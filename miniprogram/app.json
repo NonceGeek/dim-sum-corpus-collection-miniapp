@@ -1,0 +1,22 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/featured/featured",
+    "pages/post/post",
+    "pages/profile/profile",
+    "pages/tracks/tracks",
+    "pages/mine/mine",
+    "pages/message/message"
+  ],
+  "window": {
+    "navigationBarTitleText": "文化征集",
+    "navigationBarBackgroundColor": "@navBgColor",
+    "navigationBarTextStyle": "@textColor",
+    "backgroundColor": "@backgroundColor"
+  },
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents",
+  "darkmode": true,
+  "themeLocation": "theme.json"
+}

@@ -1,0 +1,16 @@
+{
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-image": "tdesign-miniprogram/image/image",
+    "t-picker": "tdesign-miniprogram/picker/picker",
+    "t-picker-item": "tdesign-miniprogram/picker-item/picker-item",
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-navbar": "tdesign-miniprogram/navbar/navbar"
+  },
+  "navigationBarTitleText": "我要投稿",
+  "navigationStyle": "custom"
+}

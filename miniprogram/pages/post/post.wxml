@@ -1,0 +1,143 @@
+<view class="upload-page theme-{{currentTheme}}">
+  <t-navbar fixed="{{false}}" class="custom-navbar">
+    <view slot="left" bind:tap="onNavbarBack">
+      <t-icon name="chevron-left" size="24" />
+    </view>
+    <view slot="title" class="custom-navbar-title">我要投稿</view>
+  </t-navbar>
+
+  <view class="upload-content">
+    <!-- 图片上传区域 -->
+    <view class="image-upload-section">
+      <view class="image-list">
+        <block wx:for="{{imageList}}" wx:key="index">
+          <view class="image-item">
+            <image src="{{item}}" mode="aspectFill" class="uploaded-image" />
+            <view class="delete-btn" catch:tap="onDeleteImage" data-index="{{index}}">
+              <t-icon name="close" size="16" color="#fff" />
+            </view>
+          </view>
+        </block>
+        <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" bind:tap="onChooseImage">
+          <t-icon name="add" size="48" color="{{currentTheme === 'dark' ? '#8B949E' : '#94A3B8'}}" />
+          <text class="add-count">{{imageList.length}}/9</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 标题输入 -->
+    <t-input placeholder="请填写标题" value="{{title}}" bind:change="onTitleInput" class="title-input" borderless="{{true}}"
+      placeholder-class="input-placeholder" maxlength="{{20}}" />
+
+    <!-- 内容输入 -->
+    <view class="input-section content-section">
+      <view class="audio-section">
+        <view class="mic-btn" bind:tap="onToggleRecordPopup">
+          <t-icon name="microphone" size="30" color="var(--primary)" />
+        </view>
+        <!-- 录音播放组件 -->
+        <view class="audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
+          <view class="audio-info">
+            <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
+            <text class="audio-label">录音 {{recordTime}}s</text>
+            <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}"</text>
+          </view>
+          <view class="audio-delete" catch:tap="onDeleteAudio">
+            <t-icon name="close" size="16" color="var(--text-muted)" />
+          </view>
+        </view>
+      </view>
+      <t-textarea placeholder="添加正文" value="{{content}}" bind:change="onContentInput" class="content-textarea"
+        maxlength="{{200}}" autocursor="{{true}}" autosize="{{true}}" borderless="{{true}}"
+        placeholder-style="color: var(--text-muted)" />
+      <view class="textarea-footer">
+        <view class="word-count">{{content.length}}/200</view>
+
+      </view>
+    </view>
+
+    <!-- 投稿类型选择 -->
+    <view class="type-section">
+      <view class="type-label">
+        <t-icon name="list" size="20" color="var(--primary)" />
+        <text>投稿类型</text>
+      </view>
+      <view class="type-picker-wrapper" bind:tap="onShowTypePicker">
+        <text class="type-value {{selectedType ? '' : 'placeholder'}}">{{selectedType || '请选择投稿类型'}}</text>
+        <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
+      </view>
+    </view>
+
+    <!-- 话题标签 -->
+    <view class="topic-section">
+      <view class="topic-header">
+        <t-icon name="price-tag" size="20" color="var(--primary)" />
+        <text class="topic-title">添加话题</text>
+      </view>
+      <view class="topic-list">
+        <block wx:for="{{selectedTopics}}" wx:key="index">
+          <view class="topic-tag">
+            <text class="topic-text">#{{item}}</text>
+            <t-icon name="close" size="14" bind:tap="onRemoveTopic" data-index="{{index}}" class="topic-close" />
+          </view>
+        </block>
+        <view class="topic-tag add-topic" bind:tap="onAddTopic">
+          <t-icon name="add" size="16" />
+          <text class="topic-text">添加话题</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Picker 弹出层 -->
+    <t-picker visible="{{pickerVisible}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
+      title="选择投稿类型">
+      <t-picker-item options="{{typeOptions}}" />
+    </t-picker>
+
+    <!-- 话题选择弹窗 -->
+    <t-popup visible="{{topicPopupVisible}}" placement="bottom" bind:visible-change="onTopicPopupClose">
+      <view class="topic-popup">
+        <view class="topic-popup-header">
+          <text class="topic-popup-title">选择话题</text>
+          <view class="topic-popup-close" bind:tap="onTopicPopupClose">
+            <t-icon name="close" size="20" />
+          </view>
+        </view>
+        <view class="topic-search">
+          <t-search placeholder="搜索话题" value="{{topicSearchKeyword}}" bind:change="onTopicSearch"
+            bind:submit="onTopicSearchSubmit" placeholder-style="color: var(--text-muted)" />
+        </view>
+        <view class="topic-list-popup">
+          <view class="topic-item-popup" wx:for="{{filteredTopicList}}" wx:key="item" bind:tap="onSelectTopic"
+            data-topic="{{item}}">
+            <text class="topic-item-text">#{{item}}</text>
+            <t-icon wx:if="{{ selectedTopics.includes(item)}}" data-key="{{item}}" name="check" size="16"
+              color="var(--primary)" />
+          </view>
+        </view>
+      </view>
+    </t-popup>
+
+    <!-- 底部按钮 -->
+    <view class="footer">
+      <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
+        disabled="{{!canPublish}}">
+        发布
+      </t-button>
+    </view>
+  </view>
+
+  <!-- 录音弹窗 -->
+  <t-popup visible="{{recordPopupVisible}}" placement="bottom" bind:visible-change="onRecordPopupClose"
+    close-on-overlay-click="{{true}}">
+    <view class="record-popup">
+      <view class="record-hint">长按按钮开始录音</view>
+      <view class="record-btn {{recording ? 'recording' : ''}}" bind:touchstart="onStartRecord"
+        bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord">
+        <t-icon name="mic" size="32" color="{{recording ? '#fff' : 'var(--primary)'}}" />
+        <text class="record-btn-text">{{recording ? '松开 结束' : '按住 录音'}}</text>
+        <text class="record-timer" wx:if="{{recording}}">{{recordTime}}s</text>
+      </view>
+    </view>
+  </t-popup>
+</view>

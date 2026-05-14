@@ -1,0 +1,25 @@
+<view class="page theme-{{currentTheme}}">
+  <!-- 无消息时 -->
+  <t-empty wx:if="{{messages.length === 0}}" icon="chat" description="暂无消息" />
+
+  <!-- 消息列表 -->
+  <view wx:else class="message-list">
+    <view
+      wx:for="{{messages}}"
+      wx:key="id"
+      class="message-card {{item.read ? 'read' : 'unread'}}"
+      bind:tap="onMessageTap"
+      data-id="{{item.id}}"
+    >
+      <view class="card-header">
+        <view class="card-icon">{{item.icon}}</view>
+        <view class="card-title-row">
+          <text class="card-title">{{item.title}}</text>
+          <view wx:if="{{!item.read}}" class="unread-dot" />
+        </view>
+      </view>
+      <view class="card-content">{{item.content}}</view>
+      <view class="card-time">{{item.time}}</view>
+    </view>
+  </view>
+</view>

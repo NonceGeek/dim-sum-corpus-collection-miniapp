@@ -1,0 +1,83 @@
+<view class="container theme-{{currentTheme}}">
+  <view class="logo-box">
+    <!-- Logo Icon -->
+    <view class="logo-icon">
+      <image src="/public/image/logo.png" mode="aspectFit" class="logo-img"></image>
+    </view>
+    <view class="title">Yue Cube</view>
+    <view class="subtitle">粤玩粤醒</view>
+    <view class="info">
+      本小程序仅供已通过网页端注册的用户使用，未注册用户请先进行网页端<text class="register-link" bind:tap="goToRegister">注册</text>。
+    </view>
+  </view>
+  <view class="login-box">
+    <button class="login-btn" type="primary" bindtap="handleLogin" loading="{{loading}}">
+      微信一键登录
+    </button>
+    <view class="login-hint">如果网页端通过微信号注册，请使用微信账号快速登录</view>
+    <button class="login-btn" type="primary" bindtap="handlePhoneLogin">
+      手机号登录
+    </button>
+    <view class="login-hint">如果网页端通过手机号注册，请使用手机号快速登录</view>
+    <view class="login-hint">
+      <checkbox-group bind:change="onAgreementChange">
+        <checkbox value="agreed" checked="{{agreedToTerms}}" class="agreement-checkbox" style="transform: scale(0.7)" />
+        我已阅读并同意Dimsum<text class="agreement-link" bind:tap="goToTerms">《用户服务协议》</text>
+        <text class="agreement-text">和</text>
+        <text class="agreement-link" bind:tap="goToPrivacy">《隐私政策》</text>
+      </checkbox-group>
+    </view>
+    <view class="login-hint">Version: {{version}}</view>
+  </view>
+
+  <!-- 手机号登录弹窗 -->
+  <t-popup visible="{{showPhonePopup}}" placement="bottom" bind:visible-change="onPopupClose"
+    close-on-overlay-click="{{true}}" rounded="{{true}}">
+    <view class="phone-login-popup theme-{{currentTheme}}">
+      <view class="popup-header">
+        <view class="popup-title">手机号登录</view>
+      </view>
+
+      <view class="popup-content">
+        <!-- 手机号输入 -->
+        <view class="input-group">
+          <t-input placeholder="请输入手机号" value="{{phone}}" bind:change="onPhoneChange" type="number" maxlength="11"
+            clearable="{{true}}" />
+        </view>
+
+        <!-- 验证码输入 -->
+        <view class="input-group">
+          <view class="code-input-row">
+            <t-input class="code-input" placeholder="请输入验证码" value="{{code}}" bind:change="onCodeChange" type="number"
+              maxlength="6" clearable="{{true}}" />
+            <t-button class="send-code-btn" size="medium" variant="outline" bind:tap="sendCode"
+              disabled="{{counting || !phone}}" loading="{{sendingCode}}">
+              <t-count-down wx:if="{{counting}}" time="{{60000}}" format="ss秒" bind:finish="onCountDownFinish" />
+              <text wx:else>{{codeButtonText}}</text>
+            </t-button>
+          </view>
+        </view>
+
+        <!-- 协议复选框 -->
+        <view class="agreement-box">
+          <checkbox-group bind:change="onAgreementChange">
+            <label class="agreement-label">
+              <checkbox value="agreed" checked="{{agreedToTerms}}" class="agreement-checkbox" />
+              <text class="agreement-text">我已阅读并同意</text>
+              <text class="agreement-link" bind:tap="goToTerms">《用户服务协议》</text>
+              <text class="agreement-text">和</text>
+              <text class="agreement-link" bind:tap="goToPrivacy">《隐私政策》</text>
+            </label>
+          </checkbox-group>
+        </view>
+      </view>
+
+      <view class="popup-footer">
+        <t-button class="login-btn" theme="primary" size="large" bind:tap="confirmPhoneLogin"
+          disabled="{{!phone || !code || !agreedToTerms}}" loading="{{logining}}">
+          登录
+        </t-button>
+      </view>
+    </view>
+  </t-popup>
+</view>
