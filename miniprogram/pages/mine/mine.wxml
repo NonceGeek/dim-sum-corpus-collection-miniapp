@@ -1,110 +1,91 @@
 <view class="page theme-{{currentTheme}}">
-  <view class="hero">
-    <view class="bubble bubble-1">你都几敢讲喔</view>
-    <view class="bubble bubble-2">全场最有声气嘅人</view>
-    <view class="bubble bubble-3">边个仲未听过你把声</view>
-    <view class="hero-title">开过咪，就留低痕迹</view>
-  </view>
-
-  <view class="filter-panel {{filterExpanded ? 'expanded' : ''}}">
-    <view class="filter-title-row" wx:if="{{filterExpanded}}">
-      <view class="filter-title">选择活动</view>
-      <view class="filter-toggle" bind:tap="onToggleFilters">
-        <t-icon name="chevron-up" size="40rpx" t-class="track-expand-icon" />
-      </view>
+  <block wx:if="{{works.length > 0}}">
+    <view class="hero">
+      <view class="bubble bubble-1">你都几敢讲喔</view>
+      <view class="bubble bubble-2">全场最有声气嘅人</view>
+      <view class="bubble bubble-3">边个仲未听过你把声</view>
+      <view class="hero-title">开过咪，就留低痕迹</view>
     </view>
 
-    <view wx:if="{{!filterExpanded}}" class="collapsed-filter-row">
-      <scroll-view class="track-tabs" scroll-x show-scrollbar="false">
-        <view class="track-tab-list">
-          <view wx:for="{{tracks}}" wx:key="value" class="track-tab {{activeTrack === item.value ? 'active' : ''}}"
-            bind:tap="onTrackTap" data-value="{{item.value}}">
-            <text class="track-tab-text">{{item.label}}</text>
-            <view class="track-tab-scribble" wx:if="{{activeTrack === item.value}}">
-              <view class="track-tab-scribble-line line-1"></view>
-              <view class="track-tab-scribble-line line-2"></view>
+    <view class="filter-panel {{filterExpanded ? 'expanded' : ''}}">
+      <view class="filter-title-row" wx:if="{{filterExpanded}}">
+        <view class="filter-title">选择活动</view>
+        <view class="filter-toggle" bind:tap="onToggleFilters">
+          <t-icon name="chevron-up" size="40rpx" t-class="track-expand-icon" />
+        </view>
+      </view>
+
+      <view wx:if="{{!filterExpanded}}" class="collapsed-filter-row">
+        <scroll-view class="track-tabs" scroll-x show-scrollbar="false">
+          <view class="track-tab-list">
+            <view wx:for="{{tracks}}" wx:key="id" class="track-tab {{activeTrack === item.id ? 'active' : ''}}"
+              bind:tap="onTrackTap" data-value="{{item.id}}">
+              <text class="track-tab-text">{{item.title}}</text>
+              <view class="track-tab-scribble" wx:if="{{activeTrack === item.id}}">
+                <view class="track-tab-scribble-line line-1"></view>
+                <view class="track-tab-scribble-line line-2"></view>
+              </view>
             </view>
           </view>
+        </scroll-view>
+        <view class="track-expand" bind:tap="onToggleFilters">
+          <t-icon name="chevron-down" size="40rpx" t-class="track-expand-icon" />
         </view>
-      </scroll-view>
-      <view class="track-expand" bind:tap="onToggleFilters">
-        <t-icon name="chevron-down" size="40rpx" t-class="track-expand-icon" />
       </view>
-    </view>
 
-    <view wx:else class="track-grid">
-      <view wx:for="{{tracks}}" wx:key="value" class="track-grid-item {{activeTrack === item.value ? 'active' : ''}}"
-        bind:tap="onTrackTap" data-value="{{item.value}}">
-        {{item.label}}
-      </view>
-    </view>
-
-    <view class="sort-section" wx:if="{{filterExpanded}}">
-      <view class="filter-title-row">
-        <view class="filter-title">选择状态</view>
-      </view>
-      <view class="track-grid">
-        <view wx:for="{{status}}" wx:key="value" class="track-grid-item {{activeStatus === item.value ? 'active' : ''}}"
-          bind:tap="onStatusTap" data-value="{{item.value}}">
+      <view wx:else class="track-grid">
+        <view wx:for="{{tracks}}" wx:key="id" class="track-grid-item {{activeTrack === item.id ? 'active' : ''}}"
+          bind:tap="onTrackTap" data-value="{{item.id}}">
           {{item.label}}
         </view>
       </view>
 
-      <view class="sort-row">
-        <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onSubmit">
-          确定
-        </t-button>
+      <view class="sort-section" wx:if="{{filterExpanded}}">
+        <view class="filter-title-row">
+          <view class="filter-title">选择状态</view>
+        </view>
+        <view class="track-grid">
+          <view wx:for="{{status}}" wx:key="value"
+            class="track-grid-item {{activeStatus === item.value ? 'active' : ''}}" bind:tap="onStatusTap"
+            data-value="{{item.value}}">
+            {{item.label}}
+          </view>
+        </view>
+
+        <view class="sort-row">
+          <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none"
+            bind:tap="onSubmit">
+            确定
+          </t-button>
+        </view>
       </view>
     </view>
-  </view>
 
-  <view class="works-section {{filterExpanded ? 'dimmed' : ''}}">
-    <view class="waterfall">
-      <view class="waterfall-column">
-        <block wx:for="{{visibleWorks}}" wx:key="id">
-          <view wx:if="{{index % 2 === 0}}" class="work-card">
-            <view class="cover-wrap">
-              <view class="work-status status-{{item.status}}">
-                {{item.status === 'pending' ? '审核中' : '中奖了'}}
-              </view>
-              <image class="work-cover" src="{{item.cover}}" mode="aspectFill" />
-              <view class="play-badge">
-                <t-icon name="play-circle-filled" size="42rpx" color="rgba(255,255,255,0.9)" />
-              </view>
-            </view>
-            <view class="work-body">
-              <view class="work-title">{{item.title}}</view>
-              <view class="work-author-row">
-                <image class="author-avatar" src="{{item.avatar}}" mode="aspectFill" />
-                <text class="author-name">{{item.author}}</text>
-              </view>
-            </view>
-          </view>
-        </block>
-      </view>
-
-      <view class="waterfall-column">
-        <block wx:for="{{visibleWorks}}" wx:key="id">
-          <view wx:if="{{index % 2 === 1}}" class="work-card">
-            <view class="cover-wrap">
-              <view class="work-status status-{{item.status}}">
-                {{item.status === 'pending' ? '审核中' : '中奖了'}}
-              </view>
-              <image class="work-cover" src="{{item.cover}}" mode="aspectFill" />
-              <view class="play-badge">
-                <t-icon name="play-circle-filled" size="42rpx" color="rgba(255,255,255,0.9)" />
-              </view>
-            </view>
-            <view class="work-body">
-              <view class="work-title">{{item.title}}</view>
-              <view class="work-author-row">
-                <image class="author-avatar" src="{{item.avatar}}" mode="aspectFill" />
-                <text class="author-name">{{item.author}}</text>
-              </view>
-            </view>
-          </view>
-        </block>
-      </view>
+    <view class="works-section {{filterExpanded ? 'dimmed' : ''}}">
+      <waterfall
+        items="{{visibleWorks}}"
+        showStatus
+        showPlayBadge
+        bind:itemtap="onWaterfallTap"
+      />
     </view>
-  </view>
+  </block>
+  <block wx:else>
+    <t-cell-group theme="card" bordered="{{false}}">
+      <t-cell title="目前仲未有作品，等你开第一围～" hover />
+    </t-cell-group>
+    <view class="empty-status">
+      <t-empty icon="rice">
+        <view slot="description" class="empty-desc">
+          <view>目前得个白饭</view>
+          <view>等你来加餸</view>
+        </view>
+      </t-empty>
+      <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none"
+        bind:tap="onNavigateToActivity">
+        我要加餸
+      </t-button>
+    </view>
+
+  </block>
 </view>

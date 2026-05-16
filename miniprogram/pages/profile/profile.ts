@@ -1,3 +1,5 @@
+import request from "../../utils/http";
+
 // 主题模式选项
 const THEME_OPTIONS = [
   { label: "跟随系统", value: "auto" },
@@ -20,6 +22,39 @@ Page({
     themeModeText: "跟随系统",
     showThemeSheet: false,
     themeOptions: THEME_OPTIONS,
+    username: "",
+    avatar: "",
+    submissionCount: 0,
+    unreadNotificationCount: 0,
+  },
+  async onLoad() {
+    const app = getApp<any>();
+    const { name, avatar } =
+      wx.getStorageSync("userInfo") || app?.globalData?.userInfo || {};
+    console.log("name:", name, avatar);
+    this.setData({
+      username: name,
+      avatar,
+    });
+    await this.loadProfileSummary();
+  },
+
+  async loadProfileSummary() {
+    try {
+      const res = await request("/profile/summary");
+      const { submissionCount, unreadNotificationCount } = res;
+      this.setData({
+        submissionCount,
+        unreadNotificationCount,
+      });
+    } catch (err) {
+      console.log("获取用户数据出错：", err);
+      wx.showModal({
+        title: "获取用户数据出错",
+        content: err.error,
+        showCancel: false,
+      });
+    }
   },
 
   onMessageClick() {

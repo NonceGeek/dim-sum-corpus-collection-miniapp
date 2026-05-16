@@ -17,61 +17,6 @@
 /* 卡片列表 - 瀑布流 */
 .card-list {
   padding: 0 24rpx;
-  column-count: 2;
-  column-gap: 24rpx;
-}
-
-.card-item {
-  break-inside: avoid;
-  background-color: var(--bg-card);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.card-item:active {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
-}
-
-.card-image-wrapper {
-  width: 100%;
-}
-
-.card-image {
-  width: 100%;
-  display: block;
-}
-
-.card-footer {
-  padding: 16rpx;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-/* 强制覆盖 t-avatar / t-image 头像尺寸 */
-.card-footer .t-avatar,
-.card-footer .t-avatar__inner,
-.card-footer .t-image {
-  width: 40rpx !important;
-  height: 40rpx !important;
-  min-width: 40rpx !important;
-  min-height: 40rpx !important;
-  font-size: 24rpx !important;
-  line-height: 56rpx !important;
-}
-
-.card-username {
-  font-size: 24rpx;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* 加载状态 */

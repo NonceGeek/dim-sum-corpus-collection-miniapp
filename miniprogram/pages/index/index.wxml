@@ -3,25 +3,12 @@
     <!-- 轮播图 - 顶格 -->
     <view class="swiper-wrapper">
       <t-swiper current="{{current}}" autoplay="{{autoplay}}" duration="{{duration}}" interval="{{interval}}"
-        list="{{swiperList}}" navigation="{{ { type: 'dots-bar' } }}" height="{{300}}" />
+        list="{{swiperList}}" navigation="{{ { type: 'dots-bar' } }}" height="{{300}}" bindclick="onClickToTrack"/>
     </view>
 
     <!-- 卡片列表 -->
     <view class="card-list">
-      <view class="card-item" wx:for="{{cardList}}" wx:key="id" bind:tap="onCardTap" data-id="{{item.id}}">
-        <view class="card-image-wrapper">
-          <image src="{{item.imageUrl}}" mode="widthFix" class="card-image" />
-        </view>
-        <view class="card-footer">
-          <block wx:if="{{item.userAvatar}}">
-            <t-image shape="circle" src="{{item.userAvatar}}" alt="{{item.username}}" width="24px" height="24px" />
-          </block>
-          <block wx:else>
-            <t-avatar shape="circle" size="20px">{{item.username[0]}}</t-avatar>
-          </block>
-          <text class="card-username">{{item.username}}</text>
-        </view>
-      </view>
+      <waterfall items="{{cardList}}" bind:itemtap="onWaterfallTap" />
     </view>
 
     <!-- 加载更多 -->

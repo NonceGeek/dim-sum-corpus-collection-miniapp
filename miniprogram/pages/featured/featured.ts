@@ -1,3 +1,16 @@
+import request from "../../utils/http";
+
+interface ITrack {
+  id: string;
+  title: string;
+  description: string;
+  bannerUrl: string;
+  status: string;
+  startsAt: string;
+  endsAt: string;
+  submissionCount: number;
+}
+
 Page({
   data: {
     currentTheme: "light",
@@ -8,6 +21,7 @@ Page({
     tabScrollLeft: 0,
     allTracksPopupVisible: false,
     visibleTabs: [] as any[],
+    top3Tracks: [] as ITrack[],
     tracks: [
       {
         id: 1,
@@ -71,10 +85,25 @@ Page({
 
   timer: null as any,
 
-  onLoad() {
+  async onLoad() {
     this.syncTheme();
     this.startDescCycle();
     this.updateVisibleTabs();
+    await this.loadTop3Tracks();
+    await this.loadAllTracks();
+  },
+  async loadTop3Tracks() {},
+  async loadAllTracks() {
+    try {
+      const res = await request("/activities");
+    } catch (err) {
+      console.log("加载活动报错:", err);
+      wx.showToast({
+        title: err.error,
+        icon: "none",
+        duration: 2000,
+      });
+    }
   },
 
   onUnload() {
@@ -206,7 +235,7 @@ Page({
     const itemId = e.currentTarget.dataset.id;
     this.setData({ allTracksPopupVisible: false });
     wx.navigateTo({
-      url: `/pages/tracks/tracks?type=${itemId}`,
+      url: `/pages/tracks/tracks?id=${itemId}`,
     });
   },
 

@@ -37,6 +37,7 @@ Page({
       title: "粤语诗歌朗诵赛",
       from: "2026-05-01",
       to: "2026-06-15",
+      cover: "https://tdesign.gtimg.com/mobile/demos/example1.png",
       type: [
         { label: "全部", value: "all" },
         { label: "用语", value: "phrase" },
@@ -137,6 +138,11 @@ Page({
 
   onCardTap(e: any) {
     const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
+  },
+
+  onWaterfallTap(e: any) {
+    const { id } = e.detail;
     wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
   },
 

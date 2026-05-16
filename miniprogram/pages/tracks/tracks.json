@@ -2,7 +2,8 @@
   "usingComponents": {
     "t-image": "tdesign-miniprogram/image/image",
     "t-avatar": "tdesign-miniprogram/avatar/avatar",
-    "t-button": "tdesign-miniprogram/button/button"
+    "t-button": "tdesign-miniprogram/button/button",
+    "waterfall": "/components/waterfall/waterfall"
   },
   "navigationBarTitleText": "活动详情"
 }

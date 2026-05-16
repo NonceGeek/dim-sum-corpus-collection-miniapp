@@ -10,80 +10,60 @@
     </view>
   </view>
 
-	<!-- 活动标题区 -->
-	<view class="tracks-header">
-		<view class="activity-name">{{track.title}}</view>
-		<view class="activity-time">{{track.from}} - {{track.to}}，期待您的参与</view>
-	</view>
+  <!-- 活动标题区：三层结构 -->
+  <view class="tracks-header">
 
-	<scroll-view class="btn-group-scroll" scroll-x show-scrollbar="false" enhanced>
-		<view class="btn-group">
-			<view
-				wx:for="{{track.type}}"
-				wx:key="value"
-				class="btn-type {{currentTrackType === item.value ? 'active' : ''}}"
-				bind:tap="onTrackTap"
-				data-type="{{item.value}}">
-				<text class="btn-type-text">{{item.label}}</text>
-				<view class="btn-scribble" wx:if="{{currentTrackType === item.value}}">
-					<view class="btn-scribble-line line-1"></view>
-					<view class="btn-scribble-line line-2"></view>
-				</view>
-			</view>
-		</view>
-	</scroll-view>
+    <!-- 背景 -->
+    <image class="header-bg" src="{{track.cover}}" mode="aspectFill" />
+    <view class="header-overlay"></view>
+    <!-- 内容 -->
+    <view class="ice-text-layer ice-animate">
 
-		<!-- 瀑布流卡片列表 -->
-		<view class="card-list">
-			<view class="card-column">
-				<block wx:for="{{cardList}}" wx:key="id">
-					<view wx:if="{{index % 2 === 0}}" class="card-item" bind:tap="onCardTap" data-id="{{item.id}}">
-						<image src="{{item.cover}}" mode="widthFix" class="card-image" />
-						<view class="card-footer">
-							<block wx:if="{{item.avatar}}">
-								<t-image shape="circle" src="{{item.avatar}}" alt="{{item.author}}" width="24px" height="24px" />
-							</block>
-							<block wx:else>
-								<t-avatar shape="circle" size="24px">{{item.author[0]}}</t-avatar>
-							</block>
-							<text class="card-username">{{item.author}}</text>
-						</view>
-					</view>
-				</block>
-			</view>
-			<view class="card-column">
-				<block wx:for="{{cardList}}" wx:key="id">
-					<view wx:if="{{index % 2 === 1}}" class="card-item" bind:tap="onCardTap" data-id="{{item.id}}">
-						<image src="{{item.cover}}" mode="widthFix" class="card-image" />
-						<view class="card-footer">
-							<block wx:if="{{item.avatar}}">
-								<t-image shape="circle" src="{{item.avatar}}" alt="{{item.author}}" width="24px" height="24px" />
-							</block>
-							<block wx:else>
-								<t-avatar shape="circle" size="24px">{{item.author[0]}}</t-avatar>
-							</block>
-							<text class="card-username">{{item.author}}</text>
-						</view>
-					</view>
-				</block>
-			</view>
-		</view>
+      <view class="activity-name ice-title">
+        {{track.title}}
+      </view>
 
-		<!-- 加载状态 -->
-		<view class="loading-tip" wx:if="{{loading}}">
-			<text>加载中...</text>
-		</view>
-		<view class="loading-tip" wx:elif="{{noMore}}">
-			<text>没有更多了</text>
-		</view>
+      <view class="activity-time ice-subtitle">
+        {{track.from}} - {{track.to}}，期待您的参与
+      </view>
 
-    <view class="post-actions">
-      <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
+    </view>
+
+  </view>
+
+  <scroll-view class="btn-group-scroll" scroll-x show-scrollbar="false" enhanced>
+    <view class="btn-group">
+      <view wx:for="{{track.type}}" wx:key="value" class="btn-type {{currentTrackType === item.value ? 'active' : ''}}"
+        bind:tap="onTrackTap" data-type="{{item.value}}">
+        <text class="btn-type-text">{{item.label}}</text>
+        <view class="btn-scribble" wx:if="{{currentTrackType === item.value}}">
+          <view class="btn-scribble-line line-1"></view>
+          <view class="btn-scribble-line line-2"></view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 瀑布流卡片列表 -->
+  <view class="card-list">
+    <waterfall items="{{cardList}}" bind:itemtap="onWaterfallTap" />
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-tip" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="loading-tip" wx:elif="{{noMore}}">
+    <text>没有更多了</text>
+  </view>
+
+  <view class="post-actions">
+    <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
       我的参赛作品
     </t-button>
 
     <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onPost">
       我也想参赛
     </t-button>
-    </view>
+  </view>
 </view>

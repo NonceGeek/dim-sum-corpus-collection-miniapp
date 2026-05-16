@@ -7,7 +7,8 @@
     "pages/profile/profile",
     "pages/tracks/tracks",
     "pages/mine/mine",
-    "pages/message/message"
+    "pages/message/message",
+    "pages/webview/webview"
   ],
   "window": {
     "navigationBarTitleText": "文化征集",

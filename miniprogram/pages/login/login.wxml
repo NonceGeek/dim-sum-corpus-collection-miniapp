@@ -4,8 +4,8 @@
     <view class="logo-icon">
       <image src="/public/image/logo.png" mode="aspectFit" class="logo-img"></image>
     </view>
-    <view class="title">Yue Cube</view>
-    <view class="subtitle">粤玩粤醒</view>
+    <view class="title">Yue Lore</view>
+    <view class="subtitle">文化征集</view>
     <view class="info">
       本小程序仅供已通过网页端注册的用户使用，未注册用户请先进行网页端<text class="register-link" bind:tap="goToRegister">注册</text>。
     </view>

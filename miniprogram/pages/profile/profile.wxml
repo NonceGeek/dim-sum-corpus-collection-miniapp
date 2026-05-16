@@ -4,19 +4,19 @@
   <!-- 顶部信息 -->
   <view class="user-card">
     <view class="user-info">
-      <image class="avatar" src="https://tdesign.gtimg.com/mobile/demos/avatar1.png" mode="aspectFill" />
+      <image class="avatar" src="{{avatar}}" mode="aspectFill" />
 
       <view class="user-meta">
         <view class="nickname-row">
-          <text class="nickname">用户1</text>
+          <text class="nickname">{{username}}</text>
 
-          <view class="vip-tag">
+          <!-- <view class="vip-tag">
             粤语创作者
-          </view>
+          </view> -->
         </view>
 
-        <view class="user-id">
-          <text class="post-num">28</text>参赛作品
+        <view class="user-id" wx:if="{{submissionCount > 0}}">
+          <text class="post-num">{{submissionCount}}</text>参赛作品
         </view>
       </view>
     </view>
@@ -33,8 +33,8 @@
       <view slot="left-icon" class="setting-icon chat-icon">
         <t-icon name="chat" size="48rpx" />
       </view>
-      <view slot="note">
-        <t-badge count="{{3}}" />
+      <view slot="note" wx:if="{{unreadNotificationCount > 0}}">
+        <t-badge count="{{unreadNotificationCount}}" />
       </view>
     </t-cell>
 

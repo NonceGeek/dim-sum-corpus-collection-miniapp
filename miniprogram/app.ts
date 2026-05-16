@@ -17,10 +17,6 @@ App<IAppOption>({
   },
 
   onLaunch() {
-    // 展示本地存储能力
-    const logs = wx.getStorageSync("logs") || [];
-    logs.unshift(Date.now());
-    wx.setStorageSync("logs", logs);
     // 从 storage 恢复全局数据（解决热启动问题）
     this.restoreGlobalData();
     // 初始化主题

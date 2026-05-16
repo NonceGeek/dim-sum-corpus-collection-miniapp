@@ -1,5 +1,13 @@
 import request from "../../utils/http";
 
+interface ISwiperList {
+  id: string;
+  title: string;
+  imageUrl: string;
+  linkType: string;
+  linkId: string;
+}
+
 Page({
   data: {
     current: 0,
@@ -12,14 +20,14 @@ Page({
       {
         id: 1,
         imageUrl: "/public/image/叉烧饭.jpg",
-        userAvatar: "",
-        username: "用户",
+        avatar: "",
+        author: "用户",
       },
       {
         id: 2,
         imageUrl: "/public/image/200.png",
-        userAvatar: "",
-        username: "用户2",
+        avatar: "",
+        author: "用户2",
       },
     ],
     page: 1,
@@ -29,11 +37,11 @@ Page({
     activeTab: "home",
   },
 
-  onLoad() {
-    console.log("cardList:", this.data.cardList);
+  async onLoad() {
     this.syncTheme();
-    this.loadSwiperData();
+    await this.loadSwiperData();
     this.loadCardList();
+    console.log("swiperList:", this.data.swiperList);
   },
 
   onShow() {
@@ -48,12 +56,24 @@ Page({
 
   async loadSwiperData() {
     try {
-      const res = await request("/banners");
+      const res = await request("/home");
       if (res.success && res.data) {
-        // this.setData({ swiperList: res.data });
+        const { banners, latestSubmissions } = res.data;
+        const swiperList = banners.map((banner: ISwiperList) => ({
+          ...banners,
+          value: banner.imageUrl,
+        }));
+        this.setData({
+          swiperList,
+        });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("加载轮播图失败", err);
+      wx.showToast({
+        title: err.error,
+        icon: "none",
+        duration: 2000,
+      });
     }
   },
 
@@ -111,6 +131,11 @@ Page({
     wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
   },
 
+  onWaterfallTap(e: any) {
+    const { id } = e.detail;
+    wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
+  },
+
   onTabChange(e: any) {
     const value = e.detail.value;
     this.setData({ activeTab: value });
@@ -121,5 +146,12 @@ Page({
     } else if (value === "profile") {
       wx.navigateTo({ url: "/pages/profile/profile" });
     }
+  },
+  onClickToTrack(index: number) {
+    const { swiperList } = this.data;
+    const trackId = (swiperList[index] as unknown as ISwiperList).linkId;
+    wx.navigateTo({
+      url: `/pages/tracks/tracks?id=${trackId}`,
+    });
   },
 });
