@@ -1,3 +1,5 @@
+import request from "../../utils/http";
+
 const CARDLIST = [
   {
     id: 1,
@@ -24,35 +26,46 @@ const CARDLIST = [
 
 Page({
   data: {
+    trackId: "",
+    track: {} as any,
     currentTrackType: "all",
     cardList: [] as any[],
     page: 1,
-    pageSize: 10,
+    total: 0,
     loading: false,
     noMore: false,
     select: "phrase",
-
-    track: {
-      id: 1,
-      title: "粤语诗歌朗诵赛",
-      from: "2026-05-01",
-      to: "2026-06-15",
-      cover: "https://tdesign.gtimg.com/mobile/demos/example1.png",
-      type: [
-        { label: "全部", value: "all" },
-        { label: "用语", value: "phrase" },
-        { label: "诗歌", value: "poem" },
-        { label: "故事", value: "story" },
-        { label: "标语", value: "slogan" },
-        { label: "地名解说", value: "geographic" },
-        { label: "歇后语", value: "rest" },
-      ],
-    },
+    type: [
+      { label: "全部", value: "all" },
+      { label: "用语", value: "phrase" },
+      { label: "诗歌", value: "poem" },
+      { label: "故事", value: "story" },
+      { label: "标语", value: "slogan" },
+      { label: "地名解说", value: "geographic" },
+      { label: "歇后语", value: "rest" },
+    ],
   },
 
-  onLoad() {
+  onLoad(options) {
+    const id = options.id;
+    this.setData({ trackId: id });
     this.syncTheme();
-    this.loadCardList();
+    this.loadTrack();
+  },
+  async loadTrack() {
+    try {
+      const track = await request(`/activities/${this.data.trackId}`);
+      // TODO 开始结束时间格式化
+      this.setData({ track });
+      await this.loadCardList();
+    } catch (err) {
+      console.log("获取活动或作品列表数据失败", err);
+      wx.showModal({
+        title: "获取活动或作品列表数据失败",
+        content: err.error + "，请稍后重试",
+        showCancel: false,
+      });
+    }
   },
 
   onShow() {
@@ -97,45 +110,47 @@ Page({
   },
 
   async loadCardList() {
-    if (this.data.loading || this.data.noMore) return;
-    const { currentTrackType } = this.data;
-    this.setData({ loading: true });
+    if (this.data.loading || this.data.noMore) {
+      return;
+    }
 
-    const app = getApp<any>();
+    this.setData({
+      loading: true,
+    });
+
     try {
-      // const res = await app.getContentList({
-      //   page: this.data.page,
-      //   pageSize: this.data.pageSize,
-      //   trackType: this.data.currentTrackType || "all",
-      // });
+      const { currentTrackType, page, cardList: oldList } = this.data;
 
-      console.log("currentTrackType", currentTrackType);
-      if (currentTrackType === "all") {
-        this.setData({ cardList: CARDLIST });
-        return;
+      let url = `/activities/${this.data.trackId}/works?page=${page}&pageSize=10`;
+
+      if (currentTrackType !== "all") {
+        url += `&type=${currentTrackType}`;
       }
-      const cardList = CARDLIST.filter(
-        (item) => item.type === currentTrackType,
-      );
-      console.log("cardList", cardList, currentTrackType);
-      this.setData({ cardList });
-      // if (res.success && res.data) {
-      // const newList = res.data.list || res.data;
-      // const isFirstPage = this.data.page === 1;
-      // this.setData({
-      //   cardList: isFirstPage ? newList : [...this.data.cardList, ...newList],
-      //   noMore: res.data.list ? newList.length < this.data.pageSize : false,
-      // });
-      // } else {
-      //   this.setData({ noMore: true });
-      // }
-    } catch (err) {
+
+      const { items = [], pagination } = await request(url);
+
+      const noMore = items.length < 10;
+
+      this.setData({
+        cardList: page === 1 ? items : [...oldList, ...items],
+
+        noMore,
+        total: pagination.total,
+      });
+    } catch (err: any) {
       console.error("加载卡片列表失败", err);
+
+      wx.showModal({
+        title: "加载失败",
+        content: err.error || "请稍后重试",
+        showCancel: false,
+      });
     } finally {
-      this.setData({ loading: false });
+      this.setData({
+        loading: false,
+      });
     }
   },
-
   onCardTap(e: any) {
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
@@ -173,13 +188,17 @@ Page({
   },
 
   onRule() {
+    const { track } = this.data;
+    const { rules } = track;
     wx.showModal({
       title: "活动规则",
-      content: "这里是活动规则说明...",
+      content: rules,
       showCancel: false,
     });
   },
   onPost() {
-    wx.navigateTo({ url: "/pages/post/post?tag=" + this.data.track.id });
+    wx.navigateTo({
+      url: "/pages/post/post?mode=edit&tag=" + this.data.track.id,
+    });
   },
 });

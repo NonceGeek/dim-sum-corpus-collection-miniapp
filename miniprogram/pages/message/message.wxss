@@ -73,3 +73,21 @@
   color: var(--text-muted);
   text-align: right;
 }
+.list-footer {
+  padding: 32rpx 0 48rpx;
+
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 24rpx;
+
+  color: var(--text-muted);
+}
+
+.empty-status {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

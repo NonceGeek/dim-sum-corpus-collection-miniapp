@@ -1,7 +1,7 @@
 <view class="container theme-{{currentTheme}}">
 
   <!-- 右上角悬浮按钮 -->
-  <view class="top-fab-container">
+  <view class="top-fab-container" wx:if="{{track.canShare}}">
     <button class="top-btn" open-type="share">
       <text class="top-btn-text">分享</text>
     </button>
@@ -14,7 +14,7 @@
   <view class="tracks-header">
 
     <!-- 背景 -->
-    <image class="header-bg" src="{{track.cover}}" mode="aspectFill" />
+    <image class="header-bg" src="{{track.bannerUrl}}" mode="aspectFill" />
     <view class="header-overlay"></view>
     <!-- 内容 -->
     <view class="ice-text-layer ice-animate">
@@ -33,7 +33,7 @@
 
   <scroll-view class="btn-group-scroll" scroll-x show-scrollbar="false" enhanced>
     <view class="btn-group">
-      <view wx:for="{{track.type}}" wx:key="value" class="btn-type {{currentTrackType === item.value ? 'active' : ''}}"
+      <view wx:for="{{type}}" wx:key="value" class="btn-type {{currentTrackType === item.value ? 'active' : ''}}"
         bind:tap="onTrackTap" data-type="{{item.value}}">
         <text class="btn-type-text">{{item.label}}</text>
         <view class="btn-scribble" wx:if="{{currentTrackType === item.value}}">

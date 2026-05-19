@@ -11,6 +11,10 @@ interface ITrack {
   submissionCount: number;
 }
 
+function isVideo(url) {
+  return /\.(mp4|mov|m3u8|webm)$/i.test(url);
+}
+
 Page({
   data: {
     currentTheme: "light",
@@ -21,7 +25,7 @@ Page({
     tabScrollLeft: 0,
     allTracksPopupVisible: false,
     visibleTabs: [] as any[],
-    top3Tracks: [] as ITrack[],
+    topTracks: [] as ITrack[],
     tracks: [
       {
         id: 1,
@@ -89,13 +93,24 @@ Page({
     this.syncTheme();
     this.startDescCycle();
     this.updateVisibleTabs();
-    await this.loadTop3Tracks();
-    await this.loadAllTracks();
+    await this.loadTracks();
   },
-  async loadTop3Tracks() {},
-  async loadAllTracks() {
+  async loadTracks() {
     try {
-      const res = await request("/activities");
+      const { items } = await request("/activities?includeExpired=true");
+      const tracks = items.map((item) => {
+        item.status =
+          item.endsAt > new Date().toISOString() ? "active" : "unactive";
+        item.works = item.works.map((work) => ({
+          ...work,
+          isVideo: isVideo(work.coverUrl),
+        }));
+        return item;
+      });
+      this.setData({
+        tracks,
+        topTracks: tracks,
+      });
     } catch (err) {
       console.log("加载活动报错:", err);
       wx.showToast({
@@ -148,25 +163,25 @@ Page({
   },
 
   updateVisibleTabs() {
-    const trackCount = this.data.tracks.length;
+    const trackCount = this.data.topTracks.length;
+    if (trackCount === 0) return;
     const current = this.data.currentIndex;
     const prevIndex = (current - 1 + trackCount) % trackCount;
     const nextIndex = (current + 1) % trackCount;
-
     this.setData({
       visibleTabs: [
         {
-          ...this.data.tracks[prevIndex],
+          ...this.data.topTracks[prevIndex],
           _position: "prev",
           _originalIndex: prevIndex,
         },
         {
-          ...this.data.tracks[current],
+          ...this.data.topTracks[current],
           _position: "current",
           _originalIndex: current,
         },
         {
-          ...this.data.tracks[nextIndex],
+          ...this.data.topTracks[nextIndex],
           _position: "next",
           _originalIndex: nextIndex,
         },
@@ -258,13 +273,15 @@ Page({
   onPost(e: any) {
     const itemId = e.currentTarget.dataset.id;
     wx.navigateTo({
-      url: `/pages/post/post?tag=${itemId}`,
+      url: `/pages/post/post?tag=${itemId}&mode=edit`,
     });
   },
   onShowDetails(e) {
     const itemId = e.currentTarget.dataset.id;
     wx.navigateTo({
-      url: `/pages/tracks/tracks?id=${id}`,
+      url: `/pages/tracks/tracks?id=${itemId}`,
     });
   },
+
+  // TODO 下拉popup loadMore /activities?includeExpired=true
 });

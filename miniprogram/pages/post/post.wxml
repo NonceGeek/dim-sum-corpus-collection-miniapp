@@ -1,143 +1,313 @@
 <view class="upload-page theme-{{currentTheme}}">
-  <t-navbar fixed="{{false}}" class="custom-navbar">
-    <view slot="left" bind:tap="onNavbarBack">
-      <t-icon name="chevron-left" size="24" />
-    </view>
-    <view slot="title" class="custom-navbar-title">我要投稿</view>
-  </t-navbar>
+  <block wx:if="{{mode === 'edit'}}">
+    <t-navbar fixed="{{false}}" class="custom-navbar">
+      <view slot="left" bind:tap="onNavbarBack">
+        <t-icon name="chevron-left" size="24" />
+      </view>
+      <view slot="title" class="custom-navbar-title">我要投稿</view>
+    </t-navbar>
 
-  <view class="upload-content">
-    <!-- 图片上传区域 -->
-    <view class="image-upload-section">
-      <view class="image-list">
-        <block wx:for="{{imageList}}" wx:key="index">
-          <view class="image-item">
-            <image src="{{item}}" mode="aspectFill" class="uploaded-image" />
-            <view class="delete-btn" catch:tap="onDeleteImage" data-index="{{index}}">
-              <t-icon name="close" size="16" color="#fff" />
+
+    <view class="upload-content">
+      <!-- 图片上传区域 -->
+      <view class="image-upload-section">
+        <view class="image-list">
+          <block wx:for="{{imageList}}" wx:key="index">
+            <view class="image-item">
+              <image src="{{item.url}}" mode="aspectFill" class="uploaded-image" />
+              <view class="delete-btn" catch:tap="onDeleteImage" data-index="{{index}}">
+                <t-icon name="close" size="16" color="#fff" />
+              </view>
+            </view>
+          </block>
+          <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" bind:tap="onChooseImage">
+            <t-icon name="add" size="48"
+              color="{{currentTheme === 'dark' ? 'var(--text-secondary)' : 'var(--text-muted)'}}" />
+            <!-- <text class="add-count">{{imageList.length}}/{{track.mediaRequirements.images && track.mediaRequirements.images.max}}</text> -->
+          </view>
+        </view>
+      </view>
+
+      <!-- 标题输入 -->
+      <t-input placeholder="请填写标题" value="{{title}}" bind:change="onTitleInput" class="title-input"
+        borderless="{{true}}" placeholder-class="input-placeholder" maxlength="{{20}}" />
+
+      <!-- 内容输入 -->
+      <view class="input-section content-section">
+        <view class="audio-section">
+          <view class="mic-btn" bind:tap="onToggleRecordPopup">
+            <t-icon name="microphone" size="30" color="var(--primary)" />
+          </view>
+          <!-- 录音播放组件 -->
+          <view class="audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
+            <view class="audio-info">
+              <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
+              <text class="audio-label">录音 {{recordTime}}s</text>
+              <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}"</text>
+            </view>
+            <view class="audio-delete" catch:tap="onDeleteAudio">
+              <t-icon name="close" size="16" color="var(--text-muted)" />
             </view>
           </view>
-        </block>
-        <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" bind:tap="onChooseImage">
-          <t-icon name="add" size="48" color="{{currentTheme === 'dark' ? '#8B949E' : '#94A3B8'}}" />
-          <text class="add-count">{{imageList.length}}/9</text>
         </view>
+        <t-textarea placeholder="添加正文" value="{{content}}" bind:change="onContentInput" class="content-textarea"
+          maxlength="{{200}}" autocursor="{{true}}" autosize="{{true}}" borderless="{{true}}"
+          placeholder-style="color: var(--text-muted)" />
+        <view class="textarea-footer">
+          <view class="word-count">{{content.length}}/200</view>
+
+        </view>
+      </view>
+
+      <!-- 投稿类型选择 -->
+      <view class="type-section">
+        <view class="type-label">
+          <text>投稿类型</text>
+        </view>
+        <view class="type-picker-wrapper" bind:tap="onShowTypePicker">
+          <text class="type-value {{selectedType ? '' : 'placeholder'}}">{{selectedType || '请选择投稿类型'}}</text>
+          <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
+        </view>
+      </view>
+
+      <view class="type-section">
+        <view class="type-label">
+          <text>选择活动</text>
+        </view>
+        <view class="type-picker-wrapper" bind:tap="onShowActivityPopup">
+          <text
+            class="type-value {{selectedActivity ? '' : 'placeholder'}}">{{selectedActivity ? selectedActivity.title : '请选择活动'}}</text>
+          <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
+        </view>
+      </view>
+
+      <!-- 活动选择弹窗 -->
+      <t-popup visible="{{activityPopupVisible}}" placement="bottom" bind:visible-change="onActivityPopupClose">
+        <view class="topic-popup">
+          <view class="topic-popup-header">
+            <text class="topic-popup-title">选择活动</text>
+            <view class="topic-popup-close" bind:tap="onActivityPopupClose">
+              <t-icon name="close" size="20" />
+            </view>
+          </view>
+          <view class="topic-search">
+            <t-search placeholder="搜索活动" value="{{activityKeyword}}" bind:change="onActivitySearch"
+              bind:submit="onActivitySearch" placeholder-style="color: var(--text-muted)" />
+          </view>
+          <scroll-view class="topic-list-popup" scroll-y bindscrolltolower="onActivityScrollToLower">
+            <view class="topic-item-popup" wx:for="{{activityList}}" wx:key="id" bind:tap="onSelectActivity"
+              data-id="{{item.id}}" data-title="{{item.title}}">
+              <text class="topic-item-text">{{item.title}}</text>
+              <t-icon wx:if="{{selectedActivity && selectedActivity.id === item.id}}" name="check" size="16"
+                color="var(--primary)" />
+            </view>
+            <view class="loading-tip" wx:if="{{activityLoading}}">
+              <text>加载中...</text>
+            </view>
+            <view class="loading-tip" wx:elif="{{activityNoMore && activityList.length > 0}}">
+              <text>没有更多了</text>
+            </view>
+            <view class="loading-tip" wx:elif="{{!activityLoading && activityList.length === 0}}">
+              <text>暂无活动</text>
+            </view>
+          </scroll-view>
+        </view>
+      </t-popup>
+
+      <!-- 话题标签 -->
+      <view class="topic-section">
+        <view class="topic-header">
+          <text class="topic-title">添加标签</text>
+        </view>
+        <view class="topic-list">
+          <block wx:for="{{selectedTopics}}" wx:key="index">
+            <view class="topic-tag">
+              <text class="topic-text">#{{item}}</text>
+              <t-icon name="close" size="14" bind:tap="onRemoveTopic" data-index="{{index}}" class="topic-close" />
+            </view>
+          </block>
+          <view class="topic-tag add-topic" bind:tap="onAddTopic">
+            <t-icon name="add" size="16" />
+            <text class="topic-text">添加标签</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Picker 弹出层 -->
+      <t-picker visible="{{pickerVisible}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
+        title="选择投稿类型">
+        <t-picker-item options="{{typeOptions}}" />
+      </t-picker>
+
+      <!-- 话题选择弹窗 -->
+      <t-popup visible="{{topicPopupVisible}}" placement="bottom" bind:visible-change="onTopicPopupClose">
+        <view class="topic-popup">
+          <view class="topic-popup-header">
+            <text class="topic-popup-title">选择标签</text>
+            <view class="topic-popup-close" bind:tap="onTopicPopupClose">
+              <t-icon name="close" size="20" />
+            </view>
+          </view>
+          <view class="topic-search">
+            <t-search placeholder="搜索标签" value="{{topicSearchKeyword}}" bind:change="onTopicSearch"
+              bind:submit="onTopicSearchSubmit" placeholder-style="color: var(--text-muted)" />
+          </view>
+          <view class="topic-list-popup">
+            <view class="topic-item-popup" wx:for="{{filteredTopicList}}" wx:key="*this" bind:tap="onSelectTopic"
+              data-topic="{{item}}" data-index="{{index}}">
+              <text class="topic-item-text">#{{item}}</text>
+              <t-icon wx:if="{{selectedTopicMap[item]}}" name="check" size="16" color="#4A7CF3" />
+            </view>
+          </view>
+        </view>
+      </t-popup>
+
+      <!-- 底部按钮 -->
+      <view class="footer">
+        <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
+          disabled="{{!canPublish}}">
+          发布
+        </t-button>
       </view>
     </view>
 
-    <!-- 标题输入 -->
-    <t-input placeholder="请填写标题" value="{{title}}" bind:change="onTitleInput" class="title-input" borderless="{{true}}"
-      placeholder-class="input-placeholder" maxlength="{{20}}" />
-
-    <!-- 内容输入 -->
-    <view class="input-section content-section">
-      <view class="audio-section">
-        <view class="mic-btn" bind:tap="onToggleRecordPopup">
-          <t-icon name="microphone" size="30" color="var(--primary)" />
-        </view>
-        <!-- 录音播放组件 -->
-        <view class="audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
-          <view class="audio-info">
-            <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
-            <text class="audio-label">录音 {{recordTime}}s</text>
-            <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}"</text>
+    <!-- 录音弹窗 -->
+    <t-popup visible="{{recordPopupVisible}}" placement="bottom" bind:visible-change="onRecordPopupClose"
+      close-on-overlay-click="{{true}}">
+      <view class="record-popup">
+        <view class="record-hint">长按录音，滑向左侧取消，滑向右侧转文字</view>
+        <view class="record-btn-area">
+          <view
+            class="record-side-btn record-cancel {{recording ? 'visible' : ''}} {{hoverTarget === 'cancel' ? 'hover' : ''}}">
+            <t-icon name="close-circle" size="28" color="var(--text-muted)" />
+            <text class="record-side-text">取消</text>
           </view>
-          <view class="audio-delete" catch:tap="onDeleteAudio">
-            <t-icon name="close" size="16" color="var(--text-muted)" />
+          <view class="record-btn {{recording ? 'recording' : ''}}" bind:touchstart="onStartRecord"
+            bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord">
+            <t-icon name="mic" size="32" color="{{recording ? '#fff' : 'var(--primary)'}}" />
+            <text class="record-btn-text">{{recording ? '松开 结束' : '按住 录音'}}</text>
+            <text class="record-timer" wx:if="{{recording}}">{{recordTime}}s</text>
           </view>
-        </view>
-      </view>
-      <t-textarea placeholder="添加正文" value="{{content}}" bind:change="onContentInput" class="content-textarea"
-        maxlength="{{200}}" autocursor="{{true}}" autosize="{{true}}" borderless="{{true}}"
-        placeholder-style="color: var(--text-muted)" />
-      <view class="textarea-footer">
-        <view class="word-count">{{content.length}}/200</view>
-
-      </view>
-    </view>
-
-    <!-- 投稿类型选择 -->
-    <view class="type-section">
-      <view class="type-label">
-        <t-icon name="list" size="20" color="var(--primary)" />
-        <text>投稿类型</text>
-      </view>
-      <view class="type-picker-wrapper" bind:tap="onShowTypePicker">
-        <text class="type-value {{selectedType ? '' : 'placeholder'}}">{{selectedType || '请选择投稿类型'}}</text>
-        <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
-      </view>
-    </view>
-
-    <!-- 话题标签 -->
-    <view class="topic-section">
-      <view class="topic-header">
-        <t-icon name="price-tag" size="20" color="var(--primary)" />
-        <text class="topic-title">添加话题</text>
-      </view>
-      <view class="topic-list">
-        <block wx:for="{{selectedTopics}}" wx:key="index">
-          <view class="topic-tag">
-            <text class="topic-text">#{{item}}</text>
-            <t-icon name="close" size="14" bind:tap="onRemoveTopic" data-index="{{index}}" class="topic-close" />
-          </view>
-        </block>
-        <view class="topic-tag add-topic" bind:tap="onAddTopic">
-          <t-icon name="add" size="16" />
-          <text class="topic-text">添加话题</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- Picker 弹出层 -->
-    <t-picker visible="{{pickerVisible}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
-      title="选择投稿类型">
-      <t-picker-item options="{{typeOptions}}" />
-    </t-picker>
-
-    <!-- 话题选择弹窗 -->
-    <t-popup visible="{{topicPopupVisible}}" placement="bottom" bind:visible-change="onTopicPopupClose">
-      <view class="topic-popup">
-        <view class="topic-popup-header">
-          <text class="topic-popup-title">选择话题</text>
-          <view class="topic-popup-close" bind:tap="onTopicPopupClose">
-            <t-icon name="close" size="20" />
-          </view>
-        </view>
-        <view class="topic-search">
-          <t-search placeholder="搜索话题" value="{{topicSearchKeyword}}" bind:change="onTopicSearch"
-            bind:submit="onTopicSearchSubmit" placeholder-style="color: var(--text-muted)" />
-        </view>
-        <view class="topic-list-popup">
-          <view class="topic-item-popup" wx:for="{{filteredTopicList}}" wx:key="item" bind:tap="onSelectTopic"
-            data-topic="{{item}}">
-            <text class="topic-item-text">#{{item}}</text>
-            <t-icon wx:if="{{ selectedTopics.includes(item)}}" data-key="{{item}}" name="check" size="16"
-              color="var(--primary)" />
+          <view
+            class="record-side-btn record-asr {{recording ? 'visible' : ''}} {{hoverTarget === 'asr' ? 'hover' : ''}}">
+            <t-icon name="chat" size="28" color="#6B93F5" />
+            <text class="record-side-text">转文字</text>
           </view>
         </view>
       </view>
     </t-popup>
 
-    <!-- 底部按钮 -->
-    <view class="footer">
-      <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
-        disabled="{{!canPublish}}">
-        发布
-      </t-button>
-    </view>
-  </view>
+    <!-- 转文字结果弹窗 -->
+    <t-popup visible="{{asrPopupVisible}}" placement="bottom" close-on-overlay-click="{{false}}">
+      <view class="asr-popup">
+        <view class="asr-popup-title">语音转文字</view>
+        <t-textarea class="asr-textarea" value="{{asrText}}" placeholder="转换结果将显示在这里，可直接编辑"
+          placeholder-style="color: var(--text-muted)" autosize="{{false}}" borderless="{{true}}"
+          bind:change="onAsrTextInput" />
+        <view class="asr-actions">
+          <t-button class="asr-btn" theme="default" shape="round" size="medium" bind:tap="onAsrCancel">取消</t-button>
+          <t-button class="asr-btn" theme="default" shape="round" size="medium" bind:tap="onAsrUseAudio">发原语音</t-button>
+          <t-button class="asr-btn asr-btn-confirm" theme="primary" shape="round" size="medium" bind:tap="onAsrConfirm">
+            确认</t-button>
+        </view>
+      </view>
+    </t-popup>
+  </block>
+  <block wx:else>
+    <t-navbar fixed="{{false}}" class="custom-navbar">
+      <view slot="left" bind:tap="onViewNavbarBack">
+        <t-icon name="chevron-left" size="24" />
+      </view>
+    </t-navbar>
 
-  <!-- 录音弹窗 -->
-  <t-popup visible="{{recordPopupVisible}}" placement="bottom" bind:visible-change="onRecordPopupClose"
-    close-on-overlay-click="{{true}}">
-    <view class="record-popup">
-      <view class="record-hint">长按按钮开始录音</view>
-      <view class="record-btn {{recording ? 'recording' : ''}}" bind:touchstart="onStartRecord"
-        bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord">
-        <t-icon name="mic" size="32" color="{{recording ? '#fff' : 'var(--primary)'}}" />
-        <text class="record-btn-text">{{recording ? '松开 结束' : '按住 录音'}}</text>
-        <text class="record-timer" wx:if="{{recording}}">{{recordTime}}s</text>
+
+    <!-- 媒体轮播 -->
+    <view class="view-swiper-wrap" wx:if="{{post.media && post.media.length > 0}}">
+      <swiper class="view-swiper" indicator-dots="{{post.media.length > 1}}" indicator-color="rgba(255,255,255,0.5)"
+        indicator-active-color="#fff">
+        <swiper-item wx:for="{{post.media}}" wx:key="index">
+          <block wx:if="{{item.type === 'video'}}">
+            <video class="view-media" src="{{item}}" controls show-fullscreen-btn object-fit="cover" />
+          </block>
+          <block wx:if="{{item.type === 'image'}}">
+            <image class="view-media" src="{{item.url}}" mode="aspectFill" bind:tap="onPreviewImage"
+              data-url="{{item.url}}" />
+          </block>
+        </swiper-item>
+      </swiper>
+    </view>
+    <view class="view-content">
+      <!-- 标题 -->
+      <view class="view-title" wx:if="{{post.title}}">{{post.title}}</view>
+
+      <!-- 音频 -->
+      <view class="audio-player view-audio" wx:if="{{post.audioUrl}}" bind:tap="onPlayAudio">
+        <view class="audio-info">
+          <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
+          <text class="audio-label">语音</text>
+          <text class="audio-duration" wx:if="{{post.audioDuration}}">{{post.audioDuration}}s</text>
+        </view>
+      </view>
+
+      <!-- 正文 -->
+      <view class="view-body" wx:if="{{post.intro}}">
+        <text class="view-body-text" user-select>{{post.intro}}</text>
+      </view>
+
+      <!-- 元信息 -->
+      <view class="view-meta">
+        <view class="view-meta-item" wx:if="{{post.submissionType}}">
+          <t-icon name="catalog" size="16" color="#94A3B8" />
+          <text class="view-meta-text">{{post.submissionType}}</text>
+        </view>
+        <view class="view-meta-item" wx:if="{{post.activity && post.activity.title}}">
+          <t-icon name="flag" size="16" color="#94A3B8" />
+          <text class="view-meta-text">{{post.activity.title}}</text>
+        </view>
+      </view>
+
+      <!-- 话题标签 -->
+      <view class="topic-list view-tags" wx:if="{{post.tags && post.tags.length > 0}}">
+        <view class="topic-tag" wx:for="{{post.tags}}" wx:key="index">
+          <text class="topic-text">#{{item}}</text>
+        </view>
+      </view>
+
+    </view>
+
+    <!-- 底部操作栏 TODO:判断是否作者和当前登录人是否是一个人-->
+    <view class="view-footer">
+      <view class="view-footer-action" bind:tap="onShowPostActions">
+        <t-icon name="edit" size="20" color="var(--text-secondary)" />
+        <text class="view-footer-text">编辑</text>
       </view>
     </view>
-  </t-popup>
+
+    <!-- 操作弹窗 -->
+    <t-popup visible="{{postActionsVisible}}" placement="bottom" bind:visible-change="onPostActionsClose">
+      <view class="post-actions-popup">
+
+        <!-- 操作区 -->
+        <view class="post-actions-row">
+
+          <view class="post-action-card" bind:tap="onEditPost">
+            <view class="post-action-icon">
+              <t-icon name="edit" size="26" color="var(--text-primary)" />
+            </view>
+            <text class="post-action-label">编辑</text>
+          </view>
+
+          <view class="post-action-card danger" bind:tap="onDeletePost">
+            <view class="post-action-icon danger-icon">
+              <t-icon name="delete" size="26" color="#f62459" />
+            </view>
+            <text class="post-action-label danger-text">删除</text>
+          </view>
+
+        </view>
+
+      </view>
+    </t-popup>
+  </block>
+
 </view>

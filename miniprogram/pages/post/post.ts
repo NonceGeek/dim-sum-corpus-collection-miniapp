@@ -1,13 +1,48 @@
+import request from "../../utils/http";
+import ENV from "../../config/setting";
+import { formatDate } from "../../utils/date";
 // pages/upload/upload.ts
 Page({
   data: {
     mode: "edit",
     currentTheme: "light",
+    post: {
+      id: "sub_001",
+      title: "月光光",
+      intro: "粤语童谣经典作品",
+      submissionType: "诗歌",
+      tags: ["童谣", "荔湾"],
+      reviewStatus: "approved",
+      media: [
+        { type: "image", url: "/public/image/200.png" },
+        { type: "audio", url: "https://oss/a.mp3", durationSec: 58 },
+      ],
+      likeCount: 20,
+      commentCount: 3,
+      shareCount: 5,
+      viewCount: 123,
+      views: "123",
+      coverUrl: "https://oss/1.jpg",
+      imageUrls: ["https://oss/1.jpg"],
+      isAwarded: false,
+      awardStatus: "none",
+      createdAt: "2026-05-01T10:00:00.000Z",
+    } as any,
+    track: {},
+    postActionsVisible: false,
     selectedType: "",
+    selectedActivity: null as { id: string; title: string } | null,
+    activityPopupVisible: false,
+    activityList: [] as { id: string; title: string }[],
+    activityPage: 1,
+    activityNoMore: false,
+    activityLoading: false,
+    activityKeyword: "",
     title: "",
     content: "",
     imageList: [],
-    selectedTopics: [],
+    selectedTopics: [] as string[],
+    selectedTopicMap: {} as Record<string, boolean>,
     canPublish: false,
     pickerVisible: false,
     pickerValue: [],
@@ -21,7 +56,8 @@ Page({
     ],
     topicPopupVisible: false,
     topicSearchKeyword: "",
-    filteredTopicList: [],
+    filteredTopicList: [] as string[],
+    // TODO
     availableTopics: [
       "日常用语",
       "方言特色",
@@ -43,18 +79,92 @@ Page({
     recordPopupVisible: false,
     recording: false,
     recordTime: 0,
-    recordTimer: null as number | null,
+    recordTimer: null as any,
     touchStartTime: 0,
     touchStartTimer: null as number | null,
     touchStartX: 0,
     touchStartY: 0,
     justFinishedRecording: false,
     audioUrl: "",
-    audioDuration: "",
+    audioDuration: 0,
+    // 滑动悬停目标：'' | 'cancel' | 'asr'
+    hoverTarget: "",
+    recordMode: "normal" as "normal" | "discard" | "asr",
+    // 转文字结果弹窗
+    asrPopupVisible: false,
+    asrText: "",
+    pendingAudioUrl: "",
+    pendingAudioDuration: 0,
+  },
+  recorderManager: null as any,
+
+  async onLoad(options) {
+    const { tag, id, mode } = options;
+    this.setData({
+      mode: mode,
+    });
+    tag && (await this.loadTrack(tag));
+    id && (await this.loadPost(id));
+    this.syncTheme();
+    this.recorderManager = wx.getRecorderManager();
+    this.handleRecordStop = this.handleRecordStop.bind(this);
+    this.recorderManager.onStop(this.handleRecordStop);
+  },
+  onUnload() {
+    if (this.data.recordTimer) {
+      clearInterval(this.data.recordTimer);
+    }
+    if (this.recorderManager) {
+      this.recorderManager.stop();
+    }
+  },
+  async loadTrack(id: string) {
+    try {
+      const track = await request(`/activities/${id}`);
+      this.setData({
+        track,
+      });
+    } catch (err: any) {
+      console.log("获取活动数据失败", err);
+      wx.showModal({
+        title: "获取活动数据失败",
+        content: err.error + "，请稍后重试",
+        showCancel: false,
+      });
+    }
   },
 
-  onLoad() {
-    this.syncTheme();
+  async loadPost(id: string) {
+    try {
+      const { mode } = this.data;
+      let view = {};
+      if (mode === "view") {
+        view = await request(`/works/${id}/view`);
+        console.log("view:", view);
+      }
+      const res = await request(`/submissions/${id}`);
+      // TODO：缺参加的活动
+      this.setData({
+        post: res,
+        ...(view ? { view: view.viewCount } : {}),
+        title: res.title,
+        content: res.intro,
+        imageList: res.media.filter(
+          (m) => m.type === "video" || m.type === "image",
+        ),
+        selectedTopics: res.tags,
+        audioUrl: res.media.find((m) => m.type === "audio")?.url || "",
+        audioDuration:
+          res.media.find((m) => m.type === "audio")?.durationSec || 0,
+      });
+    } catch (err: any) {
+      console.log("获取投稿数据失败：", err);
+      wx.showModal({
+        title: "获取投稿数据失败",
+        content: err.error + "，请稍后再试",
+        showCancel: false,
+      });
+    }
   },
 
   onShow() {
@@ -111,17 +221,75 @@ Page({
 
   // 选择图片
   onChooseImage() {
+    const mediaRequirements = this.data.track?.mediaRequirements || {};
+    const images = mediaRequirements?.images || {};
+    const audio = mediaRequirements?.audio || {};
+    const video = mediaRequirements?.video || {};
+    const maxDuration = (video.required && video.maxDurationSec) || 30;
+    const mediaType =
+      images.required && video.required
+        ? "mix"
+        : images.required
+          ? "image"
+          : video.required
+            ? "video"
+            : "image";
     const maxCount = 9 - this.data.imageList.length;
     wx.chooseMedia({
       count: maxCount,
-      mediaType: ["image"],
+      mediaType: [mediaType],
       sourceType: ["album", "camera"],
+      sizeType: ["compressed"],
+      maxDuration: maxDuration,
       success: (res) => {
-        const tempFiles = res.tempFiles.map((file: any) => file.tempFilePath);
-        this.setData({
-          imageList: [...this.data.imageList, ...tempFiles],
+        console.log("tempFiles:", res.tempFiles);
+        const tempFiles = res.tempFiles.map((file: any, index) => ({
+          url: file.tempFilePath,
+          type: file.fileType === "video" ? "video" : "image",
+          ...(file.fileType === "video" ? { durationSec: file.duration } : {}),
+          // ...(file.fileType !== "video" ? { sortOrder: index } : {}),
+        }));
+        const token = wx.getStorageSync("accessToken") || "";
+        const timestamp = Date.now();
+        const dateStr = formatDate(new Date(), "YYYYMMDD");
+        const uploadTasks = tempFiles.map((file) => {
+          return new Promise((resolve, reject) => {
+            wx.uploadFile({
+              url: `${ENV.API_BASE_URL}/upload`,
+              filePath: file.url,
+              name: "file",
+              formData: {
+                fileName: `${dateStr}_corpus_collection_${file.type}_${timestamp}.${file.url.split(".").pop()}`,
+              },
+              header: {
+                Authorization: `Bearer ${token}`,
+              },
+              success: (res) => {
+                const data = JSON.parse(res.data);
+
+                resolve({
+                  ...file,
+                  url: data.url,
+                });
+              },
+              fail: reject,
+            });
+          });
         });
-        this.checkCanPublish();
+        Promise.all(uploadTasks)
+          .then((files) => {
+            this.setData({
+              imageList: [...this.data.imageList, ...files],
+            });
+            this.checkCanPublish();
+          })
+          .catch((err) => {
+            wx.showToast({
+              title: "上传失败",
+              icon: "none",
+            });
+            console.error(err);
+          });
       },
     });
   },
@@ -131,6 +299,79 @@ Page({
     const index = e.currentTarget.dataset.index;
     const imageList = this.data.imageList.filter((_, i) => i !== index);
     this.setData({ imageList });
+    this.checkCanPublish();
+  },
+
+  // 打开活动选择弹窗
+  onShowActivityPopup() {
+    this.setData({
+      activityPopupVisible: true,
+      activityKeyword: "",
+      activityList: [],
+      activityPage: 1,
+      activityNoMore: false,
+    });
+    this.loadActivityList();
+  },
+
+  // 关闭活动选择弹窗
+  onActivityPopupClose() {
+    this.setData({ activityPopupVisible: false });
+  },
+
+  // 加载活动列表
+  async loadActivityList() {
+    if (this.data.activityLoading || this.data.activityNoMore) return;
+    this.setData({ activityLoading: true });
+    try {
+      const { activityPage, activityKeyword, activityList } = this.data;
+      const keyword = activityKeyword
+        ? `&keyword=${encodeURIComponent(activityKeyword)}`
+        : "";
+      const res = await request(
+        `/activities?page=${activityPage}&pageSize=10${keyword}`,
+      );
+      const items = (res.items || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+      }));
+      this.setData({
+        activityList: activityPage === 1 ? items : [...activityList, ...items],
+        activityNoMore: items.length < 10,
+      });
+    } catch (err) {
+      console.error("加载活动列表失败", err);
+    } finally {
+      this.setData({ activityLoading: false });
+    }
+  },
+
+  // 滚动到底部加载更多
+  onActivityScrollToLower() {
+    if (this.data.activityNoMore || this.data.activityLoading) return;
+    this.setData({ activityPage: this.data.activityPage + 1 });
+    this.loadActivityList();
+  },
+
+  // 关键词搜索（输入时实时触发）
+  onActivitySearch(e: any) {
+    const keyword = e.detail.value ?? "";
+    this.setData({
+      activityKeyword: keyword,
+      activityList: [],
+      activityPage: 1,
+      activityNoMore: false,
+    });
+    this.loadActivityList();
+  },
+
+  // 选中活动
+  onSelectActivity(e: any) {
+    const { id, title } = e.currentTarget.dataset;
+    this.setData({
+      selectedActivity: { id, title },
+      activityPopupVisible: false,
+    });
     this.checkCanPublish();
   },
 
@@ -149,9 +390,12 @@ Page({
   },
 
   // 话题搜索
-  onTopicSearch(e: any) {
+  async onTopicSearch(e: any) {
     const keyword = e.detail.value;
-    this.setData({ topicSearchKeyword: keyword });
+    this.setData({
+      topicSearchKeyword: keyword,
+    });
+
     this.filterTopics(keyword);
   },
 
@@ -163,7 +407,7 @@ Page({
   // 过滤话题列表
   filterTopics(keyword: string) {
     const filtered = this.data.availableTopics.filter((topic) =>
-      topic.toLowerCase().includes(keyword.toLowerCase()),
+      topic.includes(keyword),
     );
     this.setData({ filteredTopicList: filtered });
   },
@@ -171,20 +415,25 @@ Page({
   // 选择话题
   onSelectTopic(e: any) {
     const topic = e.currentTarget.dataset.topic;
-    const index = this.data.selectedTopics.indexOf(topic);
-    if (index === -1) {
-      // 添加话题
-      if (this.data.selectedTopics.length >= 5) {
-        wx.showToast({ title: "最多添加5个话题", icon: "none" });
-        return;
-      }
+
+    const selectedTopics = [...this.data.selectedTopics];
+    const selectedTopicMap = {
+      ...this.data.selectedTopicMap,
+    };
+
+    if (selectedTopicMap[topic]) {
+      delete selectedTopicMap[topic];
+
       this.setData({
-        selectedTopics: [...this.data.selectedTopics, topic],
+        selectedTopics: selectedTopics.filter((t) => t !== topic),
+        selectedTopicMap,
       });
     } else {
-      // 移除话题
+      selectedTopicMap[topic] = true;
+
       this.setData({
-        selectedTopics: this.data.selectedTopics.filter((_, i) => i !== index),
+        selectedTopics: [...selectedTopics, topic],
+        selectedTopicMap,
       });
     }
   },
@@ -200,14 +449,58 @@ Page({
 
   // 检查是否可以发布
   checkCanPublish() {
-    const hasContent =
-      this.data.selectedType &&
-      (this.data.title.trim() ||
-        this.data.content.trim() ||
-        this.data.imageList.length > 0);
-    this.setData({ canPublish: hasContent });
-  },
+    const {
+      track,
+      selectedType,
+      title,
+      content,
+      imageList,
+      audioUrl,
+      audioDuration,
+    } = this.data;
 
+    const { mediaRequirements: { images = {}, audio = {} } = {} } = track || {};
+
+    let canPublish = true;
+
+    // 必须选类型
+    if (!selectedType) {
+      canPublish = false;
+    }
+
+    // 内容至少有一个
+    const hasBasicContent =
+      title.trim() || content.trim() || imageList.length > 0 || audioUrl;
+
+    if (!hasBasicContent) {
+      canPublish = false;
+    }
+
+    // 图片校验
+    if (images.required) {
+      const imageCount = imageList.filter((i) => i.type === "image").length;
+
+      if (
+        imageCount < (images.min || 0) ||
+        imageCount > (images.max || Infinity)
+      ) {
+        canPublish = false;
+      }
+    }
+
+    // 音频校验
+    if (audio.required) {
+      if (!audioUrl) {
+        canPublish = false;
+      }
+
+      if (audioDuration > (audio.maxDurationSec || Infinity)) {
+        canPublish = false;
+      }
+    }
+
+    this.setData({ canPublish });
+  },
   // 取消发布
   onCancel() {
     if (
@@ -235,25 +528,121 @@ Page({
   },
 
   // 发布内容
-  onPublish() {
+  async onPublish() {
     if (!this.data.canPublish) return;
 
+    const {
+      track,
+      selectedType,
+      title,
+      content,
+      imageList,
+      selectedTopics,
+      audioUrl,
+      audioDuration,
+    } = this.data;
+    const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
+      track;
+
+    if (images.required) {
+      const imageListForImage = imageList.filter(
+        (image) => image.type === "image",
+      );
+      if (
+        imageListForImage.length < images.min ||
+        imageListForImage.length > images.max
+      ) {
+        wx.showModal({
+          title: "提示",
+          content:
+            "图片不能少于" + images.min + "张,并且不能大于" + images.max + "张",
+          showCancel: false,
+        });
+        return;
+      }
+    }
+    if (audio.required) {
+      if (!audioUrl) {
+        wx.showModal({
+          title: "提示",
+          content: "请上传录音",
+          showCancel: false,
+        });
+        return;
+      }
+      if (audioDuration > audio.maxDurationSec) {
+        wx.showModal({
+          title: "提示",
+          content: "录音不能多于" + audio.maxDurationSec + "秒",
+          showCancel: false,
+        });
+        return;
+      }
+    }
+
     const publishData = {
-      type: this.data.selectedType,
-      title: this.data.title,
-      content: this.data.content,
-      images: this.data.imageList,
-      topics: this.data.selectedTopics,
+      type: selectedType,
+      title,
+      content,
+      images: imageList,
+      topics: selectedTopics,
     };
 
-    console.log("发布内容：", publishData);
+    const mediaList = [
+      ...imageList,
+      ...(audioUrl
+        ? [
+            {
+              type: "audio",
+              url: audioUrl,
+              durationSec: audioDuration,
+            },
+          ]
+        : []),
+    ];
 
-    wx.showToast({ title: "发布成功", icon: "success" });
+    // precheck
+    const precheck = await request("/submissions/precheck", {
+      method: "POST",
+      data: {
+        title: publishData.title,
+        intro: publishData.content,
+        images: publishData.images,
+      },
+    });
+    if (precheck.verdict === "pass") {
+      console.log("发布内容：", publishData);
 
-    // TODO: 调用发布 API
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 1500);
+      const submission = await request("/submissions", {
+        method: "POST",
+        data: {
+          ...(this.data.track ? { activityId: this.data.track.id } : {}),
+          submissionType: selectedType,
+          title: title,
+          intro: content,
+          tags: selectedTopics,
+          media: mediaList,
+          precheckResult: {
+            verdict: "pass",
+          },
+        },
+      });
+      wx.showModal({
+        title: "提示",
+        content: submission.message,
+        showCancel: false,
+      });
+      setTimeout(() => {
+        wx.navigateBack();
+      }, 1500);
+    } else {
+      // TODO precheck检查出错
+      wx.showModal({
+        title: "提示",
+        content: "内容存在不安全信息，请处理",
+        showCancel: false,
+      });
+    }
   },
 
   // 切换录音弹窗
@@ -262,11 +651,13 @@ Page({
   },
 
   // 关闭录音弹窗
-  onRecordPopupClose(e: any) {
-    if (e.detail.visible === false) {
-      // 如果正在录音，先停止
+  onRecordPopupClose(e?: any) {
+    if (e?.detail?.visible === false || !e?.detail) {
       if (this.data.recording) {
-        this.onStopRecordInternal();
+        this.setData({
+          recordMode: "discard",
+        });
+        this.recorderManager.stop();
       }
       this.setData({ recordPopupVisible: false });
     }
@@ -293,33 +684,29 @@ Page({
     this.setData({ touchStartTimer: timer });
   },
 
-  // 录音按钮触摸移动，取消录音
+  // 录音按钮触摸移动：检测悬停目标
   onRecordTouchMove(e: any) {
     const touch = e.touches[0];
-    const deltaX = Math.abs(touch.clientX - this.data.touchStartX);
-    const deltaY = Math.abs(touch.clientY - this.data.touchStartY);
+    const deltaX = touch.clientX - this.data.touchStartX;
+    const deltaY = touch.clientY - this.data.touchStartY;
 
-    if (deltaX > 15 || deltaY > 15) {
-      if (this.data.touchStartTimer) {
-        clearTimeout(this.data.touchStartTimer);
-        this.setData({ touchStartTimer: null });
+    if (!this.data.recording) {
+      if (Math.abs(deltaX) > 15 || Math.abs(deltaY) > 15) {
+        if (this.data.touchStartTimer) {
+          clearTimeout(this.data.touchStartTimer);
+          this.setData({ touchStartTimer: null });
+        }
       }
+      return;
+    }
 
-      if (this.data.recording) {
-        const recorderManager = (this as any).recorderManager;
-        if (recorderManager) {
-          recorderManager.stop();
-        }
-        this.setData({
-          recording: false,
-          recordTime: 0,
-        });
-        if (this.data.recordTimer) {
-          clearInterval(this.data.recordTimer);
-          this.setData({ recordTimer: null });
-        }
-        wx.hideToast();
-      }
+    // 向左滑 -> 悬停取消，向右滑 -> 悬停转文字，居中 -> 无悬停
+    let hoverTarget = "";
+    if (deltaX < -40) hoverTarget = "cancel";
+    else if (deltaX > 40) hoverTarget = "asr";
+
+    if (hoverTarget !== this.data.hoverTarget) {
+      this.setData({ hoverTarget });
     }
   },
 
@@ -332,31 +719,29 @@ Page({
 
     if (!this.data.recording) return;
 
-    this.onStopRecordInternal();
-  },
+    const { hoverTarget } = this.data;
+    this.setData({ hoverTarget: "" });
 
-  // 内部停止录音逻辑
-  onStopRecordInternal() {
-    if (this.data.recordTimer) {
-      clearInterval(this.data.recordTimer);
+    if (hoverTarget === "cancel") {
+      this.setData({
+        recordMode: "discard",
+        recordPopupVisible: false,
+      });
+
+      this.recorderManager.stop();
+    } else if (hoverTarget === "asr") {
+      this.setData({
+        recordMode: "asr",
+      });
+
+      this.recorderManager.stop();
+    } else {
+      this.setData({
+        recordMode: "normal",
+      });
+
+      this.recorderManager.stop();
     }
-
-    this.setData({
-      recording: false,
-      recordTime: 0,
-      recordTimer: null,
-    });
-
-    const recorderManager = (this as any).recorderManager;
-    if (recorderManager) {
-      recorderManager.stop();
-    }
-
-    wx.hideToast();
-    this.setData({ justFinishedRecording: true });
-    setTimeout(() => {
-      this.setData({ justFinishedRecording: false });
-    }, 300);
   },
 
   // 检查并开始录音
@@ -371,9 +756,21 @@ Page({
             },
             fail: () => {
               wx.showModal({
-                title: "提示",
-                content: "需要录音权限才能使用此功能",
-                showCancel: false,
+                title: "需要录音权限",
+                content: "开启录音权限后才能使用语音功能",
+                confirmText: "去开启",
+                success: (modalRes) => {
+                  if (modalRes.confirm) {
+                    wx.openSetting({
+                      success: (settingRes) => {
+                        // 用户重新开启
+                        if (settingRes.authSetting["scope.record"]) {
+                          this.doStartRecord();
+                        }
+                      },
+                    });
+                  }
+                },
               });
             },
           });
@@ -398,30 +795,12 @@ Page({
     }, 1000);
     this.setData({ recordTimer: timer });
 
-    const recorderManager = wx.getRecorderManager();
-    recorderManager.start({
+    this.recorderManager.start({
       format: "mp3",
       sampleRate: 44100,
       numberOfChannels: 1,
       encodeBitRate: 128000,
     });
-
-    recorderManager.onStop((res) => {
-      console.log("录音完成", res);
-      const { tempFilePath, duration } = res;
-      const durationSec = Math.floor(duration / 1000);
-      this.setData({
-        audioUrl: tempFilePath,
-        audioDuration: `${durationSec}秒`,
-      });
-      wx.showToast({
-        title: `录音完成 ${durationSec}秒`,
-        icon: "success",
-        duration: 1500,
-      });
-    });
-
-    (this as any).recorderManager = recorderManager;
 
     wx.showToast({
       title: "正在录音...",
@@ -463,6 +842,51 @@ Page({
     backgroundAudioManager.src = audioUrl;
   },
 
+  // 转文字弹窗：编辑文字内容
+  onAsrTextInput(e: any) {
+    this.setData({ asrText: e.detail.value });
+  },
+
+  // 转文字弹窗：取消，丢弃录音和文字
+  onAsrCancel() {
+    this.setData({
+      asrPopupVisible: false,
+      asrText: "",
+      pendingAudioUrl: "",
+      pendingAudioDuration: 0,
+    });
+  },
+
+  // 转文字弹窗：发原语音，保存录音文件
+  onAsrUseAudio() {
+    this.setData({
+      audioUrl: this.data.pendingAudioUrl,
+      audioDuration: this.data.pendingAudioDuration,
+      asrPopupVisible: false,
+      asrText: "",
+      pendingAudioUrl: "",
+      pendingAudioDuration: 0,
+    });
+  },
+
+  // 转文字弹窗：确认，把文字追加到正文
+  onAsrConfirm() {
+    const text = this.data.asrText.trim();
+    if (!text) {
+      wx.showToast({ title: "文字内容为空", icon: "none" });
+      return;
+    }
+    const content = this.data.content ? this.data.content + "\n" + text : text;
+    this.setData({
+      content,
+      asrPopupVisible: false,
+      asrText: "",
+      pendingAudioUrl: "",
+      pendingAudioDuration: 0,
+    });
+    this.checkCanPublish();
+  },
+
   // 删除录音
   onDeleteAudio() {
     wx.showModal({
@@ -472,10 +896,154 @@ Page({
         if (res.confirm) {
           this.setData({
             audioUrl: "",
-            audioDuration: "",
+            audioDuration: 0,
           });
         }
       },
     });
+  },
+  async handleRecordStop(res: any) {
+    console.log("录音结束：", res);
+    if (this.data.recordTimer) {
+      clearInterval(this.data.recordTimer);
+    }
+    const { tempFilePath, duration } = res;
+    const durationSec = Math.ceil(duration / 1000);
+
+    const { recordMode } = this.data;
+
+    // 重置录音状态
+    this.setData({
+      recording: false,
+      recordTime: 0,
+      recordTimer: null,
+    });
+
+    // 丢弃模式
+    if (recordMode === "discard") {
+      console.log("录音已取消");
+      return;
+    }
+
+    // 普通录音
+    if (recordMode === "normal") {
+      this.setData({
+        audioUrl: tempFilePath,
+        audioDuration: durationSec,
+      });
+
+      wx.showToast({
+        title: `录音完成 ${durationSec}秒`,
+        icon: "success",
+      });
+
+      return;
+    }
+
+    // ASR 模式
+    if (recordMode === "asr") {
+      try {
+        wx.showLoading({
+          title: "上传中...",
+        });
+
+        const token = wx.getStorageSync("accessToken") || "";
+        const dateStr = formatDate(new Date(), "YYYYMMDD");
+        const timestamp = Date.now();
+
+        const uploadRes = await new Promise<any>((resolve, reject) => {
+          wx.uploadFile({
+            url: `${ENV.API_BASE_URL}/upload`,
+            filePath: tempFilePath,
+            name: "file",
+            formData: {
+              fileName: `${dateStr}_corpus_collection_audio_${timestamp}.mp3`,
+            },
+            header: {
+              Authorization: `Bearer ${token}`,
+            },
+            success: resolve,
+            fail: reject,
+          });
+        });
+
+        wx.hideLoading();
+
+        const data = JSON.parse(uploadRes.data);
+
+        this.setData({
+          pendingAudioUrl: data.url,
+          pendingAudioDuration: durationSec,
+          asrText: "（转换中...）",
+          asrPopupVisible: true,
+          recordPopupVisible: false,
+        });
+
+        // TODO: 这里接 ASR
+        setTimeout(() => {
+          this.setData({
+            asrText: "",
+          });
+        }, 800);
+      } catch (err) {
+        wx.hideLoading();
+
+        console.error(err);
+
+        wx.showToast({
+          title: "上传失败",
+          icon: "none",
+        });
+      }
+    }
+  },
+
+  // 查看模式：预览图片
+  onPreviewImage(e: any) {
+    const url = e.currentTarget.dataset.url;
+    const urls = (this.data.post.mediaFiles || [])
+      .filter((f: any) => f.type !== "video")
+      .map((f: any) => f.url);
+    wx.previewImage({ current: url, urls });
+  },
+
+  // 查看模式：显示操作弹窗
+  onShowPostActions() {
+    this.setData({ postActionsVisible: true });
+  },
+
+  onPostActionsClose() {
+    this.setData({ postActionsVisible: false });
+  },
+
+  // 查看模式：跳转编辑
+  onEditPost() {
+    this.setData({ postActionsVisible: false });
+    const id = (this.data.post as any).id;
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=edit` });
+  },
+
+  // TODO：删除投稿
+  onDeletePost() {
+    this.setData({ postActionsVisible: false });
+    wx.showModal({
+      title: "确认删除",
+      content: "删除后无法恢复，确定要删除吗？",
+      confirmColor: "#f62459",
+      success: async (res) => {
+        if (!res.confirm) return;
+        try {
+          const id = (this.data.post as any).id;
+          await request(`/submissions/${id}`, { method: "DELETE" });
+          wx.showToast({ title: "已删除", icon: "success" });
+          setTimeout(() => wx.navigateBack(), 1500);
+        } catch (err: any) {
+          wx.showToast({ title: err.error || "删除失败", icon: "none" });
+        }
+      },
+    });
+  },
+  onViewNavbarBack() {
+    wx.navigateBack();
   },
 });

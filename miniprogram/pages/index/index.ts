@@ -40,7 +40,7 @@ Page({
   async onLoad() {
     this.syncTheme();
     await this.loadSwiperData();
-    this.loadCardList();
+    // this.loadCardList();
     console.log("swiperList:", this.data.swiperList);
   },
 
@@ -62,6 +62,7 @@ Page({
         const swiperList = banners.map((banner: ISwiperList) => ({
           ...banners,
           value: banner.imageUrl,
+          cardList: latestSubmissions,
         }));
         this.setData({
           swiperList,
@@ -77,59 +78,46 @@ Page({
     }
   },
 
-  async loadCardList() {
-    if (this.data.loading || this.data.noMore) return;
+  // async loadCardList() {
+  //   if (this.data.loading || this.data.noMore) return;
 
-    this.setData({ loading: true });
-    const app = getApp<any>();
+  //   this.setData({ loading: true });
+  //   const app = getApp<any>();
 
-    try {
-      const res = await app.getContentList({
-        page: this.data.page,
-        pageSize: this.data.pageSize,
-      });
+  //   try {
+  //     const res = await app.getContentList({
+  //       page: this.data.page,
+  //       pageSize: this.data.pageSize,
+  //     });
 
-      if (res.success && res.data) {
-        const newList = res.data.list || res.data;
-        const isFirstPage = this.data.page === 1;
-        // this.setData({
-        //   cardList: isFirstPage ? newList : [...this.data.cardList, ...newList],
-        //   noMore: res.data.list ? newList.length < this.data.pageSize : false,
-        // });
-      } else {
-        this.setData({ noMore: true });
-      }
-    } catch (err) {
-      console.error("加载卡片列表失败", err);
-    } finally {
-      this.setData({ loading: false });
-    }
-  },
+  //     if (res.success && res.data) {
+  //       const newList = res.data.list || res.data;
+  //       const isFirstPage = this.data.page === 1;
+  //       // this.setData({
+  //       //   cardList: isFirstPage ? newList : [...this.data.cardList, ...newList],
+  //       //   noMore: res.data.list ? newList.length < this.data.pageSize : false,
+  //       // });
+  //     } else {
+  //       this.setData({ noMore: true });
+  //     }
+  //   } catch (err) {
+  //     console.error("加载卡片列表失败", err);
+  //   } finally {
+  //     this.setData({ loading: false });
+  //   }
+  // },
 
-  onReachBottom() {
-    this.setData({ page: this.data.page + 1 });
-    this.loadCardList();
-  },
+  // onReachBottom() {
+  //   this.setData({ page: this.data.page + 1 });
+  //   this.loadCardList();
+  // },
 
-  onPullDownRefresh() {
-    this.setData({ page: 1, noMore: false });
-    Promise.all([this.loadSwiperData(), this.loadCardList()]).finally(() => {
-      wx.stopPullDownRefresh();
-    });
-  },
-
-  onUploadTap() {
-    wx.navigateTo({ url: "/pages/post/post" });
-  },
-
-  onBrowseTap() {
-    wx.showToast({ title: "精选内容", icon: "none" });
-  },
-
-  onCardTap(e: any) {
-    const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
-  },
+  // onPullDownRefresh() {
+  //   this.setData({ page: 1, noMore: false });
+  //   Promise.all([this.loadSwiperData(), this.loadCardList()]).finally(() => {
+  //     wx.stopPullDownRefresh();
+  //   });
+  // },
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
@@ -142,7 +130,7 @@ Page({
     if (value === "featured") {
       wx.navigateTo({ url: "/pages/featured/featured" });
     } else if (value === "upload") {
-      wx.navigateTo({ url: "/pages/post/post" });
+      wx.navigateTo({ url: "/pages/post/post?mode=edit" });
     } else if (value === "profile") {
       wx.navigateTo({ url: "/pages/profile/profile" });
     }

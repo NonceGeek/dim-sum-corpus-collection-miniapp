@@ -1,25 +1,40 @@
 <view class="page theme-{{currentTheme}}">
   <!-- 无消息时 -->
-  <t-empty wx:if="{{messages.length === 0}}" icon="chat" description="暂无消息" />
+  <view
+    wx:if="{{messages.length === 0}}"
+    class="empty-status"
+  >
+    <t-empty
+      icon="chat"
+      description="暂无消息"
+    />
+  </view>
 
   <!-- 消息列表 -->
   <view wx:else class="message-list">
-    <view
-      wx:for="{{messages}}"
-      wx:key="id"
-      class="message-card {{item.read ? 'read' : 'unread'}}"
-      bind:tap="onMessageTap"
-      data-id="{{item.id}}"
-    >
+    <view wx:for="{{messages}}" wx:key="id" class="message-card {{item.read ? 'read' : 'unread'}}"
+      bind:tap="onMessageTap" data-id="{{item.id}}" data-workId="{{item.workId}}">
       <view class="card-header">
-        <view class="card-icon">{{item.icon}}</view>
+        <t-icon name="{{icon}}" size="48rpx"/>
         <view class="card-title-row">
           <text class="card-title">{{item.title}}</text>
-          <view wx:if="{{!item.read}}" class="unread-dot" />
+          <view wx:if="{{!item.isRead}}" class="unread-dot" />
         </view>
       </view>
       <view class="card-content">{{item.content}}</view>
-      <view class="card-time">{{item.time}}</view>
+      <view class="card-time">{{item.date}}</view>
+    </view>
+    <view class="list-footer">
+
+      <view wx:if="{{loading}}" class="footer-text">
+        加载中...
+      </view>
+
+      <view wx:elif="{{noMore}}" class="footer-text">
+        没有更多消息了
+      </view>
+
     </view>
   </view>
+
 </view>

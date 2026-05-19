@@ -20,13 +20,13 @@
   <!-- 赛道卡片轮播 -->
   <swiper class="card-swiper" current="{{currentIndex}}" bindchange="onContentSwiperChange" indicator-dots="{{false}}"
     autoplay="{{false}}" circular="{{true}}">
-    <block wx:for="{{tracks}}" wx:key="index" wx:for-item="track">
+    <block wx:for="{{topTracks}}" wx:key="index" wx:for-item="track">
       <swiper-item>
         <view class="main-card">
           <view class="card-header">
             <view>
               <view class="card-title">{{track.title}}</view>
-              <view class="card-desc">{{track.desc}}</view>
+              <view class="card-desc">{{track.description}}</view>
             </view>
             <!-- <view class="card-en" bind:tap="onShowDetails" data-id="{{item.id}}">详情</view> -->
           </view>
@@ -34,16 +34,16 @@
           <!-- 视频列表 -->
           <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
             <view class="video-list">
-              <view class="video-item" wx:for="{{track.videoList}}" wx:key="idx" wx:for-item="item">
+              <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
                 <view class="video-cover-wrapper">
-                  <image class="video-cover" src="{{item.cover}}" mode="aspectFill" />
-                  <view class="play-icon">
+                  <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+                  <view class="play-icon" wx:if="{{item.isVideo}}">
                     <t-icon name="play-circle-filled" size="48rpx" color="#fff" />
                   </view>
                 </view>
                 <view class="author-row">
-                  <image class="avatar" src="{{item.avatar}}" mode="aspectFill" />
-                  <text class="author-name">{{item.author}}</text>
+                  <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
+                  <text class="author-name">{{item.author.name}}</text>
                 </view>
               </view>
             </view>
@@ -51,10 +51,11 @@
 
           <!-- 按钮 -->
           <view class="btn-row">
-            <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{item.id}}">
+            <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}">
               更多参赛作品
             </t-button>
-            <t-button theme="primary" shape="round" size="large" class="post-btn" bind:tap="onPost" data-id="{{item.id}}">
+            <t-button theme="primary" shape="round" size="large" class="post-btn" bind:tap="onPost"
+              data-id="{{track.id}}">
               投稿此活动
             </t-button>
           </view>
@@ -69,22 +70,14 @@
   <!-- 底部tab -->
   <view class="tab-container">
     <view class="tab-list">
-      <view
-        wx:for="{{visibleTabs}}"
-        wx:key="_originalIndex"
-        wx:for-item="item"
-        class="tab-item {{item._position === 'current' ? 'active' : ''}}"
-        bindtap="onTabTap"
-        data-position="{{item._position}}"
-      >
+      <view wx:for="{{visibleTabs}}" wx:key="_originalIndex" wx:for-item="item"
+        class="tab-item {{item._position === 'current' ? 'active' : ''}}" bindtap="onTabTap"
+        data-position="{{item._position}}">
         <view class="tab-title">
           {{item.title}}
         </view>
-        <view
-          class="tab-sub"
-          wx:if="{{item._position === 'current'}}"
-        >
-          {{item.sub}}
+        <view class="tab-sub" wx:if="{{item._position === 'current'}}">
+          {{item.submissionCount}}个作品已参赛
         </view>
       </view>
     </view>
@@ -101,51 +94,44 @@
     </t-button>
   </view>
 
-  <t-popup
-    visible="{{allTracksPopupVisible}}"
-    placement="bottom"
-    t-class="tracks-popup-host"
-    bind:visible-change="onAllTracksPopupChange"
-  >
+  <t-popup visible="{{allTracksPopupVisible}}" placement="bottom" t-class="tracks-popup-host"
+    bind:visible-change="onAllTracksPopupChange">
     <view class="tracks-popup theme-{{currentTheme}}">
       <view class="tracks-popup-handle"></view>
 
       <scroll-view class="tracks-popup-list" scroll-y>
-        <view
-          wx:for="{{tracks}}"
-          wx:key="id"
-          wx:for-item="track"
-          class="tracks-popup-card"
-        >
+        <view wx:for="{{tracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
           <view class="tracks-popup-card-main">
             <view class="tracks-popup-card-header">
-              <view class="tracks-popup-card-title">{{track.title}} {{track.enTitle}}</view>
+              <view class="tracks-popup-card-title">{{track.title}}</view>
               <view class="tracks-popup-more" bind:tap="onMorePosts" data-id="{{track.id}}">
                 <text>更多作品</text>
                 <t-icon name="chevron-right" size="32rpx" color="var(--text-muted)" />
               </view>
             </view>
-            <view class="tracks-popup-card-desc">{{track.desc}}</view>
+            <view class="tracks-popup-card-desc">{{track.description}}</view>
 
             <view class="tracks-popup-video-list">
-              <view class="tracks-popup-video-item" wx:for="{{track.videoList}}" wx:key="index" wx:for-item="video">
+              <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
                 <view class="tracks-popup-cover-wrap">
-                  <image class="tracks-popup-cover" src="{{video.cover}}" mode="aspectFill" />
-                  <view class="tracks-popup-play">
+                  <image class="tracks-popup-cover" src="{{video.coverUrl}}" mode="aspectFill" />
+                  <view class="tracks-popup-play" wx:if="{{item.isVideo}}">
                     <t-icon name="play-circle-filled" size="36rpx" color="#fff" />
                   </view>
                 </view>
                 <view class="tracks-popup-author">
-                  <image class="tracks-popup-avatar" src="{{video.avatar}}" mode="aspectFill" />
-                  <text class="tracks-popup-author-name">{{video.author}}</text>
+                  <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
+                  <text class="author-name">{{item.author.name}}</text>
                 </view>
               </view>
             </view>
           </view>
 
           <view class="tracks-popup-card-footer">
+            <!-- TODO -->
             <view class="tracks-popup-rule">投稿作品需为视频，时长少于30秒</view>
-            <view class="tracks-popup-status {{track.status === 'active' ? 'active' : ''}}">{{track.status === "active" ? "正在进行中":"投稿已截止"}}</view>
+            <view class="tracks-popup-status {{track.status === 'active' ? 'active' : ''}}">
+              {{track.status === "active" ? "正在进行中":"投稿已截止"}}</view>
           </view>
         </view>
       </scroll-view>

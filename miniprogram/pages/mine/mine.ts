@@ -66,49 +66,79 @@ interface IWork {
 Page({
   data: {
     currentTheme: "light",
+
     filterExpanded: false,
-    activeTrack: "discovery",
-    tracks: [] as { id: string; title: string }[],
-    works: [] as IWork[],
-    visibleWorks: [] as any[],
-    status: STATUS,
+
+    activeTrack: "all",
     activeStatus: "all",
+
+    tracks: [],
+
+    works: [],
+    visibleWorks: [],
+
     page: 1,
-    pageSize: 10,
+
     total: 0,
-    username: "",
-    avatar: "",
+
+    loading: false,
+    noMore: false,
   },
 
   async onLoad() {
     this.syncTheme();
-    this.updateVisibleWorks();
     await this.loadOwnTracks();
     await this.loadOwnWorks();
   },
   async loadOwnWorks() {
+    if (this.data.loading || this.data.noMore) {
+      return;
+    }
+
+    this.setData({
+      loading: true,
+    });
+
     const app = getApp<any>();
+
     const { name, avatar } =
       wx.getStorageSync("userInfo") || app?.globalData?.userInfo || {};
+
     try {
-      const res = await request("/submissions/mine");
-      const { items, pagination } = res;
+      const { page, works: oldWorks } = this.data;
+
+      const res = await request(`/submissions/mine?page=${page}&pageSize=10`);
+
+      const { items = [], pagination } = res;
+
       const works = items.map((item: IWork) => ({
         ...item,
         avatar,
         author: name,
       }));
+
+      const noMore = items.length < 10;
+
       this.setData({
-        works,
-        total: pagination.total,
-        page: pagination.page,
+        works: page === 1 ? works : [...oldWorks, ...works],
+
+        visibleWorks: page === 1 ? works : [...oldWorks, ...works],
+
+        total: pagination.total || 0,
+
+        noMore,
       });
     } catch (err: any) {
       console.log("获取我的投稿数据出错：", err);
+
       wx.showModal({
-        title: "获取我的投稿数据出错",
-        content: err.error,
+        title: "获取失败",
+        content: err.error || "请稍后再试",
         showCancel: false,
+      });
+    } finally {
+      this.setData({
+        loading: false,
       });
     }
   },
@@ -140,22 +170,6 @@ Page({
     this.setData({ currentTheme });
   },
 
-  updateVisibleWorks() {
-    const { activeTrack, activeStatus, works } = this.data;
-    let visibleWorks =
-      activeTrack === "all"
-        ? [...works]
-        : works.filter((item) => item.id === activeTrack);
-
-    if (activeStatus !== "all") {
-      visibleWorks = visibleWorks.filter(
-        (item) => item.status === activeStatus,
-      );
-    }
-
-    this.setData({ visibleWorks });
-  },
-
   onBack() {
     wx.navigateBack();
   },
@@ -165,7 +179,7 @@ Page({
   },
 
   onJoin() {
-    wx.navigateTo({ url: "/pages/post/post" });
+    wx.navigateTo({ url: "/pages/post/post?mode=view" });
   },
 
   onToggleFilters() {
@@ -181,8 +195,15 @@ Page({
   },
 
   onSubmit() {
-    this.updateVisibleWorks();
-    this.setData({ filterExpanded: false });
+    this.setData({
+      page: 1,
+      noMore: false,
+      works: [],
+      visibleWorks: [],
+      filterExpanded: false,
+    });
+
+    this.loadOwnWorks();
   },
   onWaterfallTap(e: any) {
     const { id } = e.detail;
@@ -192,6 +213,29 @@ Page({
   onNavigateToActivity() {
     wx.navigateTo({
       url: "/pages/featured/featured",
+    });
+  },
+  onReachBottom() {
+    if (this.data.loading || this.data.noMore) {
+      return;
+    }
+
+    this.setData({
+      page: this.data.page + 1,
+    });
+
+    this.loadOwnWorks();
+  },
+  onPullDownRefresh() {
+    this.setData({
+      page: 1,
+      noMore: false,
+      works: [],
+      visibleWorks: [],
+    });
+
+    this.loadOwnWorks().finally(() => {
+      wx.stopPullDownRefresh();
     });
   },
 });
