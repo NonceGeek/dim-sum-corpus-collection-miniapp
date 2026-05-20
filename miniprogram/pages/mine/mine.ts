@@ -15,60 +15,12 @@ const STATUS = [
   },
 ];
 
-interface IWork {
-  id: string;
-  title: string;
-  submissionType: string;
-  reviewStatus: string;
-  reviewReason: string;
-  activity: {
-    id: string;
-    title: string;
-  };
-  createdAt: string;
-}
-// const WORKS = [
-//   {
-//     id: 1,
-//     track: "speech",
-//     status: "pending",
-//     trackLabel: "粤语歇后语大赛",
-//     rank: 5,
-//     title: "123456",
-//     author: "用户1",
-//     cover: "https://tdesign.gtimg.com/mobile/demos/example1.png",
-//     avatar: "https://tdesign.gtimg.com/mobile/demos/avatar1.png",
-//   },
-//   {
-//     id: 2,
-//     track: "poetry",
-//     status: "gift",
-//     trackLabel: "粤语诗歌朗诵赛",
-//     rank: 12,
-//     title: "4567",
-//     author: "用户1",
-//     cover: "https://tdesign.gtimg.com/mobile/demos/example2.png",
-//     avatar: "https://tdesign.gtimg.com/mobile/demos/avatar1.png",
-//   },
-//   {
-//     id: 3,
-//     track: "discovery",
-//     status: "pending",
-//     trackLabel: "粤语地名解说",
-//     rank: 17,
-//     title: "89900",
-//     author: "用户1",
-//     cover: "https://tdesign.gtimg.com/mobile/demos/example3.png",
-//     avatar: "https://tdesign.gtimg.com/mobile/demos/avatar1.png",
-//   },
-// ];
-
 Page({
   data: {
     currentTheme: "light",
 
     filterExpanded: false,
-
+    status: STATUS,
     activeTrack: "all",
     activeStatus: "all",
 
@@ -95,27 +47,19 @@ Page({
       return;
     }
 
+    wx.showLoading({ title: "加载中..." });
     this.setData({
       loading: true,
     });
-
-    const app = getApp<any>();
-
-    const { name, avatar } =
-      wx.getStorageSync("userInfo") || app?.globalData?.userInfo || {};
 
     try {
       const { page, works: oldWorks } = this.data;
 
       const res = await request(`/submissions/mine?page=${page}&pageSize=10`);
-
+      wx.hideLoading();
       const { items = [], pagination } = res;
 
-      const works = items.map((item: IWork) => ({
-        ...item,
-        avatar,
-        author: name,
-      }));
+      const works = items;
 
       const noMore = items.length < 10;
 
@@ -129,6 +73,7 @@ Page({
         noMore,
       });
     } catch (err: any) {
+      wx.hideLoading();
       console.log("获取我的投稿数据出错：", err);
 
       wx.showModal({
@@ -137,6 +82,7 @@ Page({
         showCancel: false,
       });
     } finally {
+      wx.hideLoading();
       this.setData({
         loading: false,
       });
@@ -144,13 +90,25 @@ Page({
   },
 
   async loadOwnTracks() {
+    wx.showLoading({ title: "加载中..." });
     try {
       const res = await request("/profile/activities");
+      wx.hideLoading();
       const { items } = res;
+      const mapItems = items.map((item) => ({
+        id: item.id,
+        title: item.title,
+      }));
+
       this.setData({
-        tracks: items,
+        tracks: [
+          { id: "all", title: "全部" },
+          ...mapItems,
+          { id: "other", title: "其他" },
+        ] as any,
       });
     } catch (err: any) {
+      wx.hideLoading();
       console.log("获取我的参赛活动数据出错：", err);
       wx.showModal({
         title: "获取我的参赛活动数据出错",
@@ -207,7 +165,7 @@ Page({
   },
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
   onNavigateToActivity() {

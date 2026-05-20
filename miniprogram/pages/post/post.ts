@@ -4,7 +4,7 @@ import { formatDate } from "../../utils/date";
 // pages/upload/upload.ts
 Page({
   data: {
-    mode: "edit",
+    mode: "",
     currentTheme: "light",
     post: {
       id: "sub_001",
@@ -100,12 +100,13 @@ Page({
 
   async onLoad(options) {
     const { tag, id, mode } = options;
-    this.setData({
-      mode: mode,
-    });
+    this.syncTheme();
+
     tag && (await this.loadTrack(tag));
     id && (await this.loadPost(id));
-    this.syncTheme();
+    this.setData({
+      mode: mode || "edit",
+    });
     this.recorderManager = wx.getRecorderManager();
     this.handleRecordStop = this.handleRecordStop.bind(this);
     this.recorderManager.onStop(this.handleRecordStop);
@@ -601,48 +602,48 @@ Page({
         : []),
     ];
 
-    // precheck
-    const precheck = await request("/submissions/precheck", {
+    // TODO: precheck
+    // const precheck = await request("/submissions/precheck", {
+    //   method: "POST",
+    //   data: {
+    //     title: publishData.title,
+    //     intro: publishData.content,
+    //     images: publishData.images,
+    //   },
+    // });
+    // if (precheck.verdict === "pass") {
+    //   console.log("发布内容：", publishData);
+
+    const submission = await request("/submissions", {
       method: "POST",
       data: {
-        title: publishData.title,
-        intro: publishData.content,
-        images: publishData.images,
+        ...(this.data.track ? { activityId: this.data.track.id } : {}),
+        submissionType: selectedType,
+        title: title,
+        intro: content,
+        tags: selectedTopics,
+        media: mediaList,
+        precheckResult: {
+          verdict: "pass",
+        },
       },
     });
-    if (precheck.verdict === "pass") {
-      console.log("发布内容：", publishData);
-
-      const submission = await request("/submissions", {
-        method: "POST",
-        data: {
-          ...(this.data.track ? { activityId: this.data.track.id } : {}),
-          submissionType: selectedType,
-          title: title,
-          intro: content,
-          tags: selectedTopics,
-          media: mediaList,
-          precheckResult: {
-            verdict: "pass",
-          },
-        },
-      });
-      wx.showModal({
-        title: "提示",
-        content: submission.message,
-        showCancel: false,
-      });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
-    } else {
-      // TODO precheck检查出错
-      wx.showModal({
-        title: "提示",
-        content: "内容存在不安全信息，请处理",
-        showCancel: false,
-      });
-    }
+    wx.showModal({
+      title: "提示",
+      content: submission.message,
+      showCancel: false,
+    });
+    setTimeout(() => {
+      wx.navigateBack();
+    }, 1500);
+    // } else {
+    //   // TODO precheck检查出错
+    //   wx.showModal({
+    //     title: "提示",
+    //     content: "内容存在不安全信息，请处理",
+    //     showCancel: false,
+    //   });
+    // }
   },
 
   // 切换录音弹窗
@@ -1001,10 +1002,15 @@ Page({
   // 查看模式：预览图片
   onPreviewImage(e: any) {
     const url = e.currentTarget.dataset.url;
-    const urls = (this.data.post.mediaFiles || [])
-      .filter((f: any) => f.type !== "video")
+
+    const urls = (this.data.imageList || [])
+      .filter((f: any) => f.type === "image")
       .map((f: any) => f.url);
-    wx.previewImage({ current: url, urls });
+
+    wx.previewImage({
+      current: url,
+      urls,
+    });
   },
 
   // 查看模式：显示操作弹窗

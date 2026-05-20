@@ -1,5 +1,5 @@
 <view class="page theme-{{currentTheme}}">
-  <block wx:if="{{works.length > 0}}">
+  <block wx:if="{{works.length > 0 || loading}}">
     <view class="hero">
       <view class="bubble bubble-1">你都几敢讲喔</view>
       <view class="bubble bubble-2">全场最有声气嘅人</view>
@@ -36,7 +36,7 @@
       <view wx:else class="track-grid">
         <view wx:for="{{tracks}}" wx:key="id" class="track-grid-item {{activeTrack === item.id ? 'active' : ''}}"
           bind:tap="onTrackTap" data-value="{{item.id}}">
-          {{item.label}}
+          {{item.title}}
         </view>
       </view>
 

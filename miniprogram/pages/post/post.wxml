@@ -222,12 +222,12 @@
 
 
     <!-- 媒体轮播 -->
-    <view class="view-swiper-wrap" wx:if="{{post.media && post.media.length > 0}}">
-      <swiper class="view-swiper" indicator-dots="{{post.media.length > 1}}" indicator-color="rgba(255,255,255,0.5)"
+    <view class="view-swiper-wrap" wx:if="{{imageList && imageList.length > 0}}">
+      <swiper class="view-swiper" indicator-dots="{{imageList.length > 1}}" indicator-color="rgba(255,255,255,0.5)"
         indicator-active-color="#fff">
-        <swiper-item wx:for="{{post.media}}" wx:key="index">
+        <swiper-item wx:for="{{imageList}}" wx:key="index">
           <block wx:if="{{item.type === 'video'}}">
-            <video class="view-media" src="{{item}}" controls show-fullscreen-btn object-fit="cover" />
+            <video class="view-media" src="{{item.url}}" controls show-fullscreen-btn object-fit="cover" />
           </block>
           <block wx:if="{{item.type === 'image'}}">
             <image class="view-media" src="{{item.url}}" mode="aspectFill" bind:tap="onPreviewImage"

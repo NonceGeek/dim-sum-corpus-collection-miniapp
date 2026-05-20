@@ -153,12 +153,12 @@ Page({
   },
   onCardTap(e: any) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
+    wx.navigateTo({ url: `/pages/post/post?id=${id}?mode=view` });
   },
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    wx.navigateTo({ url: `/pages/detail/detail?id=${id}` });
+    wx.navigateTo({ url: `/pages/post/post?id=${id}?mode=view` });
   },
 
   onMyWorks() {

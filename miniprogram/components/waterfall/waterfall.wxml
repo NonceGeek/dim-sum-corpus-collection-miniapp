@@ -13,13 +13,16 @@
             <t-icon name="play-circle-filled" size="42rpx" color="rgba(255,255,255,0.9)" />
           </view>
         </view>
+        <view class="card-title">
+          {{item.title}}
+        </view>
         <view class="card-footer">
           <view class="author">
-            <block wx:if="{{item.avatar}}">
-              <image class="footer-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <block wx:if="{{item.author.avatar || item.avatar}}">
+              <image class="footer-avatar" src="{{item.author.avatar || item.avatar}}" mode="aspectFill" />
             </block>
-            <view wx:else class="footer-avatar-placeholder">{{item.author[0]}}</view>
-            <text class="card-username">{{item.title || item.author}}</text>
+            <view wx:else class="footer-avatar-placeholder">{{item.author.name[0]}}</view>
+            <text class="card-username">{{item.author.name}}</text>
           </view>
           <view class="hot-wrap">
             <image src="/public/image/flame.svg" class="hot-icon" />
@@ -44,13 +47,16 @@
             <t-icon name="play-circle-filled" size="42rpx" color="rgba(255,255,255,0.9)" />
           </view>
         </view>
-       <view class="card-footer">
+        <view class="card-title">
+          {{item.title}}
+        </view>
+        <view class="card-footer">
           <view class="author">
-            <block wx:if="{{item.avatar}}">
-              <image class="footer-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <block wx:if="{{item.author.avatar || item.avatar}}">
+              <image class="footer-avatar" src="{{item.author.avatar || item.avatar}}" mode="aspectFill" />
             </block>
-            <view wx:else class="footer-avatar-placeholder">{{item.author[0]}}</view>
-            <text class="card-username">{{item.title || item.author}}</text>
+            <view wx:else class="footer-avatar-placeholder">{{item.author.name[0]}}</view>
+            <text class="card-username">{{item.author.name}}</text>
           </view>
           <view class="hot-wrap">
             <image src="/public/image/flame.svg" class="hot-icon" />
