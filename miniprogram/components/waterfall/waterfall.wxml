@@ -4,8 +4,21 @@
       <view wx:if="{{index % 2 === 0}}" class="waterfall-item" bind:tap="onItemTap" data-index="{{index}}"
         data-id="{{item.id}}">
         <view class="cover-wrap">
-          <view wx:if="{{showStatus}}" class="work-status status-{{item.reviewStatus}}">
-            {{item.reviewStatus === 'pending_review' ? '审核中' : '中奖了'}}
+          <view
+            wx:if="{{showStatus && ['pending_review','ai_reviewing','review_needed','rejected'].includes(item.reviewStatus)}}"
+            class="work-status status-{{item.reviewStatus}}">
+            <t-icon name="verified" size="42rpx" color="#fff" />
+            {{['pending_review','ai_reviewing','review_needed'].includes(item.reviewStatus)? '审核中' : '审核失败'}}
+          </view>
+          <view wx:if="{{showStatus && ['awarded','claimed','expired'].includes(item.awardStatus)}}"
+            class="work-status status-{{item.awardStatus}}">
+            <t-icon name="gift" size="42rpx" color="#fff" />
+            {{item.awardStatus === 'awarded'? '已获奖' : item.awardStatus === 'claimed'?'已兑奖':'已过期'}}
+          </view>
+          <view wx:if="{{showFeatured && item.isFeatured}}"
+            class="work-status status-pending_review">
+            <t-icon name="star" size="42rpx" color="#fff" />
+            精选
           </view>
           <image src="{{item.imageUrl || item.coverUrl}}" mode="{{showStatus ? 'aspectFill' : 'widthFix'}}"
             class="card-image" />

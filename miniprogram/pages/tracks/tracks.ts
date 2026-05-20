@@ -1,3 +1,4 @@
+import { formatDate } from "../../utils/date";
 import request from "../../utils/http";
 
 const CARDLIST = [
@@ -55,7 +56,8 @@ Page({
   async loadTrack() {
     try {
       const track = await request(`/activities/${this.data.trackId}`);
-      // TODO 开始结束时间格式化
+      track.startsAt = formatDate(track.startsAt, "YYYY-MM-DD HH:mm:ss");
+      track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD HH:mm:ss");
       this.setData({ track });
       await this.loadCardList();
     } catch (err) {
@@ -124,7 +126,7 @@ Page({
       let url = `/activities/${this.data.trackId}/works?page=${page}&pageSize=10`;
 
       if (currentTrackType !== "all") {
-        url += `&type=${currentTrackType}`;
+        url += `&submissionType=${currentTrackType}`;
       }
 
       const { items = [], pagination } = await request(url);

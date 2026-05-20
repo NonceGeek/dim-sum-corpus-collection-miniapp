@@ -72,12 +72,21 @@
   -webkit-backdrop-filter: blur(10rpx);
 }
 
-.work-status.status-pending_review {
-  background: rgba(255, 159, 10, 0.9);
+.work-status.status-pending_review,
+.work-status.status-ai_reviewing,
+.work-status.status-review_needed,
+.work-status.status-expired {
+  background: var(--warning);
 }
 
-.work-status.status-gift {
-  background: rgba(244, 36, 89, 0.9);
+.work-status.rejected,
+.work-status.awarded {
+  background: var(--danger);
+}
+
+.work-status.rejected,
+.work-status.claimed {
+  background: var(--success);
 }
 
 .card-footer {

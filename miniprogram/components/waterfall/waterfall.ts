@@ -12,6 +12,7 @@ Component({
       type: Boolean,
       value: false,
     },
+    showFeatured: { type: Boolean, value: false },
   },
 
   methods: {

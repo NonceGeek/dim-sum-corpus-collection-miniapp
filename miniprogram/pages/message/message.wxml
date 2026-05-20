@@ -1,13 +1,7 @@
 <view class="page theme-{{currentTheme}}">
   <!-- 无消息时 -->
-  <view
-    wx:if="{{messages.length === 0}}"
-    class="empty-status"
-  >
-    <t-empty
-      icon="chat"
-      description="暂无消息"
-    />
+  <view wx:if="{{messages.length === 0}}" class="empty-status">
+    <t-empty icon="chat" description="暂无消息" />
   </view>
 
   <!-- 消息列表 -->
@@ -15,7 +9,7 @@
     <view wx:for="{{messages}}" wx:key="id" class="message-card {{item.read ? 'read' : 'unread'}}"
       bind:tap="onMessageTap" data-id="{{item.id}}" data-workId="{{item.workId}}">
       <view class="card-header">
-        <t-icon name="{{icon}}" size="48rpx"/>
+        <t-icon name="{{icon}}" size="48rpx" />
         <view class="card-title-row">
           <text class="card-title">{{item.title}}</text>
           <view wx:if="{{!item.isRead}}" class="unread-dot" />
@@ -33,6 +27,13 @@
       <view wx:elif="{{noMore}}" class="footer-text">
         没有更多消息了
       </view>
+
+    </view>
+
+    <view class="post-actions">
+      <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onReadAll">
+        将所有消息标记为已读
+      </t-button>
 
     </view>
   </view>

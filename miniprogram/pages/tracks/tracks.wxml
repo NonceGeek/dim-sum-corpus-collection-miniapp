@@ -5,7 +5,7 @@
     <button class="top-btn" open-type="share">
       <text class="top-btn-text">分享</text>
     </button>
-    <view class="top-btn" bind:tap="onRule">
+    <view class="top-btn" bind:tap="onRule" wx:if="{{track.timeStatus === 'ongoing'}}">
       <text class="top-btn-text">规则</text>
     </view>
   </view>
@@ -24,7 +24,7 @@
       </view>
 
       <view class="activity-time ice-subtitle">
-        {{track.from}} - {{track.to}}，期待您的参与
+        {{track.startsAt}} - {{track.endsAt}}，期待您的参与
       </view>
 
     </view>
@@ -46,7 +46,7 @@
 
   <!-- 瀑布流卡片列表 -->
   <view class="card-list">
-    <waterfall items="{{cardList}}" bind:itemtap="onWaterfallTap" />
+    <waterfall items="{{cardList}}" bind:itemtap="onWaterfallTap" showFeatured/>
   </view>
 
   <!-- 加载状态 -->
@@ -62,7 +62,7 @@
       我的参赛作品
     </t-button>
 
-    <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onPost">
+    <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onPost" wx:if="{{track.canSubmit}}">
       我也想参赛
     </t-button>
   </view>

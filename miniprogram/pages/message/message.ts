@@ -66,7 +66,7 @@ Page({
     try {
       const { page, pageSize, messages: oldMessages } = this.data;
 
-      const res = await request(`/message?page=${page}&pageSize=${pageSize}`);
+      const res = await request(`/messages?page=${page}&pageSize=${pageSize}`);
 
       const {
         items,
@@ -98,21 +98,41 @@ Page({
     this.setData({ currentTheme });
   },
 
-  onMessageTap(e: any) {
+  async onMessageTap(e: any) {
     const { id, workId } = e.currentTarget.dataset;
-    // TODO 后端请求标记为已读
-    const messages = this.data.messages.map((item: any) => {
-      if (item.id === id) {
-        return { ...item, read: true };
+
+    try {
+      const res = await request(`/messages/${id}/read`, {
+        method: "PATCH",
+      });
+      if (res.isRead && res.id === id) {
+        const messages = this.data.messages.map((item: any) => {
+          if (item.id === id) {
+            return { ...item, read: true };
+          }
+          return item;
+        });
+        if (workId) {
+          wx.navigateTo({
+            url: `/pages/post/post?id=${workId}?mode=view`,
+          });
+        }
+        this.setData({ messages });
+      } else {
+        wx.showModal({
+          title: "错误提示",
+          content: err.error + "，清稍后再试",
+          showCancel: false,
+        });
       }
-      return item;
-    });
-    if (workId) {
-      wx.navigateTo({
-        url: `/pages/post/post?id=${workId}?mode=view`,
+    } catch (err) {
+      console.log("消息已读接口报错：", err);
+      wx.showModal({
+        title: "错误提示",
+        content: err.error + "，清稍后再试",
+        showCancel: false,
       });
     }
-    this.setData({ messages });
   },
   onReachBottom() {
     if (this.data.loading || this.data.noMore) {
@@ -135,5 +155,28 @@ Page({
     this.loadMessages().finally(() => {
       wx.stopPullDownRefresh();
     });
+  },
+  async onReadAll() {
+    try {
+      const res = await request("/messages/read-all", {
+        method: "PATCH",
+      });
+      if (res.unreadNotificationCount === 0) {
+        wx.showToast({ title: "标记成功！", duration: 2000, icon: "none" });
+      } else {
+        wx.showModal({
+          title: "错误提示",
+          content: "标记失败，请稍后重试！",
+          showCancel: false,
+        });
+      }
+    } catch (err) {
+      console.log("将所有消息标记为已读出错：", err);
+      wx.showModal({
+        title: "错误提示",
+        content: err.error + "，请稍后重试",
+        showCancel: false,
+      });
+    }
   },
 });

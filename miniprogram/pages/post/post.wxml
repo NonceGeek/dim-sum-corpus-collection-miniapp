@@ -120,6 +120,11 @@
           <text class="topic-title">添加标签</text>
         </view>
         <view class="topic-list">
+          <block wx:for="{{track.tags}}" wx:key="index">
+            <view class="topic-tag">
+              <text class="topic-text">#{{item}}</text>
+            </view>
+          </block>
           <block wx:for="{{selectedTopics}}" wx:key="index">
             <view class="topic-tag">
               <text class="topic-text">#{{item}}</text>
@@ -275,8 +280,8 @@
 
     </view>
 
-    <!-- 底部操作栏 TODO:判断是否作者和当前登录人是否是一个人-->
-    <view class="view-footer">
+   
+    <view class="view-footer" wx:if="{{post.canEdit}}">
       <view class="view-footer-action" bind:tap="onShowPostActions">
         <t-icon name="edit" size="20" color="var(--text-secondary)" />
         <text class="view-footer-text">编辑</text>

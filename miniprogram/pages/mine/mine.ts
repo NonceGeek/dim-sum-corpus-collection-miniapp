@@ -7,11 +7,27 @@ const STATUS = [
   },
   {
     label: "审核中",
-    value: "pending_review",
+    value: "reviewStatus=pending_review",
   },
   {
-    label: "获奖",
-    value: "gift",
+    label: "已审核",
+    value: "reviewStatus=approved",
+  },
+  {
+    label: "审核失败",
+    value: "reviewStatus=rejected",
+  },
+  {
+    label: "已获奖",
+    value: "awardStatus=awarded",
+  },
+  {
+    label: "已领奖",
+    value: "awardStatus=claimed",
+  },
+  {
+    label: "领奖逾期",
+    value: "awardStatus=expired",
   },
 ];
 
@@ -53,9 +69,11 @@ Page({
     });
 
     try {
-      const { page, works: oldWorks } = this.data;
+      const { page, works: oldWorks, activeStatus, activeTrack } = this.data;
 
-      const res = await request(`/submissions/mine?page=${page}&pageSize=10`);
+      const res = await request(
+        `/submissions/mine?page=${page}&pageSize=10&${activeStatus === "all" ? "" : activeStatus}&activityId=${activeTrack === "all" ? "" : activeTrack}`,
+      );
       wx.hideLoading();
       const { items = [], pagination } = res;
 
@@ -134,10 +152,6 @@ Page({
 
   onMyWorks() {
     this.setData({ filterExpanded: false });
-  },
-
-  onJoin() {
-    wx.navigateTo({ url: "/pages/post/post?mode=view" });
   },
 
   onToggleFilters() {

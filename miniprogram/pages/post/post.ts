@@ -1,6 +1,5 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
-import { formatDate } from "../../utils/date";
 // pages/upload/upload.ts
 Page({
   data: {
@@ -124,6 +123,9 @@ Page({
       const track = await request(`/activities/${id}`);
       this.setData({
         track,
+        typeOptions: track.submissionTypes.map((t) => ({ label: t, value: t })),
+        selectedType:
+          track.submissionTypes.length === 1 ? track.submissionTypes : [],
       });
     } catch (err: any) {
       console.log("获取活动数据失败", err);
@@ -621,7 +623,7 @@ Page({
         submissionType: selectedType,
         title: title,
         intro: content,
-        tags: selectedTopics,
+        tags: [track.category, ...track.tags, ...selectedTopics],
         media: mediaList,
         precheckResult: {
           verdict: "pass",
@@ -1029,7 +1031,6 @@ Page({
     wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=edit` });
   },
 
-  // TODO：删除投稿
   onDeletePost() {
     this.setData({ postActionsVisible: false });
     wx.showModal({
