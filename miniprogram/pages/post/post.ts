@@ -1,5 +1,6 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
+import { formatDate } from "../../utils/date";
 // pages/upload/upload.ts
 Page({
   data: {
@@ -614,7 +615,7 @@ Page({
     //   },
     // });
     // if (precheck.verdict === "pass") {
-    //   console.log("发布内容：", publishData);
+    console.log("发布内容：", publishData);
 
     const submission = await request("/submissions", {
       method: "POST",

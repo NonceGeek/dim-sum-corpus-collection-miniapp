@@ -456,3 +456,11 @@
   border: 0;
   color: #fff;
 }
+
+.info {
+  display: flex;
+  height: 90vh;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}

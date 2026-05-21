@@ -1,106 +1,112 @@
 <view class="container theme-{{currentTheme}}">
 
-  <!-- 顶部Banner -->
-  <view class="top-banner">
-    <view class="banner-title">
-      全港唔同声气
-    </view>
+  <block wx:if="{{topTracks.length > 0}}">
+    <!-- 顶部Banner -->
+    <view class="top-banner">
+      <view class="banner-title">
+        全港唔同声气
+      </view>
 
-    <view class="banner-subtitle">
-      等你开咪
-    </view>
+      <view class="banner-subtitle">
+        等你开咪
+      </view>
 
-    <view class="banner-desc">
-      <view class="banner-desc-text {{descAnimClass}}">
-        {{descTexts[descIndex]}}
+      <view class="banner-desc">
+        <view class="banner-desc-text {{descAnimClass}}">
+          {{descTexts[descIndex]}}
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 赛道卡片轮播 -->
-  <swiper class="card-swiper" current="{{currentIndex}}" bindchange="onContentSwiperChange" indicator-dots="{{false}}"
-    autoplay="{{false}}" circular="{{true}}">
-    <block wx:for="{{topTracks}}" wx:key="index" wx:for-item="track">
-      <swiper-item>
-        <view class="main-card">
-          <view class="card-header">
-            <view>
-              <view class="card-title">{{track.title}}</view>
-              <view class="card-desc">{{track.description}}</view>
+    <!-- 赛道卡片轮播 -->
+    <swiper class="card-swiper" current="{{currentIndex}}" bindchange="onContentSwiperChange" indicator-dots="{{false}}"
+      autoplay="{{false}}" circular="{{true}}">
+      <block wx:for="{{topTracks}}" wx:key="index" wx:for-item="track">
+        <swiper-item>
+          <view class="main-card">
+            <view class="card-header">
+              <view>
+                <view class="card-title">{{track.title}}</view>
+                <view class="card-desc">{{track.description}}</view>
+              </view>
+              <!-- <view class="card-en" bind:tap="onShowDetails" data-id="{{item.id}}">详情</view> -->
             </view>
-            <!-- <view class="card-en" bind:tap="onShowDetails" data-id="{{item.id}}">详情</view> -->
-          </view>
 
-          <!-- 视频列表 -->
-          <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
-            <view class="video-list">
-              <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
-                <view class="video-cover-wrapper">
-                  <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
-                  <view class="play-icon" wx:if="{{item.isVideo}}">
-                    <t-icon name="play-circle-filled" size="48rpx" color="#fff" />
+            <!-- 视频列表 -->
+            <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
+              <view class="video-list">
+                <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
+                  <view class="video-cover-wrapper">
+                    <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+                    <view class="play-icon" wx:if="{{item.isVideo}}">
+                      <t-icon name="play-circle-filled" size="48rpx" color="#fff" />
+                    </view>
+                  </view>
+                  <view class="author-row">
+                    <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
+                    <text class="author-name">{{item.author.name}}</text>
                   </view>
                 </view>
-                <view class="author-row">
-                  <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
-                  <text class="author-name">{{item.author.name}}</text>
-                </view>
               </view>
+            </scroll-view>
+
+            <!-- 按钮 -->
+            <view class="btn-row">
+              <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}">
+                更多参赛作品
+              </t-button>
+              <t-button theme="primary" shape="round" size="large" class="post-btn" bind:tap="onPost"
+                data-id="{{track.id}}">
+                投稿此活动
+              </t-button>
             </view>
-          </scroll-view>
 
-          <!-- 按钮 -->
-          <view class="btn-row">
-            <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}">
-              更多参赛作品
-            </t-button>
-            <t-button theme="primary" shape="round" size="large" class="post-btn" bind:tap="onPost"
-              data-id="{{track.id}}">
-              投稿此活动
-            </t-button>
+            <!-- 底部小箭头 -->
+            <view class="arrow-bottom"></view>
           </view>
+        </swiper-item>
+      </block>
+    </swiper>
 
-          <!-- 底部小箭头 -->
-          <view class="arrow-bottom"></view>
-        </view>
-      </swiper-item>
-    </block>
-  </swiper>
-
-  <!-- 底部tab -->
-  <view class="tab-container">
-    <view class="tab-list">
-      <view wx:for="{{visibleTabs}}" wx:key="_originalIndex" wx:for-item="item"
-        class="tab-item {{item._position === 'current' ? 'active' : ''}}" bindtap="onTabTap"
-        data-position="{{item._position}}">
-        <view class="tab-title">
-          {{item.title}}
-        </view>
-        <view class="tab-sub" wx:if="{{item._position === 'current'}}">
-          {{item.submissionCount}}个作品已参赛
+    <!-- 底部tab -->
+    <view class="tab-container">
+      <view class="tab-list">
+        <view wx:for="{{visibleTabs}}" wx:key="_originalIndex" wx:for-item="item"
+          class="tab-item {{item._position === 'current' ? 'active' : ''}}" bindtap="onTabTap"
+          data-position="{{item._position}}">
+          <view class="tab-title">
+            {{item.title}}
+          </view>
+          <view class="tab-sub" wx:if="{{item._position === 'current'}}">
+            {{item.submissionCount}}个作品已参赛
+          </view>
         </view>
       </view>
     </view>
+
+    <!-- 底部功能按钮 -->
+    <view class="bottom-actions">
+      <t-button theme="default" shape="round" size="large" class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
+        我的参赛作品
+      </t-button>
+
+      <t-button theme="default" shape="round" size="large" class="bottom-btn" hover-class="none" bind:tap="onAllTracks">
+        查看全部活动
+      </t-button>
+    </view>
+  </block>
+  <block wx:else>
+  <view class="info">
+    <text>目前暂无活动</text>
   </view>
-
-  <!-- 底部功能按钮 -->
-  <view class="bottom-actions">
-    <t-button theme="default" shape="round" size="large" class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
-      我的参赛作品
-    </t-button>
-
-    <t-button theme="default" shape="round" size="large" class="bottom-btn" hover-class="none" bind:tap="onAllTracks">
-      查看全部活动
-    </t-button>
-  </view>
-
+  </block>
   <t-popup visible="{{allTracksPopupVisible}}" placement="bottom" t-class="tracks-popup-host"
     bind:visible-change="onAllTracksPopupChange">
     <view class="tracks-popup theme-{{currentTheme}}">
       <view class="tracks-popup-handle"></view>
 
       <scroll-view class="tracks-popup-list" scroll-y>
-        <view wx:for="{{tracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
+        <view wx:for="{{allTracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
           <view class="tracks-popup-card-main">
             <view class="tracks-popup-card-header">
               <view class="tracks-popup-card-title">{{track.title}}</view>
@@ -131,7 +137,8 @@
             <!-- TODO -->
             <view class="tracks-popup-rule">投稿作品需为视频，时长少于30秒</view>
             <view class="tracks-popup-status {{track.status === 'active' ? 'active' : ''}}">
-              {{track.status === "active" ? "正在进行中":"投稿已截止"}}</view>
+              {{track.status === "active" ? "正在进行中":"投稿已截止"}}
+            </view>
           </view>
         </view>
       </scroll-view>

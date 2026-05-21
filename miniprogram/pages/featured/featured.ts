@@ -11,9 +11,9 @@ interface ITrack {
   submissionCount: number;
 }
 
-function isVideo(url) {
-  return /\.(mp4|mov|m3u8|webm)$/i.test(url);
-}
+// function isVideo(url) {
+//   return /\.(mp4|mov|m3u8|webm)$/i.test(url);
+// }
 
 Page({
   data: {
@@ -26,65 +26,10 @@ Page({
     allTracksPopupVisible: false,
     visibleTabs: [] as any[],
     topTracks: [] as ITrack[],
-    tracks: [
-      {
-        id: 1,
-        title: "粤语诗歌朗诵赛",
-        enTitle: "Poetry",
-        sub: "2.3万个作品已参赛",
-        desc: "用粤语展示你的创作，分享你的情感。",
-        status: "active",
-        videoList: [
-          {
-            cover: "https://tdesign.gtimg.com/mobile/demos/example1.png",
-            avatar: "https://tdesign.gtimg.com/mobile/demos/avatar1.png",
-            author: "创作者A",
-          },
-          {
-            cover: "https://tdesign.gtimg.com/mobile/demos/example2.png",
-            avatar: "https://tdesign.gtimg.com/mobile/demos/avatar2.png",
-            author: "播客达人",
-          },
-          {
-            cover: "https://tdesign.gtimg.com/mobile/demos/example3.png",
-            avatar: "https://tdesign.gtimg.com/mobile/demos/avatar3.png",
-            author: "旅行者",
-          },
-        ],
-      },
-
-      {
-        id: 2,
-        title: "粤语地名解说",
-        enTitle: "Discovery",
-        sub: "1.6万个作品已参赛",
-        desc: "向外走，探索真实世界的广度。",
-        status: "active",
-        videoList: [
-          {
-            cover: "https://tdesign.gtimg.com/mobile/demos/example3.png",
-            avatar: "https://tdesign.gtimg.com/mobile/demos/avatar3.png",
-            author: "旅行者",
-          },
-        ],
-      },
-
-      {
-        id: 3,
-        title: "粤语歇后语大赛",
-        enTitle: "Speech",
-        sub: "8千个作品已参赛",
-        desc: "用粤语展示你的创作，分享你的情感。",
-        status: "unactive",
-        videoList: [
-          {
-            cover: "https://tdesign.gtimg.com/mobile/demos/example2.png",
-            avatar: "https://tdesign.gtimg.com/mobile/demos/avatar2.png",
-            author: "开发者",
-          },
-        ],
-      },
-    ],
+    allTracks: [] as ITrack[],
+    allTracksPage: 1,
+    allTracksLoading: false,
+    allTracksNoMore: false,
   },
 
   timer: null as any,
@@ -93,22 +38,17 @@ Page({
     this.syncTheme();
     this.startDescCycle();
     this.updateVisibleTabs();
-    await this.loadTracks();
+    await this.loadTopTracks();
   },
-  async loadTracks() {
+  async loadTopTracks() {
     try {
-      const { items } = await request("/activities?includeExpired=true");
+      const { items } = await request("/activities");
       const tracks = items.map((item) => {
         item.status =
           item.endsAt > new Date().toISOString() ? "active" : "unactive";
-        item.works = item.works.map((work) => ({
-          ...work,
-          isVideo: isVideo(work.coverUrl),
-        }));
         return item;
       });
       this.setData({
-        tracks,
         topTracks: tracks,
       });
     } catch (err) {
@@ -147,7 +87,7 @@ Page({
 
   onTabTap(e: any) {
     const position = e.currentTarget.dataset.position;
-    const trackCount = this.data.tracks.length;
+    const trackCount = this.data.topTracks.length;
     let newIndex = this.data.currentIndex;
 
     if (position === "prev") {
@@ -255,7 +195,14 @@ Page({
   },
 
   onAllTracks() {
-    this.setData({ allTracksPopupVisible: true });
+    this.setData({
+      allTracksPopupVisible: true,
+      allTracks: [],
+      allTracksPage: 1,
+      allTracksNoMore: false,
+    });
+
+    this.loadMoreTracks();
   },
 
   onAllTracksPopupChange(e: any) {
@@ -282,6 +229,54 @@ Page({
       url: `/pages/tracks/tracks?id=${itemId}`,
     });
   },
+  async loadMoreTracks() {
+    if (this.data.allTracksLoading || this.data.allTracksNoMore) {
+      return;
+    }
 
-  // TODO 下拉popup loadMore /activities?includeExpired=true
+    this.setData({
+      allTracksLoading: true,
+    });
+
+    try {
+      const { allTracksPage, allTracks } = this.data;
+
+      const res = await request(
+        `/activities?page=${allTracksPage}&pageSize=10&includeExpired=true`,
+      );
+
+      const items = (res.items || []).map((item: any) => ({
+        ...item,
+        status: item.endsAt > new Date().toISOString() ? "active" : "unactive",
+      }));
+
+      this.setData({
+        allTracks: allTracksPage === 1 ? items : [...allTracks, ...items],
+
+        allTracksNoMore: items.length < 10,
+      });
+    } catch (err: any) {
+      console.log("加载更多活动失败:", err);
+
+      wx.showToast({
+        title: err.error || "加载失败",
+        icon: "none",
+      });
+    } finally {
+      this.setData({
+        allTracksLoading: false,
+      });
+    }
+  },
+  onTracksScrollToLower() {
+    if (this.data.allTracksLoading || this.data.allTracksNoMore) {
+      return;
+    }
+
+    this.setData({
+      allTracksPage: this.data.allTracksPage + 1,
+    });
+
+    this.loadMoreTracks();
+  },
 });
