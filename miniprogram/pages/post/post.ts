@@ -6,28 +6,7 @@ Page({
   data: {
     mode: "",
     currentTheme: "light",
-    post: {
-      id: "sub_001",
-      title: "月光光",
-      intro: "粤语童谣经典作品",
-      submissionType: "诗歌",
-      tags: ["童谣", "荔湾"],
-      reviewStatus: "approved",
-      media: [
-        { type: "image", url: "/public/image/200.png" },
-        { type: "audio", url: "https://oss/a.mp3", durationSec: 58 },
-      ],
-      likeCount: 20,
-      commentCount: 3,
-      shareCount: 5,
-      viewCount: 123,
-      views: "123",
-      coverUrl: "https://oss/1.jpg",
-      imageUrls: ["https://oss/1.jpg"],
-      isAwarded: false,
-      awardStatus: "none",
-      createdAt: "2026-05-01T10:00:00.000Z",
-    } as any,
+    post: {} as any,
     track: {},
     postActionsVisible: false,
     selectedType: "",
@@ -123,10 +102,17 @@ Page({
     try {
       const track = await request(`/activities/${id}`);
       this.setData({
-        track,
-        typeOptions: track.submissionTypes.map((t) => ({ label: t, value: t })),
+        ...(track.submissionTypes.length
+          ? {
+              typeOptions: track.submissionTypes.map((t) => ({
+                label: t,
+                value: t,
+              })),
+            }
+          : {}),
         selectedType:
           track.submissionTypes.length === 1 ? track.submissionTypes : [],
+        selectedActivity: track,
       });
     } catch (err: any) {
       console.log("获取活动数据失败", err);
@@ -157,6 +143,13 @@ Page({
           (m) => m.type === "video" || m.type === "image",
         ),
         selectedTopics: res.tags,
+        selectedTopicMap: (res.tags || []).reduce(
+          (map: Record<string, boolean>, topic: string) => {
+            map[topic] = true;
+            return map;
+          },
+          {},
+        ),
         audioUrl: res.media.find((m) => m.type === "audio")?.url || "",
         audioDuration:
           res.media.find((m) => m.type === "audio")?.durationSec || 0,
@@ -232,16 +225,16 @@ Page({
     const maxDuration = (video.required && video.maxDurationSec) || 30;
     const mediaType =
       images.required && video.required
-        ? "mix"
+        ? ["image", "video"]
         : images.required
-          ? "image"
+          ? ["image"]
           : video.required
-            ? "video"
-            : "image";
+            ? ["video"]
+            : ["image"];
     const maxCount = 9 - this.data.imageList.length;
     wx.chooseMedia({
       count: maxCount,
-      mediaType: [mediaType],
+      mediaType: mediaType as ("image" | "video")[],
       sourceType: ["album", "camera"],
       sizeType: ["compressed"],
       maxDuration: maxDuration,
@@ -269,7 +262,23 @@ Page({
                 Authorization: `Bearer ${token}`,
               },
               success: (res) => {
-                const data = JSON.parse(res.data);
+                let data: any = {};
+
+                try {
+                  data = JSON.parse(res.data);
+                } catch (e) {
+                  reject(new Error("返回数据解析失败"));
+                  return;
+                }
+
+                // 关键
+                if (res.statusCode !== 200) {
+                  reject({
+                    statusCode: res.statusCode,
+                    message: data?.error || "上传失败",
+                  });
+                  return;
+                }
 
                 resolve({
                   ...file,
@@ -282,15 +291,18 @@ Page({
         });
         Promise.all(uploadTasks)
           .then((files) => {
+            console.log("files:", files);
             this.setData({
               imageList: [...this.data.imageList, ...files],
             });
             this.checkCanPublish();
           })
           .catch((err) => {
-            wx.showToast({
+            console.log("err:", err);
+            wx.showModal({
               title: "上传失败",
-              icon: "none",
+              content: err,
+              showCancel: false,
             });
             console.error(err);
           });
@@ -372,10 +384,16 @@ Page({
   // 选中活动
   onSelectActivity(e: any) {
     const { id, title } = e.currentTarget.dataset;
-    this.setData({
-      selectedActivity: { id, title },
-      activityPopupVisible: false,
-    });
+
+    this.setData(
+      {
+        selectedActivity: { id, title },
+        activityPopupVisible: false,
+      },
+      async () => {
+        await this.loadTrack(id);
+      },
+    );
     this.checkCanPublish();
   },
 
@@ -416,9 +434,38 @@ Page({
     this.setData({ filteredTopicList: filtered });
   },
 
+  normalizeTopic(topic: string) {
+    return (topic || "").trim().replace(/^#+/, "").trim();
+  },
+
+  // 手动添加话题
+  onAddCustomTopic() {
+    const topic = this.normalizeTopic(this.data.topicSearchKeyword);
+
+    if (!topic) {
+      wx.showToast({ title: "请输入标签", icon: "none" });
+      return;
+    }
+
+    if (this.data.selectedTopics.includes(topic)) {
+      wx.showToast({ title: "标签已添加", icon: "none" });
+      return;
+    }
+
+    this.setData({
+      selectedTopics: [...this.data.selectedTopics, topic],
+      selectedTopicMap: {
+        ...this.data.selectedTopicMap,
+        [topic]: true,
+      },
+      topicSearchKeyword: "",
+      filteredTopicList: this.data.availableTopics,
+    });
+  },
+
   // 选择话题
   onSelectTopic(e: any) {
-    const topic = e.currentTarget.dataset.topic;
+    const topic = this.normalizeTopic(e.currentTarget.dataset.topic);
 
     const selectedTopics = [...this.data.selectedTopics];
     const selectedTopicMap = {
@@ -445,10 +492,13 @@ Page({
   // 移除话题
   onRemoveTopic(e: any) {
     const index = e.currentTarget.dataset.index;
+    const topic = this.data.selectedTopics[index];
     const selectedTopics = this.data.selectedTopics.filter(
       (_, i) => i !== index,
     );
-    this.setData({ selectedTopics });
+    const selectedTopicMap = { ...this.data.selectedTopicMap };
+    delete selectedTopicMap[topic];
+    this.setData({ selectedTopics, selectedTopicMap });
   },
 
   // 检查是否可以发布
@@ -536,7 +586,7 @@ Page({
     if (!this.data.canPublish) return;
 
     const {
-      track,
+      selectedActivity,
       selectedType,
       title,
       content,
@@ -546,8 +596,10 @@ Page({
       audioDuration,
     } = this.data;
     const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
-      track;
-
+      selectedActivity;
+    console.log("images:", images);
+    console.log("audio:", audio);
+    console.log("video:", video);
     if (images.required) {
       const imageListForImage = imageList.filter(
         (image) => image.type === "image",
@@ -584,16 +636,10 @@ Page({
       }
     }
 
-    const publishData = {
-      type: selectedType,
-      title,
-      content,
-      images: imageList,
-      topics: selectedTopics,
-    };
-
     const mediaList = [
-      ...imageList,
+      ...(imageList.length
+        ? imageList.map((m, index) => ({ ...m, sortOrder: index }))
+        : []),
       ...(audioUrl
         ? [
             {
@@ -604,6 +650,22 @@ Page({
           ]
         : []),
     ];
+
+    const publishData = {
+      ...(selectedActivity ? { activityId: selectedActivity.id } : {}),
+      submissionType: selectedType,
+      title: title,
+      intro: content,
+      tags: [
+        // ...(this.data.selectedActivity?.category || []),
+        ...(selectedActivity?.tags || []),
+        ...selectedTopics,
+      ],
+      media: mediaList,
+      precheckResult: {
+        verdict: "pass",
+      },
+    };
 
     // TODO: precheck
     // const precheck = await request("/submissions/precheck", {
@@ -619,26 +681,25 @@ Page({
 
     const submission = await request("/submissions", {
       method: "POST",
-      data: {
-        ...(this.data.track ? { activityId: this.data.track.id } : {}),
-        submissionType: selectedType,
-        title: title,
-        intro: content,
-        tags: [track.category, ...track.tags, ...selectedTopics],
-        media: mediaList,
-        precheckResult: {
-          verdict: "pass",
-        },
-      },
+      data: publishData,
     });
-    wx.showModal({
-      title: "提示",
-      content: submission.message,
-      showCancel: false,
-    });
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 1500);
+    if (submission.error) {
+      wx.showModal({
+        title: "错误提示",
+        content: submission.error,
+        showCancel: false,
+      });
+      return;
+    } else {
+      wx.showModal({
+        title: "提示",
+        content: submission.message,
+        showCancel: false,
+      });
+      setTimeout(() => {
+        wx.navigateBack();
+      }, 1500);
+    }
     // } else {
     //   // TODO precheck检查出错
     //   wx.showModal({

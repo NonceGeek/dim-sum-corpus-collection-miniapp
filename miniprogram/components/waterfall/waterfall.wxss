@@ -70,6 +70,12 @@
   box-sizing: border-box;
   backdrop-filter: blur(10rpx);
   -webkit-backdrop-filter: blur(10rpx);
+  display: flex;
+  gap: 10rpx;
+}
+
+.icon-class {
+  padding-top: 2px !important;
 }
 
 .work-status.status-pending_review,

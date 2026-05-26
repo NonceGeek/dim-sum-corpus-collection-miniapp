@@ -14,7 +14,7 @@
   <view class="tracks-header">
 
     <!-- 背景 -->
-    <image class="header-bg" src="{{track.bannerUrl}}" mode="aspectFill" />
+    <image class="header-bg" src="{{track.bannerUrl || '/public/image/yue.webp'}}" mode="aspectFill" />
     <view class="header-overlay"></view>
     <!-- 内容 -->
     <view class="ice-text-layer ice-animate">

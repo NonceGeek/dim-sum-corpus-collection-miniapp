@@ -55,9 +55,11 @@ Page({
   },
   async loadTrack() {
     try {
+      wx.showLoading({ title: "加载中..." });
       const track = await request(`/activities/${this.data.trackId}`);
-      track.startsAt = formatDate(track.startsAt, "YYYY-MM-DD HH:mm:ss");
-      track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD HH:mm:ss");
+      wx.hideLoading();
+      track.startsAt = formatDate(track.startsAt, "YYYY-MM-DD");
+      track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD");
       this.setData({ track });
       await this.loadCardList();
     } catch (err) {
@@ -119,11 +121,12 @@ Page({
     this.setData({
       loading: true,
     });
-
+    wx.showLoading({ title: "加载中..." });
     try {
       const { currentTrackType, page, cardList: oldList } = this.data;
 
       let url = `/activities/${this.data.trackId}/works?page=${page}&pageSize=10`;
+      wx.hideLoading();
 
       if (currentTrackType !== "all") {
         url += `&submissionType=${currentTrackType}`;

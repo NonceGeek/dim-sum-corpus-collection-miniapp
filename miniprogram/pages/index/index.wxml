@@ -3,7 +3,7 @@
     <!-- 轮播图 - 顶格 -->
     <view class="swiper-wrapper">
       <t-swiper current="{{current}}" autoplay="{{autoplay}}" duration="{{duration}}" interval="{{interval}}"
-        list="{{swiperList}}" navigation="{{ { type: 'dots-bar' } }}" height="{{300}}" bindclick="onClickToTrack"/>
+        list="{{swiperList}}" navigation="{{ { type: 'dots-bar' } }}" height="{{300}}" bind:click="onClickToTrack"/>
     </view>
 
     <!-- 卡片列表 -->

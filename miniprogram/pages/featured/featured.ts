@@ -28,6 +28,7 @@ Page({
     topTracks: [] as ITrack[],
     allTracks: [] as ITrack[],
     allTracksPage: 1,
+    allTracksTotal: 0,
     allTracksLoading: false,
     allTracksNoMore: false,
   },
@@ -37,20 +38,25 @@ Page({
   async onLoad() {
     this.syncTheme();
     this.startDescCycle();
-    this.updateVisibleTabs();
+
     await this.loadTopTracks();
   },
   async loadTopTracks() {
     try {
+      wx.showLoading({ title: "加载中..." });
       const { items } = await request("/activities");
+      wx.hideLoading();
       const tracks = items.map((item) => {
         item.status =
           item.endsAt > new Date().toISOString() ? "active" : "unactive";
         return item;
       });
-      this.setData({
-        topTracks: tracks,
-      });
+      this.setData(
+        {
+          topTracks: tracks,
+        },
+        () => this.updateVisibleTabs(),
+      );
     } catch (err) {
       console.log("加载活动报错:", err);
       wx.showToast({
@@ -239,21 +245,31 @@ Page({
     });
 
     try {
+      wx.showLoading({ title: "加载中..." });
       const { allTracksPage, allTracks } = this.data;
+      const pageSize = 10;
 
       const res = await request(
-        `/activities?page=${allTracksPage}&pageSize=10&includeExpired=true`,
+        `/activities?page=${allTracksPage}&pageSize=${pageSize}&includeExpired=true`,
       );
+
+      wx.hideLoading();
 
       const items = (res.items || []).map((item: any) => ({
         ...item,
         status: item.endsAt > new Date().toISOString() ? "active" : "unactive",
       }));
 
-      this.setData({
-        allTracks: allTracksPage === 1 ? items : [...allTracks, ...items],
+      const nextTracks = allTracksPage === 1 ? items : [...allTracks, ...items];
+      const total = res.pagination?.total;
 
-        allTracksNoMore: items.length < 10,
+      this.setData({
+        allTracks: nextTracks,
+        allTracksTotal: typeof total === "number" ? total : nextTracks.length,
+        allTracksNoMore:
+          typeof total === "number"
+            ? nextTracks.length >= total
+            : items.length < pageSize,
       });
     } catch (err: any) {
       console.log("加载更多活动失败:", err);
@@ -265,9 +281,42 @@ Page({
     } finally {
       this.setData({
         allTracksLoading: false,
+      }, () => {
+        this.loadNextPageIfPopupListNotScrollable();
       });
     }
   },
+
+  loadNextPageIfPopupListNotScrollable() {
+    if (
+      !this.data.allTracksPopupVisible ||
+      this.data.allTracksLoading ||
+      this.data.allTracksNoMore ||
+      this.data.allTracks.length === 0
+    ) {
+      return;
+    }
+
+    wx.nextTick(() => {
+      const query = wx.createSelectorQuery().in(this);
+      query.select(".tracks-popup-list").boundingClientRect();
+      query.select(".tracks-popup-list-content").boundingClientRect();
+
+      query.exec((res) => {
+        const listRect = res[0] as any;
+        const contentRect = res[1] as any;
+
+        if (!listRect || !contentRect) {
+          return;
+        }
+
+        if (contentRect.height <= listRect.height + 1) {
+          this.onTracksScrollToLower();
+        }
+      });
+    });
+  },
+
   onTracksScrollToLower() {
     if (this.data.allTracksLoading || this.data.allTracksNoMore) {
       return;

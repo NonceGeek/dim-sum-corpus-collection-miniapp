@@ -1,3 +1,4 @@
+import { STATIC_FILE } from "../../app";
 import request from "../../utils/http";
 
 interface ISwiperList {
@@ -14,22 +15,9 @@ Page({
     autoplay: true,
     duration: 500,
     interval: 3000,
-    swiperList: ["/public/image/200.png", "/public/image/logo.png"],
+    swiperList: [],
 
-    cardList: [
-      {
-        id: 1,
-        imageUrl: "/public/image/叉烧饭.jpg",
-        avatar: "",
-        author: "用户",
-      },
-      {
-        id: 2,
-        imageUrl: "/public/image/200.png",
-        avatar: "",
-        author: "用户2",
-      },
-    ],
+    cardList: [],
     page: 1,
     pageSize: 20,
     loading: false,
@@ -41,7 +29,6 @@ Page({
     this.syncTheme();
     await this.loadSwiperData();
     await this.loadCardList();
-    console.log("swiperList:", this.data.swiperList);
   },
 
   onShow() {
@@ -56,17 +43,17 @@ Page({
 
   async loadSwiperData() {
     try {
+      wx.showLoading({ title: "加载中..." });
       const res = await request("/home");
-      if (res.success && res.data) {
-        const { banners } = res.data;
-        const swiperList = banners.map((banner: ISwiperList) => ({
-          ...banners,
-          value: banner.imageUrl,
-        }));
-        this.setData({
-          swiperList,
-        });
-      }
+      wx.hideLoading();
+      const { banners } = res;
+      const swiperList = banners.map((banner: ISwiperList) => ({
+        ...banner,
+        value: banner.imageUrl || STATIC_FILE,
+      }));
+      this.setData({
+        swiperList,
+      });
     } catch (err: any) {
       console.error("加载轮播图失败", err);
       wx.showToast({
@@ -129,8 +116,11 @@ Page({
       wx.navigateTo({ url: "/pages/profile/profile" });
     }
   },
-  onClickToTrack(index: number) {
+  onClickToTrack(e) {
+    const index = e.detail.index;
+    console.log("index:", index);
     const { swiperList } = this.data;
+    console.log("swiperList:", swiperList[index]);
     const trackId = (swiperList[index] as unknown as ISwiperList).linkId;
     wx.navigateTo({
       url: `/pages/tracks/tracks?id=${trackId}`,

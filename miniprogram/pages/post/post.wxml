@@ -23,7 +23,6 @@
           <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" bind:tap="onChooseImage">
             <t-icon name="add" size="48"
               color="{{currentTheme === 'dark' ? 'var(--text-secondary)' : 'var(--text-muted)'}}" />
-            <!-- <text class="add-count">{{imageList.length}}/{{track.mediaRequirements.images && track.mediaRequirements.images.max}}</text> -->
           </view>
         </view>
       </view>
@@ -42,7 +41,7 @@
           <view class="audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
             <view class="audio-info">
               <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
-              <text class="audio-label">录音 {{recordTime}}s</text>
+              <text class="audio-label">录音</text>
               <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}"</text>
             </view>
             <view class="audio-delete" catch:tap="onDeleteAudio">
@@ -120,7 +119,7 @@
           <text class="topic-title">添加标签</text>
         </view>
         <view class="topic-list">
-          <block wx:for="{{track.tags}}" wx:key="index">
+          <block wx:for="{{selectedActivity.tags}}" wx:key="index">
             <view class="topic-tag">
               <text class="topic-text">#{{item}}</text>
             </view>
@@ -156,6 +155,13 @@
           <view class="topic-search">
             <t-search placeholder="搜索标签" value="{{topicSearchKeyword}}" bind:change="onTopicSearch"
               bind:submit="onTopicSearchSubmit" placeholder-style="color: var(--text-muted)" />
+            <view class="custom-topic-row" wx:if="{{topicSearchKeyword}}" bind:tap="onAddCustomTopic">
+              <view class="custom-topic-label">
+                <t-icon name="add-circle" size="18" color="var(--primary)" />
+                <text class="custom-topic-text">添加 #{{topicSearchKeyword}}</text>
+              </view>
+              <t-icon name="chevron-right" size="18" color="var(--text-muted)" />
+            </view>
           </view>
           <view class="topic-list-popup">
             <view class="topic-item-popup" wx:for="{{filteredTopicList}}" wx:key="*this" bind:tap="onSelectTopic"

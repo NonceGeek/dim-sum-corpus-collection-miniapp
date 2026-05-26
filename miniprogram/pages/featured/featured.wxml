@@ -33,30 +33,48 @@
             </view>
 
             <!-- 视频列表 -->
-            <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
-              <view class="video-list">
-                <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
-                  <view class="video-cover-wrapper">
-                    <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
-                    <view class="play-icon" wx:if="{{item.isVideo}}">
-                      <t-icon name="play-circle-filled" size="48rpx" color="#fff" />
+            <block wx:if="{{track.works.length > 0}}">
+              <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
+                <view class="video-list">
+                  <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
+                    <view class="video-cover-wrapper">
+                      <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+                      <view class="play-icon" wx:if="{{item.isVideo}}">
+                        <t-icon name="play-circle-filled" size="48rpx" color="#fff" />
+                      </view>
+                    </view>
+                    <view class="author-row">
+                      <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
+                      <text class="author-name">{{item.author.name}}</text>
                     </view>
                   </view>
-                  <view class="author-row">
-                    <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
-                    <text class="author-name">{{item.author.name}}</text>
-                  </view>
+                </view>
+              </scroll-view>
+            </block>
+            <block wx:else>
+              <view class="empty-work-stage {{index === currentIndex ? 'is-active' : ''}}">
+                <image class="empty-work-image" src="{{track.bannerUrl ? track.bannerUrl :'/public/image/yue.webp'}}"
+                  mode="aspectFill" />
+                <view class="firework-layer">
+                  <view class="firework firework-1"></view>
+                  <view class="firework firework-2"></view>
+                  <view class="firework firework-3"></view>
+                  <view class="firework firework-4"></view>
+                  <view class="firework firework-5"></view>
+                  <view class="firework firework-6"></view>
+                  <view class="firework firework-7"></view>
+                  <view class="firework firework-8"></view>
                 </view>
               </view>
-            </scroll-view>
+            </block>
 
             <!-- 按钮 -->
             <view class="btn-row">
-              <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}">
+              <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}" wx:if="{{track.works.length > 0}}">
                 更多参赛作品
               </t-button>
-              <t-button theme="primary" shape="round" size="large" class="post-btn" bind:tap="onPost"
-                data-id="{{track.id}}">
+              <t-button theme="primary" shape="round" size="large" class="post-btn {{!track.canSubmit?'unactive':''}}" bind:tap="onPost"
+                data-id="{{track.id}}" wx:if="{{track.canSubmit}}" disabled="{{!track.canSubmit}}">
                 投稿此活动
               </t-button>
             </view>
@@ -77,7 +95,7 @@
           <view class="tab-title">
             {{item.title}}
           </view>
-          <view class="tab-sub" wx:if="{{item._position === 'current'}}">
+          <view class="tab-sub" wx:if="{{item._position === 'current' && item.submissionCount > 0}}">
             {{item.submissionCount}}个作品已参赛
           </view>
         </view>
@@ -96,48 +114,49 @@
     </view>
   </block>
   <block wx:else>
-  <view class="info">
-    <text>目前暂无活动</text>
-  </view>
+    <view class="info">
+      <text>目前暂无活动</text>
+    </view>
   </block>
   <t-popup visible="{{allTracksPopupVisible}}" placement="bottom" t-class="tracks-popup-host"
     bind:visible-change="onAllTracksPopupChange">
     <view class="tracks-popup theme-{{currentTheme}}">
       <view class="tracks-popup-handle"></view>
 
-      <scroll-view class="tracks-popup-list" scroll-y>
-        <view wx:for="{{allTracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
-          <view class="tracks-popup-card-main">
-            <view class="tracks-popup-card-header">
-              <view class="tracks-popup-card-title">{{track.title}}</view>
-              <view class="tracks-popup-more" bind:tap="onMorePosts" data-id="{{track.id}}">
-                <text>更多作品</text>
-                <t-icon name="chevron-right" size="32rpx" color="var(--text-muted)" />
+      <scroll-view class="tracks-popup-list" scroll-y="{{true}}" bindscrolltolower="onTracksScrollToLower" lower-threshold="80">
+        <view class="tracks-popup-list-content">
+          <view wx:for="{{allTracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
+            <view class="tracks-popup-card-main">
+              <view class="tracks-popup-card-header">
+                <view class="tracks-popup-card-title">{{track.title}}</view>
+                <view class="tracks-popup-more" bind:tap="onMorePosts" data-id="{{track.id}}">
+                  <text>更多作品</text>
+                  <t-icon name="chevron-right" size="32rpx" color="var(--text-muted)" />
+                </view>
               </view>
-            </view>
-            <view class="tracks-popup-card-desc">{{track.description}}</view>
+              <view class="tracks-popup-card-desc">{{track.description}}</view>
 
-            <view class="tracks-popup-video-list">
-              <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
-                <view class="tracks-popup-cover-wrap">
-                  <image class="tracks-popup-cover" src="{{video.coverUrl}}" mode="aspectFill" />
-                  <view class="tracks-popup-play" wx:if="{{item.isVideo}}">
-                    <t-icon name="play-circle-filled" size="36rpx" color="#fff" />
+              <view class="tracks-popup-video-list">
+                <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
+                  <view class="tracks-popup-cover-wrap">
+                    <image class="tracks-popup-cover" src="{{video.coverUrl}}" mode="aspectFill" />
+                    <view class="tracks-popup-play" wx:if="{{video.isVideo}}">
+                      <t-icon name="play-circle-filled" size="36rpx" color="#fff" />
+                    </view>
+                  </view>
+                  <view class="tracks-popup-author">
+                    <image class="avatar" src="{{video.author.avatar}}" mode="aspectFill" />
+                    <text class="author-name">{{video.author.name}}</text>
                   </view>
                 </view>
-                <view class="tracks-popup-author">
-                  <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
-                  <text class="author-name">{{item.author.name}}</text>
-                </view>
               </view>
             </view>
-          </view>
 
-          <view class="tracks-popup-card-footer">
-            <!-- TODO -->
-            <view class="tracks-popup-rule">投稿作品需为视频，时长少于30秒</view>
-            <view class="tracks-popup-status {{track.status === 'active' ? 'active' : ''}}">
-              {{track.status === "active" ? "正在进行中":"投稿已截止"}}
+            <view class="tracks-popup-card-footer">
+              <view class="tracks-popup-rule">{{track.rules}}</view>
+              <view class="tracks-popup-status {{track.timeStatus === 'ongoing' ? 'active' : ''}}">
+                {{track.timeStatus === 'not_started' ? "投稿还未开始": track.timeStatus === 'ongoing' ? "正在进行中": track.timeStatus === 'ended' ? "投稿已截止": ''}}
+              </view>
             </view>
           </view>
         </view>

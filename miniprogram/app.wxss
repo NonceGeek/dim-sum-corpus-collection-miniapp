@@ -18,7 +18,9 @@
 page,
 view,
 text {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .nav {
@@ -30,44 +32,46 @@ text {
    ============================================ */
 page {
   /* 主色调 */
-  --primary: #4A7CF3;
-  --primary-light: #6B93F5;
-  --primary-dark: #3566D9;
-  --secondary: #7C5CFF;
-  --secondary-light: #9178FF;
+  --primary: #4a7cf3;
+  --primary-light: #6b93f5;
+  --primary-dark: #3566d9;
+  --secondary: #7c5cff;
+  --secondary-light: #9178ff;
   --tertiary-dark: #007595;
   --tertiary-light: #00d3f3;
 
   /* 渐变 */
-  --gradient-primary: linear-gradient(135deg, #4A7CF3 0%, #7C5CFF 100%);
-  --gradient-button: linear-gradient(135deg, #4A7CF3 0%, #6B93F5 100%);
+  --gradient-primary: linear-gradient(135deg, #4a7cf3 0%, #7c5cff 100%);
+  --gradient-button: linear-gradient(135deg, #4a7cf3 0%, #6b93f5 100%);
 
   /* 背景色 */
-  --bg-page: #F5F7FA;
-  --bg-card: #FFFFFF;
-  --bg-input: #F8FAFC;
-  --bg-elevated: #FFFFFF;
+  --bg-page: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --bg-elevated: #ffffff;
 
   /* 文字色 */
-  --text-primary: #1A1F36;
-  --text-secondary: #64748B;
-  --text-muted: #94A3B8;
-  --text-inverse: #FFFFFF;
+  --text-primary: #1a1f36;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
 
   /* 边框 */
-  --border-color: #E2E8F0;
-  --border-light: #F1F5F9;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
 
   /* 状态色 */
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  --info: #3B82F6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-primary: 0 4px 14px rgba(74, 124, 243, 0.25);
 
   /* 圆角 */
@@ -85,11 +89,15 @@ page {
   --td-text-color-placeholder: var(--text-muted);
   --td-border-color: var(--border-color);
   --td-brand-color: var(--primary);
-  --td-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --td-font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto,
+    sans-serif;
 
   background-color: var(--bg-page);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* ============================================
@@ -98,31 +106,31 @@ page {
 @media (prefers-color-scheme: dark) {
   page {
     /* 主色调 - 稍微提亮 */
-    --primary: #5D8CF5;
-    --primary-light: #7BA3F7;
-    --primary-dark: #4A7CF3;
-    --secondary: #9178FF;
-    --secondary-light: #A892FF;
+    --primary: #5d8cf5;
+    --primary-light: #7ba3f7;
+    --primary-dark: #4a7cf3;
+    --secondary: #9178ff;
+    --secondary-light: #a892ff;
 
     /* 渐变 */
-    --gradient-primary: linear-gradient(135deg, #5D8CF5 0%, #9178FF 100%);
-    --gradient-button: linear-gradient(135deg, #5D8CF5 0%, #7BA3F7 100%);
+    --gradient-primary: linear-gradient(135deg, #5d8cf5 0%, #9178ff 100%);
+    --gradient-button: linear-gradient(135deg, #5d8cf5 0%, #7ba3f7 100%);
 
     /* 背景色 */
-    --bg-page: #0D1117;
-    --bg-card: #161B22;
-    --bg-input: #21262D;
-    --bg-elevated: #1C2128;
+    --bg-page: #0d1117;
+    --bg-card: #161b22;
+    --bg-input: #21262d;
+    --bg-elevated: #1c2128;
 
     /* 文字色 */
-    --text-primary: #F0F6FC;
-    --text-secondary: #8B949E;
-    --text-muted: #6E7681;
-    --text-inverse: #0D1117;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --text-inverse: #0d1117;
 
     /* 边框 */
-    --border-color: #30363D;
-    --border-light: #21262D;
+    --border-color: #30363d;
+    --border-light: #21262d;
 
     /* 阴影 - 深色模式使用发光效果 */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -283,7 +291,9 @@ page {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-primary);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input-field:focus {
@@ -354,36 +364,46 @@ page {
 /* 强制浅色主题 */
 .theme-light {
   /* 主色调 */
-  --primary: #4A7CF3 !important;
-  --primary-light: #6B93F5 !important;
-  --primary-dark: #3566D9 !important;
-  --secondary: #7C5CFF !important;
-  --secondary-light: #9178FF !important;
+  --primary: #4a7cf3 !important;
+  --primary-light: #6b93f5 !important;
+  --primary-dark: #3566d9 !important;
+  --secondary: #7c5cff !important;
+  --secondary-light: #9178ff !important;
 
   /* 渐变 */
-  --gradient-primary: linear-gradient(135deg, #4A7CF3 0%, #7C5CFF 100%) !important;
-  --gradient-button: linear-gradient(135deg, #4A7CF3 0%, #6B93F5 100%) !important;
+  --gradient-primary: linear-gradient(
+    135deg,
+    #4a7cf3 0%,
+    #7c5cff 100%
+  ) !important;
+  --gradient-button: linear-gradient(
+    135deg,
+    #4a7cf3 0%,
+    #6b93f5 100%
+  ) !important;
 
   /* 背景色 */
-  --bg-page: #F5F7FA !important;
-  --bg-card: #FFFFFF !important;
-  --bg-input: #F8FAFC !important;
-  --bg-elevated: #FFFFFF !important;
+  --bg-page: #f5f7fa !important;
+  --bg-card: #ffffff !important;
+  --bg-input: #f8fafc !important;
+  --bg-elevated: #ffffff !important;
 
   /* 文字色 */
-  --text-primary: #1A1F36 !important;
-  --text-secondary: #64748B !important;
-  --text-muted: #94A3B8 !important;
-  --text-inverse: #FFFFFF !important;
+  --text-primary: #1a1f36 !important;
+  --text-secondary: #64748b !important;
+  --text-muted: #94a3b8 !important;
+  --text-inverse: #ffffff !important;
 
   /* 边框 */
-  --border-color: #E2E8F0 !important;
-  --border-light: #F1F5F9 !important;
+  --border-color: #e2e8f0 !important;
+  --border-light: #f1f5f9 !important;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
   --shadow-primary: 0 4px 14px rgba(74, 124, 243, 0.25) !important;
 
   background-color: var(--bg-page) !important;
@@ -393,31 +413,39 @@ page {
 /* 强制深色主题 */
 .theme-dark {
   /* 主色调 - 稍微提亮 */
-  --primary: #5D8CF5 !important;
-  --primary-light: #7BA3F7 !important;
-  --primary-dark: #4A7CF3 !important;
-  --secondary: #9178FF !important;
-  --secondary-light: #A892FF !important;
+  --primary: #5d8cf5 !important;
+  --primary-light: #7ba3f7 !important;
+  --primary-dark: #4a7cf3 !important;
+  --secondary: #9178ff !important;
+  --secondary-light: #a892ff !important;
 
   /* 渐变 */
-  --gradient-primary: linear-gradient(135deg, #5D8CF5 0%, #9178FF 100%) !important;
-  --gradient-button: linear-gradient(135deg, #5D8CF5 0%, #7BA3F7 100%) !important;
+  --gradient-primary: linear-gradient(
+    135deg,
+    #5d8cf5 0%,
+    #9178ff 100%
+  ) !important;
+  --gradient-button: linear-gradient(
+    135deg,
+    #5d8cf5 0%,
+    #7ba3f7 100%
+  ) !important;
 
   /* 背景色 */
-  --bg-page: #0D1117 !important;
-  --bg-card: #161B22 !important;
-  --bg-input: #21262D !important;
-  --bg-elevated: #1C2128 !important;
+  --bg-page: #0d1117 !important;
+  --bg-card: #161b22 !important;
+  --bg-input: #21262d !important;
+  --bg-elevated: #1c2128 !important;
 
   /* 文字色 */
-  --text-primary: #F0F6FC !important;
-  --text-secondary: #8B949E !important;
-  --text-muted: #6E7681 !important;
-  --text-inverse: #0D1117 !important;
+  --text-primary: #f0f6fc !important;
+  --text-secondary: #8b949e !important;
+  --text-muted: #6e7681 !important;
+  --text-inverse: #0d1117 !important;
 
   /* 边框 */
-  --border-color: #30363D !important;
-  --border-light: #21262D !important;
+  --border-color: #30363d !important;
+  --border-light: #21262d !important;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
@@ -448,7 +476,9 @@ page {
   min-height: 100vh;
   background-color: var(--bg-page);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
   box-sizing: border-box;
 }
 
@@ -558,4 +588,9 @@ page {
 .theme-light .t-tab-bar {
   background-color: var(--bg-card) !important;
   border-top: 1px solid var(--border-light) !important;
+}
+
+.t-button--disabled {
+  opacity: 0.5 !important;
+  box-shadow: none !important;
 }

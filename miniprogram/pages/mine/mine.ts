@@ -42,15 +42,16 @@ Page({
 
     tracks: [],
 
-    works: [],
     visibleWorks: [],
 
     page: 1,
+    pageSize: 10,
 
     total: 0,
 
     loading: false,
     noMore: false,
+    flag: false,
   },
 
   async onLoad() {
@@ -69,26 +70,37 @@ Page({
     });
 
     try {
-      const { page, works: oldWorks, activeStatus, activeTrack } = this.data;
+      const {
+        page,
+        pageSize,
+        visibleWorks: oldWorks,
+        activeStatus,
+        activeTrack,
+        flag,
+      } = this.data;
 
-      const res = await request(
-        `/submissions/mine?page=${page}&pageSize=10&${activeStatus === "all" ? "" : activeStatus}&activityId=${activeTrack === "all" ? "" : activeTrack}`,
-      );
+      let url = `/submissions/mine?page=${page}&pageSize=${pageSize}`;
+      if (activeStatus !== "all") {
+        url += `&${activeStatus}`;
+      }
+      if (activeTrack !== "all" && activeTrack !== "other") {
+        url += `&activityId=${activeTrack}`;
+      }
+      if (activeTrack === "other") {
+        url += "&withoutActivity=true";
+      }
+      const res = await request(url);
       wx.hideLoading();
       const { items = [], pagination } = res;
 
       const works = items;
 
-      const noMore = items.length < 10;
-
+      const noMore = items.length < pageSize;
       this.setData({
-        works: page === 1 ? works : [...oldWorks, ...works],
-
         visibleWorks: page === 1 ? works : [...oldWorks, ...works],
-
         total: pagination.total || 0,
-
         noMore,
+        ...(!flag ? { flag: (pagination.total || works.length) > 0 } : {}),
       });
     } catch (err: any) {
       wx.hideLoading();
@@ -159,7 +171,23 @@ Page({
   },
 
   onTrackTap(e: any) {
-    this.setData({ activeTrack: e.currentTarget.dataset.value });
+    this.setData({
+      activeTrack: e.currentTarget.dataset.value,
+    });
+  },
+
+  onTrackTapOutside(e) {
+    this.setData(
+      {
+        activeTrack: e.currentTarget.dataset.value,
+        page: 1,
+        noMore: false,
+        visibleWorks: [],
+      },
+      () => {
+        this.loadOwnWorks();
+      },
+    );
   },
 
   onStatusTap(e: any) {
@@ -170,7 +198,6 @@ Page({
     this.setData({
       page: 1,
       noMore: false,
-      works: [],
       visibleWorks: [],
       filterExpanded: false,
     });
@@ -202,7 +229,6 @@ Page({
     this.setData({
       page: 1,
       noMore: false,
-      works: [],
       visibleWorks: [],
     });
 

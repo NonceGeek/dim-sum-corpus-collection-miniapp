@@ -1,5 +1,5 @@
 <view class="page theme-{{currentTheme}}">
-  <block wx:if="{{works.length > 0 || loading}}">
+  <block wx:if="{{flag || loading || visibleWorks.length > 0}}">
     <view class="hero">
       <view class="bubble bubble-1">你都几敢讲喔</view>
       <view class="bubble bubble-2">全场最有声气嘅人</view>
@@ -19,7 +19,7 @@
         <scroll-view class="track-tabs" scroll-x show-scrollbar="false">
           <view class="track-tab-list">
             <view wx:for="{{tracks}}" wx:key="id" class="track-tab {{activeTrack === item.id ? 'active' : ''}}"
-              bind:tap="onTrackTap" data-value="{{item.id}}">
+              bind:tap="onTrackTapOutside" data-value="{{item.id}}">
               <text class="track-tab-text">{{item.title}}</text>
               <view class="track-tab-scribble" wx:if="{{activeTrack === item.id}}">
                 <view class="track-tab-scribble-line line-1"></view>
@@ -62,12 +62,7 @@
     </view>
 
     <view class="works-section {{filterExpanded ? 'dimmed' : ''}}">
-      <waterfall
-        items="{{visibleWorks}}"
-        showStatus
-        showPlayBadge
-        bind:itemtap="onWaterfallTap"
-      />
+      <waterfall items="{{visibleWorks}}" showStatus showPlayBadge bind:itemtap="onWaterfallTap" />
     </view>
   </block>
   <block wx:else>
@@ -86,6 +81,5 @@
         我要加餸
       </t-button>
     </view>
-
   </block>
 </view>
