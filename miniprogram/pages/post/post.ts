@@ -79,13 +79,28 @@ Page({
 
   async onLoad(options) {
     const { tag, id, mode } = options;
+    console.log("options:", options);
     this.syncTheme();
 
-    tag && (await this.loadTrack(tag));
-    id && (await this.loadPost(id));
-    this.setData({
-      mode: mode || "edit",
-    });
+    this.setData(
+      {
+        mode: mode || "edit",
+      },
+      async () => {
+        console.log("this.:", this.data.mode);
+        tag && (await this.loadTrack(tag));
+        id && (await this.loadPost(id));
+        const { mode } = this.data;
+        let view = {};
+        console.log("mode:", mode, this.data.mode);
+        if (mode === "view") {
+          view = await request(`/works/${id}/view`, { method: "POST" });
+          console.log("view:", view);
+        }
+        this.setData({ ...(view ? { view: view.viewCount } : {}) });
+      },
+    );
+
     this.recorderManager = wx.getRecorderManager();
     this.handleRecordStop = this.handleRecordStop.bind(this);
     this.recorderManager.onStop(this.handleRecordStop);
@@ -126,17 +141,11 @@ Page({
 
   async loadPost(id: string) {
     try {
-      const { mode } = this.data;
-      let view = {};
-      if (mode === "view") {
-        view = await request(`/works/${id}/view`);
-        console.log("view:", view);
-      }
       const res = await request(`/submissions/${id}`);
       // TODO：缺参加的活动
       this.setData({
         post: res,
-        ...(view ? { view: view.viewCount } : {}),
+
         title: res.title,
         content: res.intro,
         imageList: res.media.filter(
@@ -229,7 +238,7 @@ Page({
         : images.required
           ? ["image"]
           : video.required
-            ? ["video"]
+            ? ["video", "image"]
             : ["image"];
     const maxCount = 9 - this.data.imageList.length;
     wx.chooseMedia({
@@ -513,7 +522,8 @@ Page({
       audioDuration,
     } = this.data;
 
-    const { mediaRequirements: { images = {}, audio = {} } = {} } = track || {};
+    const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
+      track || {};
 
     let canPublish = true;
 
@@ -542,8 +552,15 @@ Page({
       }
     }
 
-    // 音频校验
+    if (video.required) {
+      const videoCount = imageList.filter((i) => i.type === "video").length;
+      const imageCount = imageList.filter((i) => i.type === "image").length;
+      if (videoCount && imageCount === 0) {
+        canPublish = false;
+      }
+    }
     if (audio.required) {
+      // 音频校验
       if (!audioUrl) {
         canPublish = false;
       }
@@ -612,6 +629,21 @@ Page({
           title: "提示",
           content:
             "图片不能少于" + images.min + "张,并且不能大于" + images.max + "张",
+          showCancel: false,
+        });
+        return;
+      }
+    }
+
+    if (video.required) {
+      const imageCount = imageList.filter(
+        (image) => image.type === "image",
+      ).length;
+      const videoCount = imageList.filter((i) => i.type === "video").length;
+      if (videoCount > 0 && imageCount === 0) {
+        wx.showModal({
+          title: "提示",
+          content: "请上传视频封面图",
           showCancel: false,
         });
         return;

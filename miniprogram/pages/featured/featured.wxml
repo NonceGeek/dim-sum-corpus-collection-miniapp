@@ -27,9 +27,10 @@
             <view class="card-header">
               <view>
                 <view class="card-title">{{track.title}}</view>
+                <view class="card-en">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
                 <view class="card-desc">{{track.description}}</view>
               </view>
-              <!-- <view class="card-en" bind:tap="onShowDetails" data-id="{{item.id}}">详情</view> -->
+              
             </view>
 
             <!-- 视频列表 -->
@@ -70,6 +71,9 @@
 
             <!-- 按钮 -->
             <view class="btn-row">
+               <t-button theme="default" shape="round" size="large" data-id="{{track.id}}" wx:if="{{track.timeStatus === 'not_started'}}" hover-class="none">
+                敬请期待
+              </t-button>
               <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}" wx:if="{{track.works.length > 0}}">
                 更多参赛作品
               </t-button>
@@ -134,15 +138,13 @@
                   <t-icon name="chevron-right" size="32rpx" color="var(--text-muted)" />
                 </view>
               </view>
+              <view class="tracks-popup-card-desc">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
               <view class="tracks-popup-card-desc">{{track.description}}</view>
 
               <view class="tracks-popup-video-list">
                 <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
                   <view class="tracks-popup-cover-wrap">
                     <image class="tracks-popup-cover" src="{{video.coverUrl}}" mode="aspectFill" />
-                    <view class="tracks-popup-play" wx:if="{{video.isVideo}}">
-                      <t-icon name="play-circle-filled" size="36rpx" color="#fff" />
-                    </view>
                   </view>
                   <view class="tracks-popup-author">
                     <image class="avatar" src="{{video.author.avatar}}" mode="aspectFill" />
@@ -154,7 +156,7 @@
 
             <view class="tracks-popup-card-footer">
               <view class="tracks-popup-rule">{{track.rules}}</view>
-              <view class="tracks-popup-status {{track.timeStatus === 'ongoing' ? 'active' : ''}}">
+              <view class="tracks-popup-status {{track.timeStatus === 'ongoing' ? 'active' : ''}}" data-id="{{track.id}}" data-timeStatus="{{track.timeStatus}}" bind:tap="onClickTrack">
                 {{track.timeStatus === 'not_started' ? "投稿还未开始": track.timeStatus === 'ongoing' ? "正在进行中": track.timeStatus === 'ended' ? "投稿已截止": ''}}
               </view>
             </view>

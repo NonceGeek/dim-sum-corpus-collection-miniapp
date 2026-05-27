@@ -1,3 +1,4 @@
+import { formatDate } from "../../utils/date";
 import request from "../../utils/http";
 
 interface ITrack {
@@ -49,6 +50,8 @@ Page({
       const tracks = items.map((item) => {
         item.status =
           item.endsAt > new Date().toISOString() ? "active" : "unactive";
+        item.startsAt = formatDate(item.startsAt, "YYYY-MM-DD");
+        item.endsAt = formatDate(item.endsAt, "YYYY-MM-DD");
         return item;
       });
       this.setData(
@@ -258,6 +261,8 @@ Page({
       const items = (res.items || []).map((item: any) => ({
         ...item,
         status: item.endsAt > new Date().toISOString() ? "active" : "unactive",
+        startsAt: formatDate(item.startsAt, "YYYY-MM-DD"),
+        endsAt: formatDate(item.endsAt, "YYYY-MM-DD"),
       }));
 
       const nextTracks = allTracksPage === 1 ? items : [...allTracks, ...items];
@@ -279,11 +284,14 @@ Page({
         icon: "none",
       });
     } finally {
-      this.setData({
-        allTracksLoading: false,
-      }, () => {
-        this.loadNextPageIfPopupListNotScrollable();
-      });
+      this.setData(
+        {
+          allTracksLoading: false,
+        },
+        () => {
+          this.loadNextPageIfPopupListNotScrollable();
+        },
+      );
     }
   },
 
@@ -327,5 +335,21 @@ Page({
     });
 
     this.loadMoreTracks();
+  },
+  onClickTrack(e: any) {
+    const trackId = e.currentTarget.dataset.id;
+    const timeStatus = e.currentTarget.dataset.timestatus;
+    if (timeStatus === "not_started") {
+      wx.showModal({
+        title: "投稿还未开始",
+        content: "等阵先啦～",
+        showCancel: false,
+      });
+      return;
+    } else {
+      wx.navigateTo({
+        url: `/pages/tracks/tracks?id=${trackId}`,
+      });
+    }
   },
 });

@@ -86,7 +86,7 @@
 
 /* 主卡片 */
 .main-card {
-  height: calc(100% - 40rpx);
+  height: calc(100% - 30rpx);
   box-sizing: border-box;
   position: relative;
   margin: 0;
@@ -111,8 +111,7 @@
 
 .card-en {
   color: #7a6331;
-  font-size: 32rpx;
-  margin-left: 20rpx;
+  font-size: 28rpx;
 }
 
 .card-desc {

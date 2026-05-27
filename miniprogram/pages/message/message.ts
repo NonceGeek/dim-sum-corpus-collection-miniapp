@@ -1,33 +1,5 @@
 import request from "../../utils/http";
 
-const MOCK_MESSAGES = [
-  {
-    id: 1,
-    icon: "🎉",
-    title: "恭喜！您的作品获奖了",
-    content:
-      "您在「听见广州」活动中获得二等奖，奖金 500 元，请尽快填写领奖信息。",
-    time: "今天 10:30",
-    read: false,
-  },
-  {
-    id: 2,
-    icon: "📢",
-    title: "活动通知",
-    content: "「粤港澳粤语大赛」已开始征集，点击查看详情并上传您的作品。",
-    time: "昨天 15:20",
-    read: false,
-  },
-  {
-    id: 3,
-    icon: "💬",
-    title: "系统提示",
-    content: "您的账号已完成实名认证，感谢您的配合。",
-    time: "3天前",
-    read: true,
-  },
-];
-
 const getIcon = (type) => {
   const obj = {
     系统提示: "system-messages",
@@ -49,6 +21,7 @@ Page({
 
     loading: false,
     noMore: false,
+    showButton: false,
   },
 
   async onLoad() {
@@ -64,10 +37,13 @@ Page({
     });
 
     try {
+      wx.showLoading({
+        title: "加载中...",
+      });
       const { page, pageSize, messages: oldMessages } = this.data;
 
       const res = await request(`/messages?page=${page}&pageSize=${pageSize}`);
-
+      wx.hideLoading();
       const {
         items,
         pagination: { total },
@@ -78,11 +54,12 @@ Page({
       }));
 
       const noMore = list.length < 10;
+      const findUnread = list.some((item) => !item.isRead);
 
       this.setData({
         messages: page === 1 ? list : [...oldMessages, ...list],
-
         noMore,
+        showButton: findUnread,
       });
     } catch (err) {
       console.error("loadMessages error", err);
@@ -99,7 +76,8 @@ Page({
   },
 
   async onMessageTap(e: any) {
-    const { id, workId } = e.currentTarget.dataset;
+    const { id, workid, type } = e.currentTarget.dataset;
+    console.log(e.currentTarget.dataset);
 
     try {
       const res = await request(`/messages/${id}/read`, {
@@ -108,14 +86,20 @@ Page({
       if (res.isRead && res.id === id) {
         const messages = this.data.messages.map((item: any) => {
           if (item.id === id) {
-            return { ...item, read: true };
+            return { ...item, isRead: true };
           }
           return item;
         });
-        if (workId) {
-          wx.navigateTo({
-            url: `/pages/post/post?id=${workId}?mode=view`,
-          });
+        if (workid) {
+          if (type === "中奖信息") {
+            wx.navigateTo({
+              url: `/pages/mine/mine`,
+            });
+          } else if (type === "审核信息") {
+            wx.navigateTo({
+              url: `/pages/post/post?id=${workid}&mode=view`,
+            });
+          }
         }
         this.setData({ messages });
       } else {
@@ -163,6 +147,10 @@ Page({
       });
       if (res.unreadNotificationCount === 0) {
         wx.showToast({ title: "标记成功！", duration: 2000, icon: "none" });
+        const messages = this.data.messages.map((item: any) => {
+          return { ...item, isRead: true };
+        });
+        this.setData({ messages });
       } else {
         wx.showModal({
           title: "错误提示",

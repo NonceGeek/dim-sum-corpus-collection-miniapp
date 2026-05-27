@@ -8,5 +8,7 @@
     "t-tab-bar": "tdesign-miniprogram/tab-bar/tab-bar",
     "t-tab-bar-item": "tdesign-miniprogram/tab-bar-item/tab-bar-item",
     "waterfall": "/components/waterfall/waterfall"
-  }
+  },
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 80
 }

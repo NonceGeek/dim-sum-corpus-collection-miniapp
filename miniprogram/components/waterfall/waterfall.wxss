@@ -80,19 +80,20 @@
 
 .work-status.status-pending_review,
 .work-status.status-ai_reviewing,
-.work-status.status-review_needed,
-.work-status.status-expired {
+.work-status.status-review_needed {
   background: var(--warning);
 }
 
-.work-status.rejected,
-.work-status.awarded {
+.work-status.status-rejected,
+.work-status.status-expired {
   background: var(--danger);
 }
 
-.work-status.rejected,
-.work-status.claimed {
+.work-status.status-claimed {
   background: var(--success);
+}
+.work-status.status-awarded {
+  background: var(--secondary);
 }
 
 .card-footer {

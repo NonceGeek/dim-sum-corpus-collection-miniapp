@@ -286,11 +286,15 @@
 
     </view>
 
-   
-    <view class="view-footer" wx:if="{{post.canEdit}}">
-      <view class="view-footer-action" bind:tap="onShowPostActions">
+
+    <view class="view-footer">
+      <view class="view-footer-action" bind:tap="onShowPostActions" wx:if="{{post.canEdit}}">
         <t-icon name="edit" size="20" color="var(--text-secondary)" />
         <text class="view-footer-text">编辑</text>
+      </view>
+      <view class="hot-wrap">
+        <image src="/public/image/flame.svg" class="hot-icon" />
+        <text class="hot-text">{{post.viewCount}}</text>
       </view>
     </view>
 

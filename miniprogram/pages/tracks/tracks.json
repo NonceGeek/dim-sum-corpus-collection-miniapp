@@ -5,5 +5,7 @@
     "t-button": "tdesign-miniprogram/button/button",
     "waterfall": "/components/waterfall/waterfall"
   },
-  "navigationBarTitleText": "活动详情"
+  "navigationBarTitleText": "活动详情",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 80
 }

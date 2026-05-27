@@ -1,34 +1,20 @@
 import { formatDate } from "../../utils/date";
 import request from "../../utils/http";
 
-const CARDLIST = [
-  {
-    id: 1,
-    type: "phrase",
-    cover: "https://tdesign.gtimg.com/mobile/demos/example1.png",
-    avatar: "https://tdesign.gtimg.com/mobile/demos/avatar1.png",
-    author: "创作者A",
-  },
-  {
-    id: 2,
-    type: "story",
-    cover: "https://tdesign.gtimg.com/mobile/demos/example2.png",
-    avatar: "https://tdesign.gtimg.com/mobile/demos/avatar2.png",
-    author: "播客达人",
-  },
-  {
-    id: 3,
-    type: "phrase",
-    cover: "https://tdesign.gtimg.com/mobile/demos/example3.png",
-    avatar: "https://tdesign.gtimg.com/mobile/demos/avatar3.png",
-    author: "旅行者",
-  },
-];
+const TYPE_JSON = {
+  phrase: "用语",
+  poem: "诗歌",
+  story: "故事",
+  slogan: "标语",
+  geographic: "地名解说",
+  rest: "歇后语",
+};
 
 Page({
   data: {
     trackId: "",
     track: {} as any,
+    trackTextReady: false,
     currentTrackType: "all",
     cardList: [] as any[],
     page: 1,
@@ -56,11 +42,12 @@ Page({
   async loadTrack() {
     try {
       wx.showLoading({ title: "加载中..." });
+      this.setData({ trackTextReady: false });
       const track = await request(`/activities/${this.data.trackId}`);
       wx.hideLoading();
       track.startsAt = formatDate(track.startsAt, "YYYY-MM-DD");
       track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD");
-      this.setData({ track });
+      this.setData({ track, trackTextReady: true });
       await this.loadCardList();
     } catch (err) {
       console.log("获取活动或作品列表数据失败", err);
@@ -129,7 +116,8 @@ Page({
       wx.hideLoading();
 
       if (currentTrackType !== "all") {
-        url += `&submissionType=${currentTrackType}`;
+        const typeLabel = TYPE_JSON[currentTrackType as keyof typeof TYPE_JSON];
+        url += `&submissionType=${typeLabel}`;
       }
 
       const { items = [], pagination } = await request(url);
@@ -158,12 +146,12 @@ Page({
   },
   onCardTap(e: any) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/post/post?id=${id}?mode=view` });
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    wx.navigateTo({ url: `/pages/post/post?id=${id}?mode=view` });
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
   onMyWorks() {
