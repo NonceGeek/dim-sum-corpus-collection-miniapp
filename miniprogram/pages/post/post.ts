@@ -7,7 +7,6 @@ Page({
     mode: "",
     currentTheme: "light",
     post: {} as any,
-    track: {},
     postActionsVisible: false,
     selectedType: "",
     selectedActivity: null as { id: string; title: string } | null,
@@ -79,12 +78,13 @@ Page({
 
   async onLoad(options) {
     const { tag, id, mode } = options;
-    console.log("options:", options);
+    const userInfo = wx.getStorageSync("userInfo");
     this.syncTheme();
 
     this.setData(
       {
         mode: mode || "edit",
+        userId: userInfo.id,
       },
       async () => {
         console.log("this.:", this.data.mode);
@@ -126,7 +126,9 @@ Page({
             }
           : {}),
         selectedType:
-          track.submissionTypes.length === 1 ? track.submissionTypes : [],
+          track.submissionTypes.length === 1
+            ? track.submissionTypes[0]
+            : this.data.selectedType,
         selectedActivity: track,
       });
     } catch (err: any) {
@@ -225,9 +227,98 @@ Page({
     this.checkCanPublish();
   },
 
+  compressImageFile(filePath: string) {
+    return new Promise<string>((resolve) => {
+      wx.compressImage({
+        src: filePath,
+        quality: 80,
+        success: (res) => resolve(res.tempFilePath),
+        fail: () => resolve(filePath),
+      });
+    });
+  },
+
+  compressVideoFile(filePath: string) {
+    return new Promise<string>((resolve) => {
+      wx.compressVideo({
+        src: filePath,
+        quality: "medium",
+        bitrate: 1000,
+        fps: 24,
+        resolution: 0.8,
+        success: (res) => resolve(res.tempFilePath),
+        fail: () => resolve(filePath),
+      });
+    });
+  },
+
+  async compressMediaFile(file: any) {
+    const compressedPath =
+      file.type === "video"
+        ? await this.compressVideoFile(file.url)
+        : await this.compressImageFile(file.url);
+
+    return {
+      ...file,
+      url: compressedPath,
+    };
+  },
+
+  getFileExtension(filePath: string, fileType: string) {
+    const path = filePath.split("?")[0];
+    const ext = path.includes(".") ? path.split(".").pop() : "";
+    return ext || (fileType === "video" ? "mp4" : "jpg");
+  },
+
+  uploadMediaFile(
+    file: any,
+    token: string,
+    dateStr: string,
+    timestamp: number,
+  ) {
+    return new Promise((resolve, reject) => {
+      const uploadPath = file.url;
+      const ext = this.getFileExtension(uploadPath, file.type);
+
+      wx.uploadFile({
+        url: `${ENV.API_BASE_URL}/upload`,
+        filePath: uploadPath,
+        name: "file",
+        formData: {
+          fileName: `${dateStr}_corpus_collection_${file.type}_${timestamp}.${ext}`,
+        },
+        header: {
+          Authorization: `Bearer ${token}`,
+        },
+        success: (res) => {
+          let data: any = {};
+
+          try {
+            data = JSON.parse(res.data);
+          } catch (e) {
+            reject(new Error("返回数据解析失败"));
+            return;
+          }
+
+          if (res.statusCode !== 200) {
+            reject(new Error(data?.error || "上传失败"));
+            return;
+          }
+
+          resolve({
+            ...file,
+            url: data.url,
+          });
+        },
+        fail: reject,
+      });
+    });
+  },
+
   // 选择图片
-  onChooseImage() {
-    const mediaRequirements = this.data.track?.mediaRequirements || {};
+  async onChooseImage() {
+    const mediaRequirements =
+      this.data.selectedActivity?.mediaRequirements || {};
     const images = mediaRequirements?.images || {};
     const audio = mediaRequirements?.audio || {};
     const video = mediaRequirements?.video || {};
@@ -239,82 +330,55 @@ Page({
           ? ["image"]
           : video.required
             ? ["video", "image"]
-            : ["image"];
+            : ["video", "image"];
     const maxCount = 9 - this.data.imageList.length;
+
     wx.chooseMedia({
       count: maxCount,
       mediaType: mediaType as ("image" | "video")[],
       sourceType: ["album", "camera"],
       sizeType: ["compressed"],
       maxDuration: maxDuration,
-      success: (res) => {
-        console.log("tempFiles:", res.tempFiles);
-        const tempFiles = res.tempFiles.map((file: any, index) => ({
-          url: file.tempFilePath,
-          type: file.fileType === "video" ? "video" : "image",
-          ...(file.fileType === "video" ? { durationSec: file.duration } : {}),
-          // ...(file.fileType !== "video" ? { sortOrder: index } : {}),
-        }));
-        const token = wx.getStorageSync("accessToken") || "";
-        const timestamp = Date.now();
-        const dateStr = formatDate(new Date(), "YYYYMMDD");
-        const uploadTasks = tempFiles.map((file) => {
-          return new Promise((resolve, reject) => {
-            wx.uploadFile({
-              url: `${ENV.API_BASE_URL}/upload`,
-              filePath: file.url,
-              name: "file",
-              formData: {
-                fileName: `${dateStr}_corpus_collection_${file.type}_${timestamp}.${file.url.split(".").pop()}`,
-              },
-              header: {
-                Authorization: `Bearer ${token}`,
-              },
-              success: (res) => {
-                let data: any = {};
+      success: async (res) => {
+        try {
+          wx.showLoading({ title: "压缩中..." });
 
-                try {
-                  data = JSON.parse(res.data);
-                } catch (e) {
-                  reject(new Error("返回数据解析失败"));
-                  return;
-                }
+          const tempFiles = res.tempFiles.map((file: any) => ({
+            url: file.tempFilePath,
+            type: file.fileType === "video" ? "video" : "image",
+            ...(file.fileType === "video"
+              ? { durationSec: file.duration }
+              : {}),
+          }));
+          const compressedFiles = await Promise.all(
+            tempFiles.map((file) => this.compressMediaFile(file)),
+          );
 
-                // 关键
-                if (res.statusCode !== 200) {
-                  reject({
-                    statusCode: res.statusCode,
-                    message: data?.error || "上传失败",
-                  });
-                  return;
-                }
+          wx.showLoading({ title: "上传中..." });
 
-                resolve({
-                  ...file,
-                  url: data.url,
-                });
-              },
-              fail: reject,
-            });
+          const token = wx.getStorageSync("accessToken") || "";
+          const timestamp = Date.now();
+          const dateStr = formatDate(new Date(), "YYYYMMDD");
+          const files = await Promise.all(
+            compressedFiles.map((file) =>
+              this.uploadMediaFile(file, token, dateStr, timestamp),
+            ),
+          );
+
+          this.setData({
+            imageList: [...this.data.imageList, ...files],
           });
-        });
-        Promise.all(uploadTasks)
-          .then((files) => {
-            console.log("files:", files);
-            this.setData({
-              imageList: [...this.data.imageList, ...files],
-            });
-            this.checkCanPublish();
-          })
-          .catch((err) => {
-            console.log("err:", err);
-            wx.showModal({
-              title: "上传失败",
-              content: err,
-              showCancel: false,
-            });
-            console.error(err);
+          this.checkCanPublish();
+        } catch (err: any) {
+          wx.showModal({
+            title: "上传失败",
+            content: err?.message || "请稍后重试",
+            showCancel: false,
           });
+          console.error(err);
+        } finally {
+          wx.hideLoading();
+        }
       },
     });
   },
@@ -513,7 +577,7 @@ Page({
   // 检查是否可以发布
   checkCanPublish() {
     const {
-      track,
+      selectedActivity,
       selectedType,
       title,
       content,
@@ -523,7 +587,7 @@ Page({
     } = this.data;
 
     const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
-      track || {};
+      selectedActivity || { mediaRequirements: {} };
 
     let canPublish = true;
 
@@ -613,10 +677,14 @@ Page({
       audioDuration,
     } = this.data;
     const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
-      selectedActivity;
+      selectedActivity || { mediaRequirements: {} };
     console.log("images:", images);
     console.log("audio:", audio);
     console.log("video:", video);
+    const imageCount = imageList.filter(
+      (image) => image.type === "image",
+    ).length;
+    const videoCount = imageList.filter((i) => i.type === "video").length;
     if (images.required) {
       const imageListForImage = imageList.filter(
         (image) => image.type === "image",
@@ -635,20 +703,6 @@ Page({
       }
     }
 
-    if (video.required) {
-      const imageCount = imageList.filter(
-        (image) => image.type === "image",
-      ).length;
-      const videoCount = imageList.filter((i) => i.type === "video").length;
-      if (videoCount > 0 && imageCount === 0) {
-        wx.showModal({
-          title: "提示",
-          content: "请上传视频封面图",
-          showCancel: false,
-        });
-        return;
-      }
-    }
     if (audio.required) {
       if (!audioUrl) {
         wx.showModal({
@@ -668,9 +722,23 @@ Page({
       }
     }
 
+    if (videoCount > 0 && imageCount === 0) {
+      wx.showModal({
+        title: "提示",
+        content: "请至少上传一张图片",
+        showCancel: false,
+      });
+      return;
+    }
+
+    let imageSortOrder = 0;
     const mediaList = [
       ...(imageList.length
-        ? imageList.map((m, index) => ({ ...m, sortOrder: index }))
+        ? imageList.map((m: any) =>
+            m.type === "image"
+              ? { ...m, sortOrder: imageSortOrder++ }
+              : { ...m },
+          )
         : []),
       ...(audioUrl
         ? [

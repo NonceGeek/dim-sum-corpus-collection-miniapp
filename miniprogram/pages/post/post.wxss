@@ -160,6 +160,7 @@
   font-size: 32rpx;
   border-radius: var(--radius-md);
   background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
   padding: 0 16rpx;
 }
 
@@ -860,6 +861,7 @@
   gap: 10rpx;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
 }
 
 .hot-icon {

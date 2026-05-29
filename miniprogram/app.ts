@@ -5,7 +5,7 @@ import { IAppOption } from "../typings";
 // 主题类型定义
 export type ThemeMode = "auto" | "light" | "dark";
 export type ThemeValue = "light" | "dark";
-export const STATIC_FILE = "/public/image/yue.webp";
+export const STATIC_FILE = "/public/image/yue.jpg";
 let loginPromise: Promise<string> | null = null;
 
 App<IAppOption>({

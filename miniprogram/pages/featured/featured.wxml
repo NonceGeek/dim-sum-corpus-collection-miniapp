@@ -54,7 +54,7 @@
             </block>
             <block wx:else>
               <view class="empty-work-stage {{index === currentIndex ? 'is-active' : ''}}">
-                <image class="empty-work-image" src="{{track.bannerUrl ? track.bannerUrl :'/public/image/yue.webp'}}"
+                <image class="empty-work-image" src="{{track.bannerUrl ? track.bannerUrl :'/public/image/yue.jpg'}}"
                   mode="aspectFill" />
                 <view class="firework-layer">
                   <view class="firework firework-1"></view>
