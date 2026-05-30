@@ -493,6 +493,9 @@
 .record-cancel.visible {
   opacity: 1;
   pointer-events: auto;
+  transform: translate(calc(-100% - 72rpx), -70rpx) rotate(-12deg);
+}
+.record-btn-area.actions-entering .record-cancel.visible {
   animation: appear-left 0.7s ease-out forwards;
 }
 
@@ -507,7 +510,7 @@
   }
   100% {
     opacity: 1;
-    transform: translate(-160rpx, -70rpx) rotate(-12deg);
+    transform: translate(calc(-100% - 72rpx), -70rpx) rotate(-12deg);
   }
 }
 
@@ -519,6 +522,9 @@
 .record-asr.visible {
   opacity: 1;
   pointer-events: auto;
+  transform: translate(72rpx, -70rpx) rotate(12deg);
+}
+.record-btn-area.actions-entering .record-asr.visible {
   animation: appear-right 0.7s ease-out forwards;
 }
 .record-asr .record-side-text {
@@ -536,7 +542,7 @@
   }
   100% {
     opacity: 1;
-    transform: translate(40rpx, -70rpx) rotate(12deg);
+    transform: translate(72rpx, -70rpx) rotate(12deg);
   }
 }
 
@@ -586,11 +592,11 @@
 }
 .record-cancel.hover {
   animation: none;
-  transform: translate(-160rpx, -70rpx) rotate(-12deg) scale(1.08);
+  transform: translate(calc(-100% - 72rpx), -70rpx) rotate(-12deg) scale(1.08);
 }
 .record-asr.hover {
   animation: none;
-  transform: translate(40rpx, -70rpx) rotate(12deg) scale(1.08);
+  transform: translate(72rpx, -70rpx) rotate(12deg) scale(1.08);
 }
 .record-side-btn.hover .record-side-text {
   color: #fff;

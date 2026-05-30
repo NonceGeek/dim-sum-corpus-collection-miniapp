@@ -187,7 +187,7 @@
       close-on-overlay-click="{{true}}">
       <view class="record-popup">
         <view class="record-hint">长按录音，滑向左侧取消，滑向右侧转文字</view>
-        <view class="record-btn-area">
+        <view class="record-btn-area {{recordActionsAnimating ? 'actions-entering' : ''}}">
           <view
             class="record-side-btn record-cancel {{recording ? 'visible' : ''}} {{hoverTarget === 'cancel' ? 'hover' : ''}}">
             <t-icon name="close-circle" size="28" color="var(--text-muted)" />

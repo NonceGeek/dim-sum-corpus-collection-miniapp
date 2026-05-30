@@ -56,8 +56,10 @@ Page({
     // 录音弹窗
     recordPopupVisible: false,
     recording: false,
+    recordActionsAnimating: false,
     recordTime: 0,
     recordTimer: null as any,
+    recordActionsAnimationTimer: null as any,
     touchStartTime: 0,
     touchStartTimer: null as number | null,
     touchStartX: 0,
@@ -108,6 +110,9 @@ Page({
   onUnload() {
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
+    }
+    if (this.data.recordActionsAnimationTimer) {
+      clearTimeout(this.data.recordActionsAnimationTimer);
     }
     if (this.recorderManager) {
       this.recorderManager.stop();
@@ -418,7 +423,7 @@ Page({
         ? `&keyword=${encodeURIComponent(activityKeyword)}`
         : "";
       const res = await request(
-        `/activities?page=${activityPage}&pageSize=10${keyword}`,
+        `/activities?timeStatus=ongoing&page=${activityPage}&pageSize=10${keyword}`,
       );
       const items = (res.items || []).map((item: any) => ({
         id: item.id,
@@ -824,7 +829,10 @@ Page({
         });
         this.recorderManager.stop();
       }
-      this.setData({ recordPopupVisible: false });
+      this.setData({
+        recordPopupVisible: false,
+        recordActionsAnimating: false,
+      });
     }
   },
 
@@ -950,8 +958,21 @@ Page({
   doStartRecord() {
     this.setData({
       recording: true,
+      recordActionsAnimating: true,
       recordTime: 0,
     });
+
+    if (this.data.recordActionsAnimationTimer) {
+      clearTimeout(this.data.recordActionsAnimationTimer);
+    }
+
+    const animationTimer = setTimeout(() => {
+      this.setData({
+        recordActionsAnimating: false,
+        recordActionsAnimationTimer: null,
+      });
+    }, 700);
+    this.setData({ recordActionsAnimationTimer: animationTimer });
 
     const timer = setInterval(() => {
       this.setData({
@@ -1072,6 +1093,9 @@ Page({
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
+    if (this.data.recordActionsAnimationTimer) {
+      clearTimeout(this.data.recordActionsAnimationTimer);
+    }
     const { tempFilePath, duration } = res;
     const durationSec = Math.ceil(duration / 1000);
 
@@ -1080,8 +1104,10 @@ Page({
     // 重置录音状态
     this.setData({
       recording: false,
+      recordActionsAnimating: false,
       recordTime: 0,
       recordTimer: null,
+      recordActionsAnimationTimer: null,
     });
 
     // 丢弃模式
