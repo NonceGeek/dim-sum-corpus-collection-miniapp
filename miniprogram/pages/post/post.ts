@@ -7,11 +7,11 @@ Page({
     mode: "",
     currentTheme: "light",
     post: {} as any,
-    postActionsVisible: false,
+    // postActionsVisible: false,
     selectedType: "",
-    selectedActivity: null as { id: string; title: string } | null,
+    selectedActivity: {} as any | null,
     activityPopupVisible: false,
-    activityList: [] as { id: string; title: string }[],
+    activityList: [] as { id: string; title: string; description: string }[],
     activityPage: 1,
     activityNoMore: false,
     activityLoading: false,
@@ -35,7 +35,6 @@ Page({
     topicPopupVisible: false,
     topicSearchKeyword: "",
     filteredTopicList: [] as string[],
-    // TODO
     availableTopics: [
       "日常用语",
       "方言特色",
@@ -119,8 +118,10 @@ Page({
     }
   },
   async loadTrack(id: string) {
+    wx.showLoading({ title: "加载活动中..." });
     try {
       const track = await request(`/activities/${id}`);
+      wx.hideLoading();
       this.setData({
         ...(track.submissionTypes.length
           ? {
@@ -137,6 +138,7 @@ Page({
         selectedActivity: track,
       });
     } catch (err: any) {
+      wx.hideLoading();
       console.log("获取活动数据失败", err);
       wx.showModal({
         title: "获取活动数据失败",
@@ -147,9 +149,25 @@ Page({
   },
 
   async loadPost(id: string) {
+    wx.showLoading({ title: "加载中..." });
     try {
       const res = await request(`/submissions/${id}`);
-      // TODO：缺参加的活动
+      console.log("select:", this.data.selectedActivity);
+      let selectedActivity = {};
+
+      if (
+        JSON.stringify(this.data.selectedActivity) === "{}" &&
+        res.activity &&
+        res.activity.id
+      ) {
+        selectedActivity = await request(`/activities/${res.activity.id}`);
+      }
+      wx.hideLoading();
+      console.log("res:", res);
+      console.log(
+        "audio:",
+        res.media.find((m) => m.type === "audio")?.url || "",
+      );
       this.setData({
         post: res,
 
@@ -169,8 +187,12 @@ Page({
         audioUrl: res.media.find((m) => m.type === "audio")?.url || "",
         audioDuration:
           res.media.find((m) => m.type === "audio")?.durationSec || 0,
+        selectedActivity,
+        selectedType: res.submissionType,
       });
+      this.checkCanPublish();
     } catch (err: any) {
+      wx.hideLoading();
       console.log("获取投稿数据失败：", err);
       wx.showModal({
         title: "获取投稿数据失败",
@@ -325,7 +347,6 @@ Page({
     const mediaRequirements =
       this.data.selectedActivity?.mediaRequirements || {};
     const images = mediaRequirements?.images || {};
-    const audio = mediaRequirements?.audio || {};
     const video = mediaRequirements?.video || {};
     const maxDuration = (video.required && video.maxDurationSec) || 30;
     const mediaType =
@@ -355,6 +376,19 @@ Page({
               ? { durationSec: file.duration }
               : {}),
           }));
+          const overDurationVideo = tempFiles.find(
+            (file) => file.type === "video" && file.durationSec > maxDuration,
+          );
+
+          if (overDurationVideo) {
+            wx.showModal({
+              title: "提示",
+              content: "视频不能多于" + maxDuration + "秒",
+              showCancel: false,
+            });
+            return;
+          }
+
           const compressedFiles = await Promise.all(
             tempFiles.map((file) => this.compressMediaFile(file)),
           );
@@ -428,6 +462,7 @@ Page({
       const items = (res.items || []).map((item: any) => ({
         id: item.id,
         title: item.title,
+        description: item.description,
       }));
       this.setData({
         activityList: activityPage === 1 ? items : [...activityList, ...items],
@@ -579,8 +614,7 @@ Page({
     this.setData({ selectedTopics, selectedTopicMap });
   },
 
-  // 检查是否可以发布
-  checkCanPublish() {
+  getPublishValidation() {
     const {
       selectedActivity,
       selectedType,
@@ -594,51 +628,69 @@ Page({
     const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
       selectedActivity || { mediaRequirements: {} };
 
-    let canPublish = true;
-
-    // 必须选类型
     if (!selectedType) {
-      canPublish = false;
+      return { canPublish: false, message: "请选择类型" };
     }
 
-    // 内容至少有一个
     const hasBasicContent =
       title.trim() || content.trim() || imageList.length > 0 || audioUrl;
 
     if (!hasBasicContent) {
-      canPublish = false;
+      return { canPublish: false, message: "请填写内容或上传媒体" };
     }
 
-    // 图片校验
     if (images.required) {
       const imageCount = imageList.filter((i) => i.type === "image").length;
+      const imageMin = images.min || 0;
+      const imageMax = images.max || Infinity;
 
-      if (
-        imageCount < (images.min || 0) ||
-        imageCount > (images.max || Infinity)
-      ) {
-        canPublish = false;
+      if (imageCount < imageMin || imageCount > imageMax) {
+        return {
+          canPublish: false,
+          message:
+            "图片不能少于" + imageMin + "张,并且不能大于" + imageMax + "张",
+        };
       }
     }
 
-    if (video.required) {
-      const videoCount = imageList.filter((i) => i.type === "video").length;
-      const imageCount = imageList.filter((i) => i.type === "image").length;
-      if (videoCount && imageCount === 0) {
-        canPublish = false;
-      }
+    const videoCount = imageList.filter((i) => i.type === "video").length;
+    const imageCount = imageList.filter((i) => i.type === "image").length;
+    if (videoCount > 0 && imageCount === 0) {
+      return { canPublish: false, message: "请至少上传一张图片" };
     }
+
+    const maxVideoDuration = (video.required && video.maxDurationSec) || 30;
+    const overDurationVideo = imageList.find(
+      (i) =>
+        i.type === "video" && i.durationSec && i.durationSec > maxVideoDuration,
+    );
+    if (overDurationVideo) {
+      return {
+        canPublish: false,
+        message: "视频不能多于" + maxVideoDuration + "秒",
+      };
+    }
+
     if (audio.required) {
-      // 音频校验
       if (!audioUrl) {
-        canPublish = false;
+        return { canPublish: false, message: "请上传录音" };
       }
 
       if (audioDuration > (audio.maxDurationSec || Infinity)) {
-        canPublish = false;
+        return {
+          canPublish: false,
+          message: "录音不能多于" + audio.maxDurationSec + "秒",
+        };
       }
     }
 
+    return { canPublish: true, message: "" };
+  },
+
+  // 检查是否可以发布
+  checkCanPublish() {
+    const { canPublish, message } = this.getPublishValidation();
+    console.log("message:", message);
     this.setData({ canPublish });
   },
   // 取消发布
@@ -669,8 +721,19 @@ Page({
 
   // 发布内容
   async onPublish() {
-    if (!this.data.canPublish) return;
+    const validation = this.getPublishValidation();
+    if (!validation.canPublish) {
+      if (validation.message) {
+        wx.showModal({
+          title: "提示",
+          content: validation.message,
+          showCancel: false,
+        });
+      }
+      return;
+    }
 
+    wx.showLoading({ title: "正在提交中..." });
     const {
       selectedActivity,
       selectedType,
@@ -681,60 +744,6 @@ Page({
       audioUrl,
       audioDuration,
     } = this.data;
-    const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
-      selectedActivity || { mediaRequirements: {} };
-    console.log("images:", images);
-    console.log("audio:", audio);
-    console.log("video:", video);
-    const imageCount = imageList.filter(
-      (image) => image.type === "image",
-    ).length;
-    const videoCount = imageList.filter((i) => i.type === "video").length;
-    if (images.required) {
-      const imageListForImage = imageList.filter(
-        (image) => image.type === "image",
-      );
-      if (
-        imageListForImage.length < images.min ||
-        imageListForImage.length > images.max
-      ) {
-        wx.showModal({
-          title: "提示",
-          content:
-            "图片不能少于" + images.min + "张,并且不能大于" + images.max + "张",
-          showCancel: false,
-        });
-        return;
-      }
-    }
-
-    if (audio.required) {
-      if (!audioUrl) {
-        wx.showModal({
-          title: "提示",
-          content: "请上传录音",
-          showCancel: false,
-        });
-        return;
-      }
-      if (audioDuration > audio.maxDurationSec) {
-        wx.showModal({
-          title: "提示",
-          content: "录音不能多于" + audio.maxDurationSec + "秒",
-          showCancel: false,
-        });
-        return;
-      }
-    }
-
-    if (videoCount > 0 && imageCount === 0) {
-      wx.showModal({
-        title: "提示",
-        content: "请至少上传一张图片",
-        showCancel: false,
-      });
-      return;
-    }
 
     let imageSortOrder = 0;
     const mediaList = [
@@ -771,48 +780,60 @@ Page({
         verdict: "pass",
       },
     };
-
-    // TODO: precheck
-    // const precheck = await request("/submissions/precheck", {
-    //   method: "POST",
-    //   data: {
-    //     title: publishData.title,
-    //     intro: publishData.content,
-    //     images: publishData.images,
-    //   },
-    // });
-    // if (precheck.verdict === "pass") {
-    console.log("发布内容：", publishData);
-
-    const submission = await request("/submissions", {
+    const imagePrecheck = mediaList
+      .map((m) => {
+        if (m.type === "image") {
+          return m.url;
+        }
+        return null;
+      })
+      .filter((m) => m);
+    const precheck = await request("/submissions/precheck", {
       method: "POST",
-      data: publishData,
+      data: {
+        title: publishData.title,
+        intro: publishData.intro,
+        images: imagePrecheck,
+      },
     });
-    if (submission.error) {
-      wx.showModal({
-        title: "错误提示",
-        content: submission.error,
-        showCancel: false,
+    console.log("precheck:", precheck);
+    if (precheck.verdict === "pass") {
+      console.log("发布内容：", publishData);
+
+      const existedPostEdit = this.data.post?.id ? true : false;
+      const url = existedPostEdit
+        ? `/submissions/${this.data.post.id}`
+        : "/submissions";
+      const submission = await request(url, {
+        method: existedPostEdit ? "PATCH" : "POST",
+        data: publishData,
       });
-      return;
+      wx.hideLoading();
+      if (submission.error) {
+        wx.showModal({
+          title: "错误提示",
+          content: submission.error,
+          showCancel: false,
+        });
+        return;
+      } else {
+        wx.showModal({
+          title: "提示",
+          content: submission.message,
+          showCancel: false,
+        });
+        setTimeout(() => {
+          wx.navigateBack();
+        }, 1500);
+      }
     } else {
+      wx.hideLoading();
       wx.showModal({
         title: "提示",
-        content: submission.message,
+        content: precheck.error,
         showCancel: false,
       });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
     }
-    // } else {
-    //   // TODO precheck检查出错
-    //   wx.showModal({
-    //     title: "提示",
-    //     content: "内容存在不安全信息，请处理",
-    //     showCancel: false,
-    //   });
-    // }
   },
 
   // 切换录音弹窗
@@ -1088,6 +1109,45 @@ Page({
       },
     });
   },
+
+  uploadAudioFile(filePath: string) {
+    return new Promise<string>((resolve, reject) => {
+      const token = wx.getStorageSync("accessToken") || "";
+      const dateStr = formatDate(new Date(), "YYYYMMDD");
+      const timestamp = Date.now();
+
+      wx.uploadFile({
+        url: `${ENV.API_BASE_URL}/upload`,
+        filePath,
+        name: "file",
+        formData: {
+          fileName: `${dateStr}_corpus_collection_audio_${timestamp}.mp3`,
+        },
+        header: {
+          Authorization: `Bearer ${token}`,
+        },
+        success: (uploadRes) => {
+          let data: any = {};
+
+          try {
+            data = JSON.parse(uploadRes.data);
+          } catch (err) {
+            reject(new Error("返回数据解析失败"));
+            return;
+          }
+
+          if (uploadRes.statusCode !== 200) {
+            reject(new Error(data?.error || "上传失败"));
+            return;
+          }
+
+          resolve(data.url);
+        },
+        fail: reject,
+      });
+    });
+  },
+
   async handleRecordStop(res: any) {
     console.log("录音结束：", res);
     if (this.data.recordTimer) {
@@ -1118,15 +1178,33 @@ Page({
 
     // 普通录音
     if (recordMode === "normal") {
-      this.setData({
-        audioUrl: tempFilePath,
-        audioDuration: durationSec,
-      });
+      try {
+        wx.showLoading({
+          title: "上传中...",
+        });
 
-      wx.showToast({
-        title: `录音完成 ${durationSec}秒`,
-        icon: "success",
-      });
+        const audioUrl = await this.uploadAudioFile(tempFilePath);
+
+        this.setData({
+          audioUrl,
+          audioDuration: durationSec,
+        });
+        this.checkCanPublish();
+
+        wx.showToast({
+          title: `录音完成 ${durationSec}秒`,
+          icon: "success",
+        });
+      } catch (err: any) {
+        console.error(err);
+
+        wx.showToast({
+          title: err.error || err.message || "上传失败",
+          icon: "none",
+        });
+      } finally {
+        wx.hideLoading();
+      }
 
       return;
     }
@@ -1138,42 +1216,28 @@ Page({
           title: "上传中...",
         });
 
-        const token = wx.getStorageSync("accessToken") || "";
-        const dateStr = formatDate(new Date(), "YYYYMMDD");
-        const timestamp = Date.now();
-
-        const uploadRes = await new Promise<any>((resolve, reject) => {
-          wx.uploadFile({
-            url: `${ENV.API_BASE_URL}/upload`,
-            filePath: tempFilePath,
-            name: "file",
-            formData: {
-              fileName: `${dateStr}_corpus_collection_audio_${timestamp}.mp3`,
-            },
-            header: {
-              Authorization: `Bearer ${token}`,
-            },
-            success: resolve,
-            fail: reject,
-          });
-        });
+        const audioUrl = await this.uploadAudioFile(tempFilePath);
 
         wx.hideLoading();
 
-        const data = JSON.parse(uploadRes.data);
-
         this.setData({
-          pendingAudioUrl: data.url,
+          pendingAudioUrl: audioUrl,
           pendingAudioDuration: durationSec,
           asrText: "（转换中...）",
           asrPopupVisible: true,
           recordPopupVisible: false,
         });
 
-        // TODO: 这里接 ASR
+        const asrRes = await request("/transcriptions", {
+          method: "POST",
+          data: {
+            audioUrl,
+          },
+        });
+        console.log("asrRes:", asrRes);
         setTimeout(() => {
           this.setData({
-            asrText: "",
+            asrText: asrRes.text,
           });
         }, 800);
       } catch (err) {
@@ -1182,7 +1246,7 @@ Page({
         console.error(err);
 
         wx.showToast({
-          title: "上传失败",
+          title: err.error || err.errMsg || "上传失败",
           icon: "none",
         });
       }
@@ -1204,13 +1268,13 @@ Page({
   },
 
   // 查看模式：显示操作弹窗
-  onShowPostActions() {
-    this.setData({ postActionsVisible: true });
-  },
+  // onShowPostActions() {
+  //   this.setData({ postActionsVisible: true });
+  // },
 
-  onPostActionsClose() {
-    this.setData({ postActionsVisible: false });
-  },
+  // onPostActionsClose() {
+  //   this.setData({ postActionsVisible: false });
+  // },
 
   // 查看模式：跳转编辑
   onEditPost() {
@@ -1219,25 +1283,25 @@ Page({
     wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=edit` });
   },
 
-  onDeletePost() {
-    this.setData({ postActionsVisible: false });
-    wx.showModal({
-      title: "确认删除",
-      content: "删除后无法恢复，确定要删除吗？",
-      confirmColor: "#f62459",
-      success: async (res) => {
-        if (!res.confirm) return;
-        try {
-          const id = (this.data.post as any).id;
-          await request(`/submissions/${id}`, { method: "DELETE" });
-          wx.showToast({ title: "已删除", icon: "success" });
-          setTimeout(() => wx.navigateBack(), 1500);
-        } catch (err: any) {
-          wx.showToast({ title: err.error || "删除失败", icon: "none" });
-        }
-      },
-    });
-  },
+  // onDeletePost() {
+  //   this.setData({ postActionsVisible: false });
+  //   wx.showModal({
+  //     title: "确认删除",
+  //     content: "删除后无法恢复，确定要删除吗？",
+  //     confirmColor: "#f62459",
+  //     success: async (res) => {
+  //       if (!res.confirm) return;
+  //       try {
+  //         const id = (this.data.post as any).id;
+  //         await request(`/submissions/${id}`, { method: "DELETE" });
+  //         wx.showToast({ title: "已删除", icon: "success" });
+  //         setTimeout(() => wx.navigateBack(), 1500);
+  //       } catch (err: any) {
+  //         wx.showToast({ title: err.error || "删除失败", icon: "none" });
+  //       }
+  //     },
+  //   });
+  // },
   onViewNavbarBack() {
     wx.navigateBack();
   },

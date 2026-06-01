@@ -108,7 +108,7 @@ Page({
 
       wx.showModal({
         title: "获取失败",
-        content: err.error || "请稍后再试",
+        content: err.error || err.errMsg + "，请稍后再试",
         showCancel: false,
       });
     } finally {
@@ -142,7 +142,7 @@ Page({
       console.log("获取我的参赛活动数据出错：", err);
       wx.showModal({
         title: "获取我的参赛活动数据出错",
-        content: err.error,
+        content: err.error || err.errMsg + "，请稍后重试",
         showCancel: false,
       });
     }

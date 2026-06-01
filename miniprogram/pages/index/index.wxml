@@ -18,6 +18,7 @@
     <view class="loading-tip" wx:elif="{{noMore}}">
       <text>没有更多了</text>
     </view>
+    <view class="load-more-trigger"></view>
   </view>
 
   <!-- Tab Bar -->

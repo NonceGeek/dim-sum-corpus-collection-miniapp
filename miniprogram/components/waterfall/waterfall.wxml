@@ -4,42 +4,39 @@
       <view wx:if="{{index % 2 === 0}}" class="waterfall-item" bind:tap="onItemTap" data-index="{{index}}"
         data-id="{{item.id}}">
         <view class="cover-wrap">
-          <view wx:if="{{showStatus && (
-            item.reviewStatus === 'pending_review' ||
-            item.reviewStatus === 'ai_reviewing' ||
-            item.reviewStatus === 'review_needed' ||
-            item.reviewStatus === 'rejected'
-          )}}" class="work-status status-{{item.reviewStatus}}">
-            <t-icon name="verified" size="32rpx" color="#fff" t-class="icon-class" />
-
-            {{
+          <view class="badge-label">
+            <view wx:if="{{showStatus && (
               item.reviewStatus === 'pending_review' ||
               item.reviewStatus === 'ai_reviewing' ||
-              item.reviewStatus === 'review_needed'
-                ? '审核中'
-                : '审核失败'
-            }}
+              item.reviewStatus === 'review_needed' ||
+              item.reviewStatus === 'rejected'
+            )}}" class="work-status status-{{item.reviewStatus}}">
+              <view class="work-status-icon">
+                <t-icon name="verified" size="24rpx" color="#fff" t-class="icon-class" />
+              </view>
+              <view class="work-status-text" wx:if="{{item.reviewStatus === 'pending_review' || item.reviewStatus === 'ai_reviewing' || item.reviewStatus === 'review_needed'}}">审核中</view>
+              <view class="work-status-text" wx:else>审核失败</view>
+            </view>
+            <view wx:if="{{showStatus && item.reviewStatus === 'approved' && (
+              item.awardStatus === 'awarded' ||
+              item.awardStatus === 'claimed' ||
+              item.awardStatus === 'expired'
+            )}}" class="work-status status-{{item.awardStatus}}">
+              <view class="work-status-icon">
+                <t-icon name="gift" size="24rpx" color="#fff" t-class="icon-class"/>
+              </view>
+              <view class="work-status-text" wx:if="{{item.awardStatus === 'awarded'}}">已获奖</view>
+              <view class="work-status-text" wx:elif="{{item.awardStatus === 'claimed'}}">已兑奖</view>
+              <view class="work-status-text" wx:else>已过期</view>
+            </view>
+            <view wx:if="{{showFeatured && item.isFeatured && item.reviewStatus === 'approved'}}" class="work-status status-pending_review">
+              <view class="work-status-icon">
+                <t-icon name="star" size="24rpx" color="#fff" t-class="icon-class"/>
+              </view>
+              <view class="work-status-text">精选</view>
+            </view>
           </view>
-          <view wx:if="{{showStatus && (
-            item.awardStatus === 'awarded' ||
-            item.awardStatus === 'claimed' ||
-            item.awardStatus === 'expired'
-          )}}" class="work-status status-{{item.awardStatus}}">
-            <t-icon name="gift" size="32rpx" color="#fff" t-class="icon-class"/>
-
-            {{
-              item.awardStatus === 'awarded'
-                ? '已获奖'
-                : item.awardStatus === 'claimed'
-                  ? '已兑奖'
-                  : '已过期'
-            }}
-          </view>
-          <view wx:if="{{showFeatured && item.isFeatured}}" class="work-status status-pending_review">
-            <t-icon name="star" size="32rpx" color="#fff" t-class="icon-class"/>
-            精选
-          </view>
-          <image src="{{item.coverUrl}}" mode="{{showStatus ? 'aspectFill' : 'widthFix'}}"
+          <image src="{{item.coverUrl}}" mode="widthFix"
             class="card-image" />
         </view>
         <view class="card-title">
@@ -66,43 +63,40 @@
     <block wx:for="{{items}}" wx:key="id">
       <view wx:if="{{index % 2 === 1}}" class="waterfall-item" bind:tap="onItemTap" data-index="{{index}}"
         data-id="{{item.id}}">
-         <view class="cover-wrap">
-          <view wx:if="{{showStatus && (
-            item.reviewStatus === 'pending_review' ||
-            item.reviewStatus === 'ai_reviewing' ||
-            item.reviewStatus === 'review_needed' ||
-            item.reviewStatus === 'rejected'
-          )}}" class="work-status status-{{item.reviewStatus}}">
-            <t-icon name="verified" size="32rpx" color="#fff" t-class="icon-class" />
-
-            {{
+        <view class="cover-wrap">
+          <view class="badge-label">
+            <view wx:if="{{showStatus && (
               item.reviewStatus === 'pending_review' ||
               item.reviewStatus === 'ai_reviewing' ||
-              item.reviewStatus === 'review_needed'
-                ? '审核中'
-                : '审核失败'
-            }}
+              item.reviewStatus === 'review_needed' ||
+              item.reviewStatus === 'rejected'
+            )}}" class="work-status status-{{item.reviewStatus}}">
+              <view class="work-status-icon">
+                <t-icon name="verified" size="24rpx" color="#fff" t-class="icon-class" />
+              </view>
+              <view class="work-status-text" wx:if="{{item.reviewStatus === 'pending_review' || item.reviewStatus === 'ai_reviewing' || item.reviewStatus === 'review_needed'}}">审核中</view>
+              <view class="work-status-text" wx:else>审核失败</view>
+            </view>
+            <view wx:if="{{showStatus && item.reviewStatus === 'approved' && (
+              item.awardStatus === 'awarded' ||
+              item.awardStatus === 'claimed' ||
+              item.awardStatus === 'expired'
+            )}}" class="work-status status-{{item.awardStatus}}">
+              <view class="work-status-icon">
+                <t-icon name="gift" size="24rpx" color="#fff" t-class="icon-class"/>
+              </view>
+              <view class="work-status-text" wx:if="{{item.awardStatus === 'awarded'}}">已获奖</view>
+              <view class="work-status-text" wx:elif="{{item.awardStatus === 'claimed'}}">已兑奖</view>
+              <view class="work-status-text" wx:else>已过期</view>
+            </view>
+            <view wx:if="{{showFeatured && item.isFeatured  && item.reviewStatus === 'approved'}}" class="work-status status-pending_review">
+              <view class="work-status-icon">
+                <t-icon name="star" size="24rpx" color="#fff" t-class="icon-class" />
+              </view>
+              <view class="work-status-text">精选</view>
+            </view>
           </view>
-          <view wx:if="{{showStatus && (
-            item.awardStatus === 'awarded' ||
-            item.awardStatus === 'claimed' ||
-            item.awardStatus === 'expired'
-          )}}" class="work-status status-{{item.awardStatus}}">
-            <t-icon name="gift" size="32rpx" color="#fff" t-class="icon-class"/>
-
-            {{
-              item.awardStatus === 'awarded'
-                ? '已获奖'
-                : item.awardStatus === 'claimed'
-                  ? '已兑奖'
-                  : '已过期'
-            }}
-          </view>
-          <view wx:if="{{showFeatured && item.isFeatured}}" class="work-status status-pending_review">
-            <t-icon name="star" size="32rpx" color="#fff" t-class="icon-class" />
-            精选
-          </view>
-          <image src="{{item.coverUrl}}" mode="{{showStatus ? 'aspectFill' : 'widthFix'}}"
+          <image src="{{item.coverUrl}}" mode="widthFix"
             class="card-image" />
         </view>
         <view class="card-title">

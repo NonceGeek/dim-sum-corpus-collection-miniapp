@@ -105,7 +105,7 @@ Page({
       } else {
         wx.showModal({
           title: "错误提示",
-          content: err.error + "，清稍后再试",
+          content: err.error || err.errMsg + "，清稍后再试",
           showCancel: false,
         });
       }
@@ -113,7 +113,7 @@ Page({
       console.log("消息已读接口报错：", err);
       wx.showModal({
         title: "错误提示",
-        content: err.error + "，清稍后再试",
+        content: err.error || err.errMsg + "，清稍后再试",
         showCancel: false,
       });
     }
@@ -162,7 +162,7 @@ Page({
       console.log("将所有消息标记为已读出错：", err);
       wx.showModal({
         title: "错误提示",
-        content: err.error + "，请稍后重试",
+        content: err.error || err.errMsg + "，请稍后重试",
         showCancel: false,
       });
     }

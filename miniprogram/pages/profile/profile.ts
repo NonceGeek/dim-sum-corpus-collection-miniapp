@@ -28,15 +28,18 @@ Page({
     unreadNotificationCount: 0,
   },
   async onLoad() {
+    this.syncUserInfo();
+    await this.loadProfileSummary();
+  },
+
+  syncUserInfo() {
     const app = getApp<any>();
     const { name, avatar } =
       wx.getStorageSync("userInfo") || app?.globalData?.userInfo || {};
-    console.log("name:", name, avatar);
     this.setData({
       username: name,
       avatar,
     });
-    await this.loadProfileSummary();
   },
 
   async loadProfileSummary() {
@@ -47,7 +50,7 @@ Page({
         submissionCount,
         unreadNotificationCount,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.log("获取用户数据出错：", err);
       wx.showModal({
         title: "获取用户数据出错",
@@ -67,6 +70,14 @@ Page({
   onShow() {
     // 每次显示页面时同步主题状态
     this.syncTheme();
+  },
+
+  onPullDownRefresh() {
+    this.syncUserInfo();
+    this.syncTheme();
+    this.loadProfileSummary().finally(() => {
+      wx.stopPullDownRefresh();
+    });
   },
 
   /**

@@ -24,11 +24,22 @@ Page({
     noMore: false,
     activeTab: "home",
   },
+  loadMoreObserver: null as any,
 
   async onLoad() {
     this.syncTheme();
     await this.loadSwiperData();
     await this.loadCardList();
+    wx.nextTick(() => {
+      this.initLoadMoreObserver();
+    });
+  },
+
+  onUnload() {
+    if (this.loadMoreObserver) {
+      this.loadMoreObserver.disconnect();
+      this.loadMoreObserver = null;
+    }
   },
 
   onShow() {
@@ -57,7 +68,7 @@ Page({
     } catch (err: any) {
       console.error("加载轮播图失败", err);
       wx.showToast({
-        title: err.error,
+        title: err.error || err.errMsg,
         icon: "none",
         duration: 2000,
       });
@@ -70,27 +81,54 @@ Page({
     this.setData({ loading: true });
 
     try {
-      const { page } = this.data;
+      const { page, pageSize } = this.data;
       const res = await request(
-        `/home/submissions?page=${page}&pageSize=20&sort=latest`,
+        `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
       );
       const { items } = res;
       const newList = items;
       const isFirstPage = this.data.page === 1;
       this.setData({
         cardList: isFirstPage ? newList : [...this.data.cardList, ...newList],
-        noMore: items ? newList.length < this.data.pageSize : false,
+        noMore: items ? newList.length < pageSize : false,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("加载卡片列表失败", err);
+      wx.showToast({
+        title: err.error || err.errMsg,
+        icon: "none",
+        duration: 2000,
+      });
     } finally {
       this.setData({ loading: false });
     }
   },
 
+  loadNextPage() {
+    if (this.data.loading || this.data.noMore) return;
+
+    this.setData({ page: this.data.page + 1 }, () => {
+      this.loadCardList();
+    });
+  },
+
+  initLoadMoreObserver() {
+    if (this.loadMoreObserver) {
+      this.loadMoreObserver.disconnect();
+    }
+
+    this.loadMoreObserver = wx.createIntersectionObserver(this);
+    this.loadMoreObserver
+      .relativeToViewport({ bottom: 240 })
+      .observe(".load-more-trigger", (res) => {
+        if (res.intersectionRatio > 0) {
+          this.loadNextPage();
+        }
+      });
+  },
+
   onReachBottom() {
-    this.setData({ page: this.data.page + 1 });
-    this.loadCardList();
+    this.loadNextPage();
   },
 
   onPullDownRefresh() {

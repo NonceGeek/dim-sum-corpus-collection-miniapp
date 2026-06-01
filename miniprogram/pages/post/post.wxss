@@ -218,6 +218,7 @@
 
 /* 录音播放组件 */
 .audio-player {
+  width: fit-content;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -225,7 +226,7 @@
   margin-bottom: 16rpx;
   background-color: var(--bg-input);
   border-radius: var(--radius-md);
-  border: 1rpx solid var(--border-light);
+  border: 1rpx solid var(--border-color);
 }
 
 .audio-info {
@@ -386,6 +387,19 @@
 .topic-item-text {
   font-size: 28rpx;
   color: var(--text-primary);
+}
+
+.activity-item-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.activity-item-description {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .loading-tip {
@@ -739,31 +753,6 @@
   color: #4a7cf3;
 }
 
-/* 音频播放器 */
-.view-audio {
-  margin-top: 24rpx;
-  padding: 24rpx;
-  border-radius: 28rpx;
-  background: var(--card-bg);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.audio-info {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.audio-label {
-  font-size: 30rpx;
-  font-weight: 600;
-}
-
-.audio-duration {
-  font-size: 24rpx;
-  color: var(--text-muted);
-}
-
 /* 底部栏 */
 .view-footer {
   position: fixed;
@@ -804,7 +793,7 @@
 .post-actions-row {
   display: flex;
   align-items: flex-start;
-  justify-content: end;
+  justify-content: flex-start;
   padding: 24rpx;
 }
 

@@ -96,7 +96,10 @@
           <scroll-view class="topic-list-popup" scroll-y bindscrolltolower="onActivityScrollToLower">
             <view class="topic-item-popup" wx:for="{{activityList}}" wx:key="id" bind:tap="onSelectActivity"
               data-id="{{item.id}}" data-title="{{item.title}}">
-              <text class="topic-item-text">{{item.title}}</text>
+              <view class="activity-item-content">
+                <text class="topic-item-text">{{item.title}}</text>
+                <text class="activity-item-description" wx:if="{{item.description}}">{{item.description}}</text>
+              </view>
               <t-icon wx:if="{{selectedActivity && selectedActivity.id === item.id}}" name="check" size="16"
                 color="var(--primary)" />
             </view>
@@ -252,11 +255,11 @@
       <view class="view-title" wx:if="{{post.title}}">{{post.title}}</view>
 
       <!-- 音频 -->
-      <view class="audio-player view-audio" wx:if="{{post.audioUrl}}" bind:tap="onPlayAudio">
+      <view class="audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
         <view class="audio-info">
           <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
-          <text class="audio-label">语音</text>
-          <text class="audio-duration" wx:if="{{post.audioDuration}}">{{post.audioDuration}}s</text>
+          <text class="audio-label">录音</text>
+          <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}"</text>
         </view>
       </view>
 
@@ -288,7 +291,7 @@
 
 
     <view class="view-footer">
-      <view class="view-footer-action" bind:tap="onShowPostActions" wx:if="{{post.canEdit && userId === post.author.id}}">
+      <view class="view-footer-action" bind:tap="onEditPost" wx:if="{{post.canEdit && userId === post.author.id}}">
         <t-icon name="edit" size="20" color="var(--text-secondary)" />
         <text class="view-footer-text">编辑</text>
       </view>
@@ -299,10 +302,9 @@
     </view>
 
     <!-- 操作弹窗 -->
-    <t-popup visible="{{postActionsVisible}}" placement="bottom" bind:visible-change="onPostActionsClose">
+    <!-- <t-popup visible="{{postActionsVisible}}" placement="bottom" bind:visible-change="onPostActionsClose">
       <view class="post-actions-popup">
 
-        <!-- 操作区 -->
         <view class="post-actions-row">
 
           <view class="post-action-card" bind:tap="onEditPost">
@@ -322,7 +324,7 @@
         </view>
 
       </view>
-    </t-popup>
+    </t-popup> -->
   </block>
 
 </view>

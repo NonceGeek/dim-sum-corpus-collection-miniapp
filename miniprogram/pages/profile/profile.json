@@ -8,5 +8,6 @@
     "t-cell": "tdesign-miniprogram/cell/cell",
     "t-badge": "tdesign-miniprogram/badge/badge"
   },
-  "navigationBarTitleText": "个人中心"
+  "navigationBarTitleText": "个人中心",
+  "enablePullDownRefresh": true
 }

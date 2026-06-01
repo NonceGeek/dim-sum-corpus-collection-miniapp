@@ -62,7 +62,7 @@
     </view>
 
     <view class="works-section {{filterExpanded ? 'dimmed' : ''}}">
-      <waterfall items="{{visibleWorks}}" showStatus showPlayBadge bind:itemtap="onWaterfallTap" />
+      <waterfall items="{{visibleWorks}}" showStatus showPlayBadge bind:itemtap="onWaterfallTap" showFeatured/>
     </view>
   </block>
   <block wx:else>

@@ -53,7 +53,7 @@ Page({
       console.log("获取活动或作品列表数据失败", err);
       wx.showModal({
         title: "获取活动或作品列表数据失败",
-        content: err.error + "，请稍后重试",
+        content: err.error || err.errMsg + "，请稍后重试",
         showCancel: false,
       });
     }
@@ -135,7 +135,7 @@ Page({
 
       wx.showModal({
         title: "加载失败",
-        content: err.error || "请稍后重试",
+        content: err.error || err.errMsg + "，请稍后重试",
         showCancel: false,
       });
     } finally {
