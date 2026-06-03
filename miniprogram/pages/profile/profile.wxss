@@ -53,8 +53,17 @@
   width: 132rpx;
   height: 132rpx;
   border-radius: 50%;
-
   border: 6rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.avatar-placeholder {
+  background: var(--primary, #4f46e5);
+  color: #fff;
+  font-size: 56rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-meta {

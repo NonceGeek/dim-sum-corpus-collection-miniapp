@@ -4,7 +4,10 @@
   <!-- 顶部信息 -->
   <view class="user-card">
     <view class="user-info">
-      <image class="avatar" src="{{avatar}}" mode="aspectFill" />
+      <block wx:if="{{avatar}}">
+        <image class="avatar" src="{{avatar}}" mode="aspectFill" />
+      </block>
+      <view wx:else class="avatar avatar-placeholder">{{username[0]}}</view>
 
       <view class="user-meta">
         <view class="nickname-row">
