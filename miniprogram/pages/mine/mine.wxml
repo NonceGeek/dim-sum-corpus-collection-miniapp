@@ -64,6 +64,12 @@
     <view class="works-section {{filterExpanded ? 'dimmed' : ''}}">
       <waterfall items="{{visibleWorks}}" showStatus showPlayBadge bind:itemtap="onWaterfallTap" showFeatured/>
     </view>
+    <view class="loading-tip" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+    <view class="loading-tip" wx:elif="{{noMore}}">
+      <text>没有更多了</text>
+    </view>
   </block>
   <block wx:else>
     <t-cell-group theme="card" bordered="{{false}}">

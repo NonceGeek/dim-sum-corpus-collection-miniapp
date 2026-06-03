@@ -301,7 +301,7 @@ Page({
     file: any,
     token: string,
     dateStr: string,
-    timestamp: number,
+    timestamp: string,
   ) {
     return new Promise((resolve, reject) => {
       const uploadPath = file.url;
@@ -399,8 +399,13 @@ Page({
           const timestamp = Date.now();
           const dateStr = formatDate(new Date(), "YYYYMMDD");
           const files = await Promise.all(
-            compressedFiles.map((file) =>
-              this.uploadMediaFile(file, token, dateStr, timestamp),
+            compressedFiles.map((file, index) =>
+              this.uploadMediaFile(
+                file,
+                token,
+                dateStr,
+                `${timestamp}_${index}`,
+              ),
             ),
           );
 
@@ -995,11 +1000,11 @@ Page({
     }, 700);
     this.setData({ recordActionsAnimationTimer: animationTimer });
 
+    (this as any)._recordStartTime = Date.now();
     const timer = setInterval(() => {
-      this.setData({
-        recordTime: this.data.recordTime + 1,
-      });
-    }, 1000);
+      const elapsed = Math.floor((Date.now() - (this as any)._recordStartTime) / 1000);
+      this.setData({ recordTime: elapsed });
+    }, 500);
     this.setData({ recordTimer: timer });
 
     this.recorderManager.start({

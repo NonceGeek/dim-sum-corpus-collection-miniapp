@@ -1,7 +1,7 @@
 <view class="waterfall">
   <view class="waterfall-column">
-    <block wx:for="{{items}}" wx:key="id">
-      <view wx:if="{{index % 2 === 0}}" class="waterfall-item" bind:tap="onItemTap" data-index="{{index}}"
+    <block wx:for="{{leftItems}}" wx:key="id">
+      <view class="waterfall-item" bind:tap="onItemTap" data-index="{{item._wfIndex}}"
         data-id="{{item.id}}">
         <view class="cover-wrap">
           <view class="badge-label">
@@ -52,7 +52,7 @@
           </view>
           <view class="hot-wrap">
             <image src="/public/image/flame.svg" class="hot-icon" />
-            <text class="hot-text">{{item.viewCount}}</text>
+            <text class="hot-text">{{item.displayViewCount}}</text>
           </view>
         </view>
       </view>
@@ -60,8 +60,8 @@
   </view>
 
   <view class="waterfall-column">
-    <block wx:for="{{items}}" wx:key="id">
-      <view wx:if="{{index % 2 === 1}}" class="waterfall-item" bind:tap="onItemTap" data-index="{{index}}"
+    <block wx:for="{{rightItems}}" wx:key="id">
+      <view class="waterfall-item" bind:tap="onItemTap" data-index="{{item._wfIndex}}"
         data-id="{{item.id}}">
         <view class="cover-wrap">
           <view class="badge-label">
@@ -112,7 +112,7 @@
           </view>
           <view class="hot-wrap">
             <image src="/public/image/flame.svg" class="hot-icon" />
-            <text class="hot-text">{{item.viewCount}}</text>
+            <text class="hot-text">{{item.displayViewCount}}</text>
           </view>
         </view>
       </view>

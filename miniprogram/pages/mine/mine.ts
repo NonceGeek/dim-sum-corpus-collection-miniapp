@@ -19,15 +19,15 @@ const STATUS = [
   },
   {
     label: "已获奖",
-    value: "awardStatus=awarded",
+    value: "reviewStatus=approved&awardStatus=awarded",
   },
   {
     label: "已领奖",
-    value: "awardStatus=claimed",
+    value: "reviewStatus=approved&awardStatus=claimed",
   },
   {
     label: "领奖逾期",
-    value: "awardStatus=expired",
+    value: "reviewStatus=approved&awardStatus=expired",
   },
 ];
 
