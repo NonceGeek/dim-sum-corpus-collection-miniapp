@@ -331,12 +331,12 @@
 }
 
 .topic-popup-close {
-  width: 48rpx;
+  width: fit-content;
   height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--primary-light);
 }
 
 .topic-search {
@@ -372,8 +372,10 @@
 }
 
 .topic-list-popup {
+  flex: 1;
   height: 500rpx;
-  padding: 16rpx 0;
+  overflow-y: auto;
+  padding: 8rpx 0;
 }
 
 .topic-item-popup {
@@ -382,6 +384,10 @@
   justify-content: space-between;
   padding: 24rpx 32rpx;
   border-bottom: 1px solid var(--border-color);
+}
+
+.topic-item-selected {
+  background-color: var(--bg-input);
 }
 
 .topic-item-text {
@@ -509,6 +515,13 @@
   pointer-events: auto;
   transform: translate(calc(-100% - 72rpx), -70rpx) rotate(-12deg);
 }
+
+.theme-dark .record-cancel .t-icon {
+  color: var(--text-muted) !important;
+}
+.theme-dark .record-cancel.hover .t-icon {
+  color: #fff !important;
+}
 .record-btn-area.actions-entering .record-cancel.visible {
   animation: appear-left 0.7s ease-out forwards;
 }
@@ -543,6 +556,14 @@
 }
 .record-asr .record-side-text {
   color: var(--primary);
+}
+
+.theme-dark .record-asr .t-icon {
+  color: #6b93f5 !important;
+}
+
+.theme-dark .record-asr.hover .t-icon {
+  color: #fff !important;
 }
 
 @keyframes appear-right {
@@ -863,4 +884,16 @@
   width: 52rpx;
   height: 52rpx;
   color: var(--danger);
+}
+
+.t-picker-item__item.t-picker-item__item--active {
+  color: #1a1f36 !important;
+}
+
+.t-icon-search.t-icon-base {
+  color: var(--text-muted) !important;
+}
+
+.t-search__input-box .t-input__keyword {
+  color: #1a1f36 !important;
 }

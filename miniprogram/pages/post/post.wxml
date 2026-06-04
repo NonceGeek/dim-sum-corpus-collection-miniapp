@@ -152,7 +152,7 @@
           <view class="topic-popup-header">
             <text class="topic-popup-title">选择标签</text>
             <view class="topic-popup-close" bind:tap="onTopicPopupClose">
-              <t-icon name="close" size="20" />
+              确定
             </view>
           </view>
           <view class="topic-search">
@@ -166,13 +166,14 @@
               <t-icon name="chevron-right" size="18" color="var(--text-muted)" />
             </view>
           </view>
-          <view class="topic-list-popup">
-            <view class="topic-item-popup" wx:for="{{filteredTopicList}}" wx:key="*this" bind:tap="onSelectTopic"
+          <scroll-view class="topic-list-popup" scroll-y>
+            <view class="topic-item-popup {{selectedTopicMap[item] ? 'topic-item-selected' : ''}}"
+              wx:for="{{filteredTopicList}}" wx:key="*this" bind:tap="onSelectTopic"
               data-topic="{{item}}" data-index="{{index}}">
               <text class="topic-item-text">#{{item}}</text>
-              <t-icon wx:if="{{selectedTopicMap[item]}}" name="check" size="16" color="#4A7CF3" />
+              <t-icon wx:if="{{selectedTopicMap[item]}}" name="check" size="16" color="var(--primary)" />
             </view>
-          </view>
+          </scroll-view>
         </view>
       </t-popup>
 

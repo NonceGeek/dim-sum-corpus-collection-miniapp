@@ -2,6 +2,7 @@
   background-color: var(--bg-page);
   color: var(--text-primary);
   width: 100%;
+  min-height: 100vh;
   padding-bottom: 200rpx;
   display: flex;
   flex-direction: column;
@@ -12,6 +13,9 @@
 .swiper-wrapper {
   width: 100%;
   background-color: var(--bg-page);
+}
+.t-swiper-host {
+  border-radius: 0 !important;
 }
 
 /* 卡片列表 - 瀑布流 */

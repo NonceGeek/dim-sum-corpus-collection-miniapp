@@ -366,6 +366,7 @@
   font-size: 26rpx;
 }
 
+
 .bottom-btn {
   min-width: 240rpx;
   height: 76rpx !important;
@@ -376,9 +377,17 @@
   text-align: center !important;
   background: var(--gradient-primary) !important;
   border: none !important;
+  outline: none !important;
+  --td-button-default-border-color: transparent !important;
+  --td-button-default-color: transparent !important;
   color: #fff !important;
   border-radius: var(--radius-full) !important;
   box-shadow: var(--shadow-primary) !important;
+}
+
+.bottom-btn::after {
+  border: none !important;
+  border-color: transparent !important;
 }
 
 .bottom-btn .t-button__text {

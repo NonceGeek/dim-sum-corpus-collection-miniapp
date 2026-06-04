@@ -88,17 +88,17 @@ Page({
         userId: userInfo.id,
       },
       async () => {
-        console.log("this.:", this.data.mode);
-        tag && (await this.loadTrack(tag));
-        id && (await this.loadPost(id));
-        const { mode } = this.data;
-        let view = {};
-        console.log("mode:", mode, this.data.mode);
-        if (mode === "view") {
-          view = await request(`/works/${id}/view`, { method: "POST" });
-          console.log("view:", view);
+        try {
+          tag && (await this.loadTrack(tag));
+          id && (await this.loadPost(id));
+          const { mode } = this.data;
+          if (mode === "view") {
+            const view = await request(`/works/${id}/view`, { method: "POST" });
+            this.setData({ view: view?.viewCount });
+          }
+        } catch (err: any) {
+          console.error("onLoad async error:", err);
         }
-        this.setData({ ...(view ? { view: view.viewCount } : {}) });
       },
     );
 
@@ -184,6 +184,12 @@ Page({
           },
           {},
         ),
+        availableTopics: [
+          ...(res.tags || []).filter(
+            (t: string) => !this.data.availableTopics.includes(t),
+          ),
+          ...this.data.availableTopics,
+        ],
         audioUrl: res.media.find((m) => m.type === "audio")?.url || "",
         audioDuration:
           res.media.find((m) => m.type === "audio")?.durationSec || 0,
@@ -570,14 +576,19 @@ Page({
       return;
     }
 
+    const availableTopics = this.data.availableTopics.includes(topic)
+      ? this.data.availableTopics
+      : [topic, ...this.data.availableTopics];
+
     this.setData({
       selectedTopics: [...this.data.selectedTopics, topic],
       selectedTopicMap: {
         ...this.data.selectedTopicMap,
         [topic]: true,
       },
+      availableTopics,
       topicSearchKeyword: "",
-      filteredTopicList: this.data.availableTopics,
+      filteredTopicList: availableTopics,
     });
   },
 
@@ -937,6 +948,7 @@ Page({
     } else {
       this.setData({
         recordMode: "normal",
+        recordPopupVisible: false,
       });
 
       this.recorderManager.stop();
@@ -1002,7 +1014,9 @@ Page({
 
     (this as any)._recordStartTime = Date.now();
     const timer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - (this as any)._recordStartTime) / 1000);
+      const elapsed = Math.floor(
+        (Date.now() - (this as any)._recordStartTime) / 1000,
+      );
       this.setData({ recordTime: elapsed });
     }, 500);
     this.setData({ recordTimer: timer });
