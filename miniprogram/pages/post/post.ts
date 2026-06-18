@@ -1,7 +1,11 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
-// pages/upload/upload.ts
+
+const MAX_AUDIO_DURATION = 60;
+const MAX_VIDEO_BURATION = 30;
+const MIN_IMAGE = 1;
+const MAX_IMAGE = 8;
 Page({
   data: {
     mode: "",
@@ -9,7 +13,12 @@ Page({
     post: {} as any,
     // postActionsVisible: false,
     selectedType: "",
-    selectedActivity: {} as any | null,
+    selectedActivity: {
+      id: "",
+      title: "不参与任何活动",
+      tags: [],
+      mediaRequirements: {},
+    } as any,
     activityPopupVisible: false,
     activityList: [] as { id: string; title: string; description: string }[],
     activityPage: 1,
@@ -153,13 +162,9 @@ Page({
     try {
       const res = await request(`/submissions/${id}`);
       console.log("select:", this.data.selectedActivity);
-      let selectedActivity = {};
+      let selectedActivity = this.data.selectedActivity;
 
-      if (
-        JSON.stringify(this.data.selectedActivity) === "{}" &&
-        res.activity &&
-        res.activity.id
-      ) {
+      if (!this.data.selectedActivity?.id && res.activity && res.activity.id) {
         selectedActivity = await request(`/activities/${res.activity.id}`);
       }
       wx.hideLoading();
@@ -352,22 +357,41 @@ Page({
   async onChooseImage() {
     const mediaRequirements =
       this.data.selectedActivity?.mediaRequirements || {};
-    const images = mediaRequirements?.images || {};
-    const video = mediaRequirements?.video || {};
-    const maxDuration = (video.required && video.maxDurationSec) || 30;
-    const mediaType =
-      images.required && video.required
-        ? ["image", "video"]
-        : images.required
-          ? ["image"]
-          : video.required
-            ? ["video", "image"]
-            : ["video", "image"];
-    const maxCount = 9 - this.data.imageList.length;
+    const requiredTypes = mediaRequirements.requiredTypes || [];
+    const hasImage = requiredTypes.includes("image");
+    const hasVideo = requiredTypes.includes("video");
+    const hasAudio = requiredTypes.includes("audio");
+    const hasMediaRequirement = hasImage || hasVideo || hasAudio;
+
+    // 有图片要求时最多 8 张；仅视频/录音时仍需要 1 张封面图。
+    // 没有活动媒体要求时，沿用默认的 8 张图片 + 1 个视频。
+    const maxImageCount =
+      hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
+    const maxVideoCount = hasMediaRequirement && !hasVideo ? 0 : MIN_IMAGE;
+    const currentImageCount = this.data.imageList.filter(
+      (file) => file.type === "image",
+    ).length;
+    const currentVideoCount = this.data.imageList.filter(
+      (file) => file.type === "video",
+    ).length;
+    const remainingImageCount = Math.max(maxImageCount - currentImageCount, 0);
+    const remainingVideoCount = Math.max(maxVideoCount - currentVideoCount, 0);
+    const maxCount = remainingImageCount + remainingVideoCount;
+
+    if (maxCount === 0) {
+      wx.showToast({ title: "已达到媒体数量上限", icon: "none" });
+      return;
+    }
+
+    const mediaType = [
+      ...(remainingImageCount > 0 ? ["image" as const] : []),
+      ...(remainingVideoCount > 0 ? ["video" as const] : []),
+    ];
+    const maxDuration = MAX_VIDEO_BURATION;
 
     wx.chooseMedia({
       count: maxCount,
-      mediaType: mediaType as ("image" | "video")[],
+      mediaType,
       sourceType: ["album", "camera"],
       sizeType: ["compressed"],
       maxDuration: maxDuration,
@@ -382,6 +406,28 @@ Page({
               ? { durationSec: file.duration }
               : {}),
           }));
+          const selectedImageCount = tempFiles.filter(
+            (file) => file.type === "image",
+          ).length;
+          const selectedVideoCount = tempFiles.filter(
+            (file) => file.type === "video",
+          ).length;
+
+          if (
+            currentImageCount + selectedImageCount > maxImageCount ||
+            currentVideoCount + selectedVideoCount > maxVideoCount
+          ) {
+            wx.showModal({
+              title: "提示",
+              content:
+                maxVideoCount > 0
+                  ? `最多选择${maxImageCount}张图片和1个视频`
+                  : `最多选择${maxImageCount}张图片`,
+              showCancel: false,
+            });
+            return;
+          }
+
           const overDurationVideo = tempFiles.find(
             (file) => file.type === "video" && file.durationSec > maxDuration,
           );
@@ -503,6 +549,23 @@ Page({
       activityNoMore: false,
     });
     this.loadActivityList();
+  },
+
+  // 不参与任何活动
+  onNoActivity() {
+    this.setData({
+      selectedActivity: { id: "", title: "不参与任何活动" },
+      activityPopupVisible: false,
+      typeOptions: [
+        { label: "用语", value: "用语" },
+        { label: "诗歌", value: "诗歌" },
+        { label: "故事", value: "故事" },
+        { label: "标语", value: "标语" },
+        { label: "地名解说", value: "地名解说" },
+        { label: "歇后语", value: "歇后语" },
+      ],
+    });
+    this.checkCanPublish();
   },
 
   // 选中活动
@@ -641,8 +704,8 @@ Page({
       audioDuration,
     } = this.data;
 
-    const { mediaRequirements: { images = {}, audio = {}, video = {} } = {} } =
-      selectedActivity || { mediaRequirements: {} };
+    const requiredTypes =
+      selectedActivity?.mediaRequirements?.requiredTypes || [];
 
     if (!selectedType) {
       return { canPublish: false, message: "请选择类型" };
@@ -655,30 +718,29 @@ Page({
       return { canPublish: false, message: "请填写内容或上传媒体" };
     }
 
-    if (images.required) {
+    if (requiredTypes.includes("image")) {
       const imageCount = imageList.filter((i) => i.type === "image").length;
-      const imageMin = images.min || 0;
-      const imageMax = images.max || Infinity;
 
-      if (imageCount < imageMin || imageCount > imageMax) {
+      if (imageCount < MIN_IMAGE || imageCount > MAX_IMAGE) {
         return {
           canPublish: false,
           message:
-            "图片不能少于" + imageMin + "张,并且不能大于" + imageMax + "张",
+            "图片不能少于" + MIN_IMAGE + "张,并且不能大于" + MAX_IMAGE + "张",
         };
       }
     }
 
     const videoCount = imageList.filter((i) => i.type === "video").length;
     const imageCount = imageList.filter((i) => i.type === "image").length;
-    if (videoCount > 0 && imageCount === 0) {
+    if (requiredTypes.includes("video") && videoCount > 0 && imageCount === 0) {
       return { canPublish: false, message: "请至少上传一张图片" };
     }
 
-    const maxVideoDuration = (video.required && video.maxDurationSec) || 30;
     const overDurationVideo = imageList.find(
       (i) =>
-        i.type === "video" && i.durationSec && i.durationSec > maxVideoDuration,
+        i.type === "video" &&
+        i.durationSec &&
+        i.durationSec > MAX_VIDEO_BURATION,
     );
     if (overDurationVideo) {
       return {
@@ -687,17 +749,15 @@ Page({
       };
     }
 
-    if (audio.required) {
-      if (!audioUrl) {
-        return { canPublish: false, message: "请上传录音" };
-      }
+    if (requiredTypes.includes("audio") && !audioUrl) {
+      return { canPublish: false, message: "请上传录音" };
+    }
 
-      if (audioDuration > (audio.maxDurationSec || Infinity)) {
-        return {
-          canPublish: false,
-          message: "录音不能多于" + audio.maxDurationSec + "秒",
-        };
-      }
+    if (audioUrl && audioDuration > MAX_AUDIO_DURATION) {
+      return {
+        canPublish: false,
+        message: "录音不能多于" + MAX_AUDIO_DURATION + "秒",
+      };
     }
 
     return { canPublish: true, message: "" };
@@ -782,7 +842,9 @@ Page({
     ];
 
     const publishData = {
-      ...(selectedActivity ? { activityId: selectedActivity.id } : {}),
+      ...(selectedActivity && selectedActivity.id
+        ? { activityId: selectedActivity.id }
+        : {}),
       submissionType: selectedType,
       title: title,
       intro: content,
@@ -804,19 +866,30 @@ Page({
         return null;
       })
       .filter((m) => m);
-    const precheck = await request("/submissions/precheck", {
-      method: "POST",
-      data: {
-        title: publishData.title,
-        intro: publishData.intro,
-        images: imagePrecheck,
-      },
-    });
-    console.log("precheck:", precheck);
-    if (precheck.verdict === "pass") {
-      console.log("发布内容：", publishData);
 
-      const existedPostEdit = this.data.post?.id ? true : false;
+    try {
+      const precheck = await request("/submissions/precheck", {
+        method: "POST",
+        data: {
+          title: publishData.title,
+          intro: publishData.intro,
+          images: imagePrecheck,
+        },
+      });
+      console.log("precheck:", precheck);
+
+      if (precheck.verdict !== "pass") {
+        wx.hideLoading();
+        wx.showModal({
+          title: "提示",
+          content: precheck.error || "内容审核未通过",
+          showCancel: false,
+        });
+        return;
+      }
+
+      console.log("发布内容：", publishData);
+      const existedPostEdit = !!this.data.post?.id;
       const url = existedPostEdit
         ? `/submissions/${this.data.post.id}`
         : "/submissions";
@@ -825,28 +898,29 @@ Page({
         data: publishData,
       });
       wx.hideLoading();
+
       if (submission.error) {
         wx.showModal({
           title: "错误提示",
           content: submission.error,
           showCancel: false,
         });
-        return;
       } else {
-        wx.showModal({
-          title: "提示",
-          content: submission.message,
-          showCancel: false,
+        wx.showToast({
+          title: existedPostEdit ? "修改成功" : "发布成功",
+          icon: "success",
+          duration: 1500,
         });
         setTimeout(() => {
           wx.navigateBack();
         }, 1500);
       }
-    } else {
+    } catch (err: any) {
       wx.hideLoading();
+      console.error("发布失败：", err);
       wx.showModal({
-        title: "提示",
-        content: precheck.error,
+        title: "发布失败",
+        content: err?.error || err?.message || "请稍后重试",
         showCancel: false,
       });
     }
@@ -1022,6 +1096,7 @@ Page({
     this.setData({ recordTimer: timer });
 
     this.recorderManager.start({
+      duration: MAX_AUDIO_DURATION * 1000,
       format: "mp3",
       sampleRate: 44100,
       numberOfChannels: 1,
@@ -1192,6 +1267,14 @@ Page({
     // 丢弃模式
     if (recordMode === "discard") {
       console.log("录音已取消");
+      return;
+    }
+
+    if (durationSec > MAX_AUDIO_DURATION) {
+      wx.showToast({
+        title: `录音不能超过${MAX_AUDIO_DURATION}秒`,
+        icon: "none",
+      });
       return;
     }
 

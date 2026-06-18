@@ -75,7 +75,7 @@
         </view>
         <view class="type-picker-wrapper" bind:tap="onShowActivityPopup">
           <text
-            class="type-value {{selectedActivity ? '' : 'placeholder'}}">{{selectedActivity ? selectedActivity.title : '请选择活动'}}</text>
+            class="type-value {{selectedActivity && selectedActivity.title ? '' : 'placeholder'}}">{{selectedActivity && selectedActivity.title ? selectedActivity.title : '请选择活动'}}</text>
           <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
         </view>
       </view>
@@ -94,6 +94,13 @@
               bind:submit="onActivitySearch" placeholder-style="color: var(--text-muted)" />
           </view>
           <scroll-view class="topic-list-popup" scroll-y bindscrolltolower="onActivityScrollToLower">
+            <!-- 不参与任何活动 -->
+            <view class="topic-item-popup" bind:tap="onNoActivity">
+              <view class="activity-item-content">
+                <text class="topic-item-text">不参与任何活动</text>
+              </view>
+              <t-icon wx:if="{{selectedActivity && selectedActivity.id === ''}}" name="check" size="16" color="var(--primary)" />
+            </view>
             <view class="topic-item-popup" wx:for="{{activityList}}" wx:key="id" bind:tap="onSelectActivity"
               data-id="{{item.id}}" data-title="{{item.title}}">
               <view class="activity-item-content">
@@ -190,7 +197,7 @@
     <t-popup visible="{{recordPopupVisible}}" placement="bottom" bind:visible-change="onRecordPopupClose"
       close-on-overlay-click="{{true}}">
       <view class="record-popup">
-        <view class="record-hint">长按录音，滑向左侧取消，滑向右侧转文字</view>
+        <view class="record-hint">长按录音，最长60秒；左右滑动可取消或转文字</view>
         <view class="record-btn-area {{recordActionsAnimating ? 'actions-entering' : ''}}">
           <view
             class="record-side-btn record-cancel {{recording ? 'visible' : ''}} {{hoverTarget === 'cancel' ? 'hover' : ''}}">

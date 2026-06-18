@@ -5,20 +5,107 @@ interface ITrack {
   id: string;
   title: string;
   description: string;
+  displayTitle?: string;
+  displayDescription?: string;
   bannerUrl: string;
   status: string;
   startsAt: string;
   endsAt: string;
   submissionCount: number;
 }
+const TITLE_ARRAY = [
+  {
+    title: "粤语唔止一种讲法",
+    subtitle: "欢迎所有野生创作",
+  },
+  {
+    title: "15种民间表达",
+    subtitle: "欢迎你用粤语重新定义世界",
+  },
+  {
+    title: "粤语唔止一种讲法",
+    subtitle: "欢迎所有野生创作",
+  },
+  {
+    title: "收集民间灵魂",
+    subtitle: "欢迎乱入粤语世界",
+  },
+  {
+    title: "万千讲法",
+    subtitle: "皆是人间烟火",
+  },
+  {
+    title: "字有乡音",
+    subtitle: "话有来处",
+  },
+  {
+    title: "让正在消失的表达",
+    subtitle: "重新被听见",
+  },
+  {
+    title: "收录民间癫话",
+    subtitle: "欢迎对号入座",
+  },
+  {
+    title: "15种粤语生存方式",
+    subtitle: "欢迎唔被定义嘅你",
+  },
+  {
+    title: "15种人间声气",
+    subtitle: "欢迎你留下讲法",
+  },
+  {
+    title: "15种民间声气",
+    subtitle: "欢迎唔被定义嘅你",
+  },
+  {
+    title: "收录民间声气",
+    subtitle: "等你发声",
+  },
+  {
+    title: "你把声",
+    subtitle: "值得被听见",
+  },
+];
 
-// function isVideo(url) {
-//   return /\.(mp4|mov|m3u8|webm)$/i.test(url);
-// }
+const getRandomTitle = () => {
+  const index = Math.floor(Math.random() * TITLE_ARRAY.length);
+  return TITLE_ARRAY[index];
+};
+
+const truncateText = (text = "", maxLength: number) => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength)}...`;
+};
+
+const formatTrack = (item: any) => {
+  const requiredTypes = item.mediaRequirements?.requiredTypes || [];
+  const requiresVideo = requiredTypes.includes("video");
+  const requiresAudio = requiredTypes.includes("audio");
+  const requiresImage = requiredTypes.includes("image");
+
+  return {
+    ...item,
+    displayTitle: truncateText(item.title, 8),
+    displayDescription: truncateText(item.description, 15),
+    status: item.endsAt > new Date().toISOString() ? "active" : "unactive",
+    startsAt: formatDate(item.startsAt, "YYYY-MM-DD"),
+    endsAt: formatDate(item.endsAt, "YYYY-MM-DD"),
+    requiresVideo,
+    requiresAudio,
+    requiresImage,
+    hasMediaReq: requiresVideo || requiresAudio || requiresImage,
+  };
+};
 
 Page({
   data: {
     currentTheme: "light",
+    bannerTitle: "",
+    bannerSubtitle: "",
     currentIndex: 0,
     descIndex: 0,
     descAnimClass: "show",
@@ -38,22 +125,27 @@ Page({
 
   async onLoad() {
     this.syncTheme();
+    this.updateBannerTitle();
     this.startDescCycle();
 
     await this.loadTopTracks();
   },
+
+  updateBannerTitle() {
+    const bannerTitle = getRandomTitle();
+    this.setData({
+      bannerTitle: bannerTitle.title,
+      bannerSubtitle: bannerTitle.subtitle,
+    });
+  },
+
   async loadTopTracks() {
     try {
       wx.showLoading({ title: "加载中..." });
       const { items } = await request("/activities");
+      const tracks = items.map(formatTrack);
+
       wx.hideLoading();
-      const tracks = items.map((item) => {
-        item.status =
-          item.endsAt > new Date().toISOString() ? "active" : "unactive";
-        item.startsAt = formatDate(item.startsAt, "YYYY-MM-DD");
-        item.endsAt = formatDate(item.endsAt, "YYYY-MM-DD");
-        return item;
-      });
       this.setData(
         {
           topTracks: tracks,
@@ -61,6 +153,7 @@ Page({
         () => this.updateVisibleTabs(),
       );
     } catch (err) {
+      wx.hideLoading();
       console.log("加载活动报错:", err);
       wx.showToast({
         title: err.error,
@@ -74,6 +167,11 @@ Page({
     if (this.timer) {
       clearInterval(this.timer);
     }
+  },
+
+  async onPullDownRefresh() {
+    await this.loadTopTracks();
+    wx.stopPullDownRefresh();
   },
 
   onShow() {
@@ -258,12 +356,7 @@ Page({
 
       wx.hideLoading();
 
-      const items = (res.items || []).map((item: any) => ({
-        ...item,
-        status: item.endsAt > new Date().toISOString() ? "active" : "unactive",
-        startsAt: formatDate(item.startsAt, "YYYY-MM-DD"),
-        endsAt: formatDate(item.endsAt, "YYYY-MM-DD"),
-      }));
+      const items = (res.items || []).map(formatTrack);
 
       const nextTracks = allTracksPage === 1 ? items : [...allTracks, ...items];
       const total = res.pagination?.total;

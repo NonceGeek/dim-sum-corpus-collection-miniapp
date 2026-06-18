@@ -4,9 +4,10 @@ import request from "../../utils/http";
 interface ISwiperList {
   id: string;
   title: string;
-  imageUrl: string;
+  bannerUrl: string;
   linkType: string;
   linkId: string;
+  value: string;
 }
 
 Page({
@@ -14,7 +15,10 @@ Page({
     current: 0,
     autoplay: true,
     duration: 500,
-    interval: 3000,
+    interval: 10000,
+    bannerImageProps: {
+      mode: "widthFix",
+    },
     swiperList: [],
 
     cardList: [],
@@ -44,6 +48,7 @@ Page({
 
   onShow() {
     this.syncTheme();
+    this.setData({ activeTab: "home" });
   },
 
   syncTheme() {
@@ -55,12 +60,16 @@ Page({
   async loadSwiperData() {
     try {
       wx.showLoading({ title: "加载中..." });
-      const res = await request("/home");
+      const res = await request("/activities?timeStatus=ongoing");
       wx.hideLoading();
-      const { banners } = res;
-      const swiperList = banners.map((banner: ISwiperList) => ({
-        ...banner,
-        value: banner.imageUrl || STATIC_FILE,
+      const activities = (res.items || []).slice(0, 5);
+      const swiperList = activities.map((activity: ISwiperList) => ({
+        id: activity.id,
+        title: activity.title,
+        imageUrl: activity.bannerUrl || STATIC_FILE,
+        linkType: "activity",
+        linkId: activity.id,
+        value: activity.bannerUrl || STATIC_FILE,
       }));
       this.setData({
         swiperList,

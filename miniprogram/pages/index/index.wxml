@@ -3,7 +3,8 @@
     <!-- 轮播图 - 顶格 -->
     <view class="swiper-wrapper">
       <t-swiper current="{{current}}" autoplay="{{autoplay}}" duration="{{duration}}" interval="{{interval}}"
-        list="{{swiperList}}" navigation="{{ { type: 'dots-bar' } }}" height="{{300}}" bind:click="onClickToTrack"/>
+        list="{{swiperList}}" image-props="{{bannerImageProps}}" navigation="{{ { type: 'dots-bar' } }}" height="{{200}}"
+        bind:click="onClickToTrack"/>
     </view>
 
     <!-- 卡片列表 -->
@@ -24,7 +25,7 @@
   <!-- Tab Bar -->
   <t-tab-bar value="{{activeTab}}" bordered="{{false}}" theme="tag" bind:change="onTabChange" split="{{false}}">
     <t-tab-bar-item value="home" icon="home">首页</t-tab-bar-item>
-    <t-tab-bar-item value="featured" icon="star">精选内容</t-tab-bar-item>
+    <t-tab-bar-item value="featured" icon="star">精选活动</t-tab-bar-item>
     <t-tab-bar-item value="upload" icon="upload">我要投稿</t-tab-bar-item>
     <t-tab-bar-item value="profile" icon="user">个人中心</t-tab-bar-item>
   </t-tab-bar>

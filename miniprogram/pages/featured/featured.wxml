@@ -4,11 +4,11 @@
     <!-- 顶部Banner -->
     <view class="top-banner">
       <view class="banner-title">
-        全港唔同声气
+        {{bannerTitle}}
       </view>
 
       <view class="banner-subtitle">
-        等你开咪
+        {{bannerSubtitle}}
       </view>
 
       <view class="banner-desc">
@@ -26,11 +26,25 @@
           <view class="main-card">
             <view class="card-header">
               <view>
-                <view class="card-title">{{track.title}}</view>
+                <view class="card-title">{{track.displayTitle}}</view>
                 <view class="card-en">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
-                <view class="card-desc">{{track.description}}</view>
+                <view class="card-desc">{{track.displayDescription}}</view>
+                <view class="media-req-row" wx:if="{{track.hasMediaReq}}">
+                  <view class="media-requirement-item" wx:if="{{track.requiresImage}}">
+                    <t-icon name="image" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                    <text>图片</text>
+                  </view>
+                  <view class="media-requirement-item" wx:if="{{track.requiresVideo}}">
+                    <t-icon name="video" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                    <text>视频</text>
+                  </view>
+                  <view class="media-requirement-item" wx:if="{{track.requiresAudio}}">
+                    <t-icon name="microphone" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                    <text>音频</text>
+                  </view>
+                </view>
               </view>
-              
+
             </view>
 
             <!-- 视频列表 -->
@@ -40,9 +54,6 @@
                   <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
                     <view class="video-cover-wrapper">
                       <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
-                      <view class="play-icon" wx:if="{{item.isVideo}}">
-                        <t-icon name="play-circle-filled" size="48rpx" color="#fff" />
-                      </view>
                     </view>
                     <view class="author-row">
                       <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
@@ -71,14 +82,16 @@
 
             <!-- 按钮 -->
             <view class="btn-row">
-               <t-button theme="default" shape="round" size="large" data-id="{{track.id}}" wx:if="{{track.timeStatus === 'not_started'}}" hover-class="none">
+              <t-button theme="default" shape="round" size="large" data-id="{{track.id}}"
+                wx:if="{{track.timeStatus === 'not_started'}}" hover-class="none">
                 敬请期待
               </t-button>
-              <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}" wx:if="{{track.works.length > 0}}">
+              <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}"
+                wx:if="{{track.works.length > 0}}">
                 更多参赛作品
               </t-button>
-              <t-button theme="primary" shape="round" size="large" class="post-btn {{!track.canSubmit?'unactive':''}}" bind:tap="onPost"
-                data-id="{{track.id}}" wx:if="{{track.canSubmit}}" disabled="{{!track.canSubmit}}">
+              <t-button theme="primary" shape="round" size="large" class="post-btn {{!track.canSubmit?'unactive':''}}"
+                bind:tap="onPost" data-id="{{track.id}}" wx:if="{{track.canSubmit}}" disabled="{{!track.canSubmit}}">
                 投稿此活动
               </t-button>
             </view>
@@ -97,7 +110,7 @@
           class="tab-item {{item._position === 'current' ? 'active' : ''}}" bindtap="onTabTap"
           data-position="{{item._position}}">
           <view class="tab-title">
-            {{item.title}}
+            {{item.displayTitle}}
           </view>
           <view class="tab-sub" wx:if="{{item._position === 'current' && item.submissionCount > 0}}">
             {{item.submissionCount}}个作品已参赛
@@ -127,19 +140,20 @@
     <view class="tracks-popup theme-{{currentTheme}}">
       <view class="tracks-popup-handle"></view>
 
-      <scroll-view class="tracks-popup-list" scroll-y="{{true}}" bindscrolltolower="onTracksScrollToLower" lower-threshold="80">
+      <scroll-view class="tracks-popup-list" scroll-y="{{true}}" bindscrolltolower="onTracksScrollToLower"
+        lower-threshold="80">
         <view class="tracks-popup-list-content">
           <view wx:for="{{allTracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
             <view class="tracks-popup-card-main">
               <view class="tracks-popup-card-header">
-                <view class="tracks-popup-card-title">{{track.title}}</view>
+                <view class="tracks-popup-card-title">{{track.displayTitle}}</view>
                 <view class="tracks-popup-more" bind:tap="onMorePosts" data-id="{{track.id}}">
                   <text>更多作品</text>
                   <t-icon name="chevron-right" size="32rpx" color="var(--text-muted)" />
                 </view>
               </view>
               <view class="tracks-popup-card-desc">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
-              <view class="tracks-popup-card-desc">{{track.description}}</view>
+              <view class="tracks-popup-card-desc">{{track.displayDescription}}</view>
 
               <view class="tracks-popup-video-list">
                 <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
@@ -155,8 +169,22 @@
             </view>
 
             <view class="tracks-popup-card-footer">
-              <view class="tracks-popup-rule">{{track.rules}}</view>
-              <view class="tracks-popup-status {{track.timeStatus === 'ongoing' ? 'active' : ''}}" data-id="{{track.id}}" data-timeStatus="{{track.timeStatus}}" bind:tap="onClickTrack">
+              <view class="tracks-popup-rule" wx:if="{{track.hasMediaReq}}">
+                <view class="media-requirement-item" wx:if="{{track.requiresImage}}">
+                  <t-icon name="image" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                  <text>图片</text>
+                </view>
+                <view class="media-requirement-item" wx:if="{{track.requiresVideo}}">
+                  <t-icon name="video" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                  <text>视频</text>
+                </view>
+                <view class="media-requirement-item" wx:if="{{track.requiresAudio}}">
+                  <t-icon name="microphone" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                  <text>音频</text>
+                </view>
+              </view>
+              <view class="tracks-popup-status {{track.timeStatus === 'ongoing' ? 'active' : ''}}"
+                data-id="{{track.id}}" data-timeStatus="{{track.timeStatus}}" bind:tap="onClickTrack">
                 {{track.timeStatus === 'not_started' ? "投稿还未开始": track.timeStatus === 'ongoing' ? "正在进行中": track.timeStatus === 'ended' ? "投稿已截止": ''}}
               </view>
             </view>

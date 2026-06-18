@@ -10,6 +10,14 @@ const TYPE_JSON = {
   rest: "歇后语",
 };
 
+const formatRules = (rules: unknown) => {
+  if (Array.isArray(rules)) {
+    return rules.filter(Boolean).join("\n");
+  }
+
+  return typeof rules === "string" ? rules : "";
+};
+
 Page({
   data: {
     trackId: "",
@@ -21,6 +29,16 @@ Page({
     total: 0,
     loading: false,
     noMore: false,
+    ruleDialogVisible: false,
+    ruleDialogDescription: "",
+    ruleDialogRules: "",
+    ruleDialogConfirmBtn: {
+      content: "确定",
+      variant: "base",
+      theme: "primary",
+      shape: "round",
+      size: "medium",
+    },
     select: "phrase",
     type: [
       { label: "全部", value: "all" },
@@ -182,13 +200,17 @@ Page({
 
   onRule() {
     const { track } = this.data;
-    const { rules } = track;
-    wx.showModal({
-      title: "活动规则",
-      content: rules,
-      showCancel: false,
+    this.setData({
+      ruleDialogVisible: true,
+      ruleDialogDescription: track.description || "暂无",
+      ruleDialogRules: formatRules(track.rules) || "暂无",
     });
   },
+
+  onRuleDialogClose() {
+    this.setData({ ruleDialogVisible: false });
+  },
+
   onPost() {
     wx.navigateTo({
       url: "/pages/post/post?mode=edit&tag=" + this.data.track.id,

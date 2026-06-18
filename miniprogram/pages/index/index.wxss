@@ -14,6 +14,13 @@
   width: 100%;
   background-color: var(--bg-page);
 }
+
+.swiper-wrapper .t-swiper,
+.swiper-wrapper .t-image,
+.swiper-wrapper image {
+  width: 100%;
+}
+
 .t-swiper-host {
   border-radius: 0 !important;
 }

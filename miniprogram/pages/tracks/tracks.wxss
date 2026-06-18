@@ -8,6 +8,48 @@
   position: relative;
 }
 
+.rule-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+  text-align: left;
+}
+
+.rule-dialog-section {
+  display: flex;
+  align-items: flex-start;
+  color: var(--text-primary);
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+
+.rule-dialog-label {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.rule-dialog-text {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.rule-dialog-confirm {
+  max-width: 200rpx;
+  margin: 0 auto;
+  background: var(--gradient-primary) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: var(--radius-full) !important;
+  box-shadow: var(--shadow-primary) !important;
+  font-size: 32rpx !important;
+}
+
+.rule-dialog-confirm .t-button__text {
+  font-size: 32rpx !important;
+}
+
 /* ======================================
    Header
 ====================================== */
@@ -250,7 +292,7 @@
   background: rgba(79, 70, 229, 0.06);
 }
 
-.btn-scribble {
+.track-tab-scribble {
   position: absolute;
   left: 20rpx;
   right: 16rpx;
@@ -259,7 +301,7 @@
   pointer-events: none;
 }
 
-.btn-scribble-line {
+.track-tab-scribble-line {
   position: absolute;
   left: 0;
   width: 100%;
@@ -268,13 +310,13 @@
   transform-origin: left center;
 }
 
-.btn-scribble .line-1 {
+.track-tab-scribble .line-1 {
   bottom: 2rpx;
   height: 6rpx;
   transform: rotate(-2deg);
 }
 
-.btn-scribble .line-2 {
+.track-tab-scribble .line-2 {
   bottom: 7rpx;
   left: 12rpx;
   width: calc(100% - 18rpx);
