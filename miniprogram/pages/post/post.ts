@@ -6,6 +6,14 @@ const MAX_AUDIO_DURATION = 60;
 const MAX_VIDEO_BURATION = 30;
 const MIN_IMAGE = 1;
 const MAX_IMAGE = 8;
+const TYPES = [
+  { label: "用语", value: "用语" },
+  { label: "诗歌", value: "诗歌" },
+  { label: "故事", value: "故事" },
+  { label: "标语", value: "标语" },
+  { label: "地名解说", value: "地名解说" },
+  { label: "歇后语", value: "歇后语" },
+];
 Page({
   data: {
     mode: "",
@@ -33,14 +41,7 @@ Page({
     canPublish: false,
     pickerVisible: false,
     pickerValue: [],
-    typeOptions: [
-      { label: "用语", value: "用语" },
-      { label: "诗歌", value: "诗歌" },
-      { label: "故事", value: "故事" },
-      { label: "标语", value: "标语" },
-      { label: "地名解说", value: "地名解说" },
-      { label: "歇后语", value: "歇后语" },
-    ],
+    typeOptions: TYPES,
     topicPopupVisible: false,
     topicSearchKeyword: "",
     filteredTopicList: [] as string[],
@@ -85,6 +86,8 @@ Page({
     pendingAudioDuration: 0,
   },
   recorderManager: null as any,
+  recordTouchActive: false,
+  recordTouchSession: 0,
 
   async onLoad(options) {
     const { tag, id, mode } = options;
@@ -116,6 +119,11 @@ Page({
     this.recorderManager.onStop(this.handleRecordStop);
   },
   onUnload() {
+    this.recordTouchActive = false;
+    this.recordTouchSession += 1;
+    if (this.data.touchStartTimer) {
+      clearTimeout(this.data.touchStartTimer);
+    }
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
@@ -123,7 +131,9 @@ Page({
       clearTimeout(this.data.recordActionsAnimationTimer);
     }
     if (this.recorderManager) {
+      this.setData({ recordMode: "discard" });
       this.recorderManager.stop();
+      this.recorderManager.offStop(this.handleRecordStop);
     }
   },
   async loadTrack(id: string) {
@@ -556,14 +566,7 @@ Page({
     this.setData({
       selectedActivity: { id: "", title: "不参与任何活动" },
       activityPopupVisible: false,
-      typeOptions: [
-        { label: "用语", value: "用语" },
-        { label: "诗歌", value: "诗歌" },
-        { label: "故事", value: "故事" },
-        { label: "标语", value: "标语" },
-        { label: "地名解说", value: "地名解说" },
-        { label: "歇后语", value: "歇后语" },
-      ],
+      typeOptions: TYPES,
     });
     this.checkCanPublish();
   },
@@ -718,22 +721,18 @@ Page({
       return { canPublish: false, message: "请填写内容或上传媒体" };
     }
 
-    if (requiredTypes.includes("image")) {
-      const imageCount = imageList.filter((i) => i.type === "image").length;
-
-      if (imageCount < MIN_IMAGE || imageCount > MAX_IMAGE) {
-        return {
-          canPublish: false,
-          message:
-            "图片不能少于" + MIN_IMAGE + "张,并且不能大于" + MAX_IMAGE + "张",
-        };
-      }
+    const imageCount = imageList.filter((i) => i.type === "image").length;
+    if (imageCount < MIN_IMAGE) {
+      return { canPublish: false, message: "请至少上传一张图片" };
     }
 
-    const videoCount = imageList.filter((i) => i.type === "video").length;
-    const imageCount = imageList.filter((i) => i.type === "image").length;
-    if (requiredTypes.includes("video") && videoCount > 0 && imageCount === 0) {
-      return { canPublish: false, message: "请至少上传一张图片" };
+    if (requiredTypes.includes("image")) {
+      if (imageCount > MAX_IMAGE) {
+        return {
+          canPublish: false,
+          message: "图片不能多于" + MAX_IMAGE + "张",
+        };
+      }
     }
 
     const overDurationVideo = imageList.find(
@@ -798,6 +797,7 @@ Page({
   // 发布内容
   async onPublish() {
     const validation = this.getPublishValidation();
+    console.log("validation:", validation);
     if (!validation.canPublish) {
       if (validation.message) {
         wx.showModal({
@@ -934,6 +934,11 @@ Page({
   // 关闭录音弹窗
   onRecordPopupClose(e?: any) {
     if (e?.detail?.visible === false || !e?.detail) {
+      this.recordTouchActive = false;
+      this.recordTouchSession += 1;
+      if (this.data.touchStartTimer) {
+        clearTimeout(this.data.touchStartTimer);
+      }
       if (this.data.recording) {
         this.setData({
           recordMode: "discard",
@@ -943,13 +948,19 @@ Page({
       this.setData({
         recordPopupVisible: false,
         recordActionsAnimating: false,
+        touchStartTimer: null,
+        hoverTarget: "",
       });
     }
   },
 
   // 开始录音
   onStartRecord(e: any) {
+    if (this.data.recording || !this.data.recordPopupVisible) return;
+
     const touch = e.touches[0];
+    const touchSession = ++this.recordTouchSession;
+    this.recordTouchActive = true;
 
     this.setData({
       touchStartTime: Date.now(),
@@ -962,7 +973,8 @@ Page({
     }
 
     const timer = setTimeout(() => {
-      this.checkAndStartRecord();
+      this.setData({ touchStartTimer: null });
+      this.checkAndStartRecord(touchSession);
     }, 200) as unknown as number;
 
     this.setData({ touchStartTimer: timer });
@@ -976,6 +988,7 @@ Page({
 
     if (!this.data.recording) {
       if (Math.abs(deltaX) > 15 || Math.abs(deltaY) > 15) {
+        this.recordTouchActive = false;
         if (this.data.touchStartTimer) {
           clearTimeout(this.data.touchStartTimer);
           this.setData({ touchStartTimer: null });
@@ -996,6 +1009,8 @@ Page({
 
   // 停止录音（由 touchend 触发）
   onStopRecord(e: any) {
+    this.recordTouchActive = false;
+
     if (this.data.touchStartTimer) {
       clearTimeout(this.data.touchStartTimer);
       this.setData({ touchStartTimer: null });
@@ -1030,16 +1045,30 @@ Page({
   },
 
   // 检查并开始录音
-  checkAndStartRecord() {
+  checkAndStartRecord(touchSession: number) {
+    const canStart = () =>
+      this.recordTouchActive &&
+      this.recordTouchSession === touchSession &&
+      this.data.recordPopupVisible &&
+      !this.data.recording;
+
+    if (!canStart()) return;
+
     wx.getSetting({
       success: (res) => {
+        if (!canStart()) return;
+
         if (!res.authSetting["scope.record"]) {
           wx.authorize({
             scope: "scope.record",
             success: () => {
-              this.doStartRecord();
+              if (canStart()) {
+                this.doStartRecord();
+              }
             },
             fail: () => {
+              if (!canStart()) return;
+
               wx.showModal({
                 title: "需要录音权限",
                 content: "开启录音权限后才能使用语音功能",
@@ -1049,7 +1078,10 @@ Page({
                     wx.openSetting({
                       success: (settingRes) => {
                         // 用户重新开启
-                        if (settingRes.authSetting["scope.record"]) {
+                        if (
+                          settingRes.authSetting["scope.record"] &&
+                          canStart()
+                        ) {
                           this.doStartRecord();
                         }
                       },
@@ -1059,7 +1091,7 @@ Page({
               });
             },
           });
-        } else {
+        } else if (canStart()) {
           this.doStartRecord();
         }
       },
@@ -1072,6 +1104,7 @@ Page({
       recording: true,
       recordActionsAnimating: true,
       recordTime: 0,
+      recordMode: "normal",
     });
 
     if (this.data.recordActionsAnimationTimer) {
@@ -1244,6 +1277,8 @@ Page({
 
   async handleRecordStop(res: any) {
     console.log("录音结束：", res);
+    this.recordTouchActive = false;
+    this.recordTouchSession += 1;
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
@@ -1251,7 +1286,12 @@ Page({
       clearTimeout(this.data.recordActionsAnimationTimer);
     }
     const { tempFilePath, duration } = res;
-    const durationSec = Math.ceil(duration / 1000);
+    // RecorderManager 设置了 60 秒上限，但部分设备返回值会略大于 60000ms。
+    // 对系统自动停止的录音按配置上限计算，避免被向上取整误判成 61 秒。
+    const durationSec = Math.min(
+      MAX_AUDIO_DURATION,
+      Math.ceil(duration / 1000),
+    );
 
     const { recordMode } = this.data;
 
@@ -1262,19 +1302,14 @@ Page({
       recordTime: 0,
       recordTimer: null,
       recordActionsAnimationTimer: null,
+      touchStartTimer: null,
+      hoverTarget: "",
+      ...(recordMode === "normal" ? { recordPopupVisible: false } : {}),
     });
 
     // 丢弃模式
     if (recordMode === "discard") {
       console.log("录音已取消");
-      return;
-    }
-
-    if (durationSec > MAX_AUDIO_DURATION) {
-      wx.showToast({
-        title: `录音不能超过${MAX_AUDIO_DURATION}秒`,
-        icon: "none",
-      });
       return;
     }
 

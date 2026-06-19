@@ -6,7 +6,7 @@
 
 .upload-content {
   padding: 24rpx 32rpx;
-  padding-bottom: 120rpx;
+  padding-bottom: 150rpx;
   display: flex;
   flex-direction: column;
   gap: 24rpx;
@@ -98,6 +98,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
+}
+
+.image-upload-tip {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .image-item {

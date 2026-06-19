@@ -280,3 +280,9 @@
 .chat-section .t-cell__note {
   margin-top: -13px;
 }
+
+.hint {
+  display: flex;
+  justify-content: center;
+  margin: 36rpx 0;
+}

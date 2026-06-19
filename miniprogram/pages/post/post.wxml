@@ -25,6 +25,10 @@
               color="{{currentTheme === 'dark' ? 'var(--text-secondary)' : 'var(--text-muted)'}}" />
           </view>
         </view>
+        <view class="image-upload-tip">
+          <t-icon name="info-circle" size="16" color="var(--primary)" />
+          <text>温馨提示：请至少上传一张图片</text>
+        </view>
       </view>
 
       <!-- 标题输入 -->
@@ -205,7 +209,7 @@
             <text class="record-side-text">取消</text>
           </view>
           <view class="record-btn {{recording ? 'recording' : ''}}" bind:touchstart="onStartRecord"
-            bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord">
+            bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord" bind:touchcancel="onStopRecord">
             <t-icon name="mic" size="32" color="{{recording ? '#fff' : 'var(--primary)'}}" />
             <text class="record-btn-text">{{recording ? '松开 结束' : '按住 录音'}}</text>
             <text class="record-timer" wx:if="{{recording}}">{{recordTime}}s</text>

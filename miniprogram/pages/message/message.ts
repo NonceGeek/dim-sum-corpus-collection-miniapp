@@ -1,13 +1,20 @@
 import request from "../../utils/http";
 
-const getIcon = (type) => {
+const getIconColor = (type) => {
   const obj = {
     系统提示: "system-messages",
     活动通知: "loudspeaker",
     中奖信息: "gift",
     审核信息: "chat-bubble-error",
   };
-  return obj[type as keyof typeof obj];
+  const colorjson = {
+    "system-messages": "#4a7cf3",
+    loudspeaker: "#10b981",
+    gift: "#7c5cff",
+    "chat-bubble-error": "#f59e0b",
+  };
+  const icon = obj[type as keyof typeof obj];
+  return { icon, color: colorjson[icon] };
 };
 
 Page({
@@ -35,11 +42,10 @@ Page({
     this.setData({
       loading: true,
     });
-
+    wx.showLoading({
+      title: "加载中...",
+    });
     try {
-      wx.showLoading({
-        title: "加载中...",
-      });
       const { page, pageSize, messages: oldMessages } = this.data;
 
       const res = await request(`/messages?page=${page}&pageSize=${pageSize}`);
@@ -48,10 +54,12 @@ Page({
         items,
         pagination: { total },
       } = res;
-      const list = (items || []).map((item) => ({
-        ...item,
-        icon: getIcon(item.type),
-      }));
+      const list = (items || []).map((item) => {
+        const { icon, color } = getIconColor(item.type);
+        item.icon = icon;
+        item.color = color;
+        return item;
+      });
 
       const noMore = list.length < 10;
       const findUnread = list.some((item) => !item.isRead);
@@ -62,8 +70,15 @@ Page({
         showButton: findUnread,
       });
     } catch (err) {
+      wx.hideLoading();
       console.error("loadMessages error", err);
+      wx.showModal({
+        title: "提示",
+        content: err.errMsg || "请求出错",
+        showCancel: false,
+      });
     } finally {
+      wx.hideLoading();
       this.setData({
         loading: false,
       });

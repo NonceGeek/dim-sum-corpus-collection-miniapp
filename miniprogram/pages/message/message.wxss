@@ -51,6 +51,7 @@
   font-size: 32rpx;
   font-weight: 700;
   color: var(--text-primary);
+  margin-left: 10rpx;
 }
 
 .unread-dot {

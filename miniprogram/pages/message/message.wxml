@@ -9,7 +9,7 @@
     <view wx:for="{{messages}}" wx:key="id" class="message-card {{item.isRead ? 'read' : 'unread'}}"
       bind:tap="onMessageTap" data-id="{{item.id}}" data-workId="{{item.workId}}" data-type="{{item.type}}">
       <view class="card-header">
-        <t-icon name="{{icon}}" size="48rpx" />
+        <t-icon name="{{item.icon}}" size="32rpx" color="{{item.color}}"/>
         <view class="card-title-row">
           <text class="card-title">{{item.title}}</text>
           <view wx:if="{{!item.isRead}}" class="unread-dot" />

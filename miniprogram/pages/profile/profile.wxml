@@ -55,11 +55,12 @@
     </t-cell>
   </t-cell-group>
 
+    <view class="hint">Version: {{version}}</view>
 
-  <!-- 退出登录 -->
-  <view class="logout-btn" bind:tap="onLogout">
-    退出登录
-  </view>
+    <!-- 退出登录 -->
+    <view class="logout-btn" bind:tap="onLogout">
+      退出登录
+    </view>
 
   <!-- 外观模式选择 -->
   <t-action-sheet visible="{{showThemeSheet}}" items="{{themeOptions}}" bind:selected="onThemeSelect"

@@ -1,4 +1,6 @@
 import request from "../../utils/http";
+import ENV from "../../config/setting";
+const { miniProgram } = wx.getAccountInfoSync();
 
 // 主题模式选项
 const THEME_OPTIONS = [
@@ -26,6 +28,7 @@ Page({
     avatar: "",
     submissionCount: 0,
     unreadNotificationCount: 0,
+    version: miniProgram.version || `${ENV.VERSION}`,
   },
   async onLoad() {
     this.syncUserInfo();

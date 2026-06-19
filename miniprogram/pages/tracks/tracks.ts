@@ -38,6 +38,7 @@ Page({
       theme: "primary",
       shape: "round",
       size: "medium",
+      hoverClass: "none",
     },
     select: "phrase",
     type: [
@@ -181,12 +182,12 @@ Page({
   },
 
   getShareConfig() {
-    const { track, cardList } = this.data;
+    const { track } = this.data;
 
     return {
       title: track.title,
       path: `/pages/tracks/tracks?id=${track.id}`,
-      imageUrl: cardList[0]?.cover || "",
+      imageUrl: track.bannerUrl || "",
     };
   },
 
