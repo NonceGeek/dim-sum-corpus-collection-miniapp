@@ -14,6 +14,7 @@ const TYPES = [
   { label: "地名解说", value: "地名解说" },
   { label: "歇后语", value: "歇后语" },
 ];
+
 Page({
   data: {
     mode: "",
@@ -140,30 +141,38 @@ Page({
     wx.showLoading({ title: "加载活动中..." });
     try {
       const track = await request(`/activities/${id}`);
-      wx.hideLoading();
-      this.setData({
-        ...(track.submissionTypes.length
-          ? {
-              typeOptions: track.submissionTypes.map((t) => ({
-                label: t,
-                value: t,
-              })),
-            }
-          : {}),
-        selectedType:
-          track.submissionTypes.length === 1
-            ? track.submissionTypes[0]
-            : this.data.selectedType,
-        selectedActivity: track,
+      await new Promise<void>((resolve) => {
+        this.setData(
+          {
+            ...(track.submissionTypes.length
+              ? {
+                  typeOptions: track.submissionTypes.map((t) => ({
+                    label: t,
+                    value: t,
+                  })),
+                }
+              : {}),
+            selectedType:
+              track.submissionTypes.length === 1
+                ? track.submissionTypes[0]
+                : this.data.selectedType,
+            selectedActivity: track,
+          },
+          resolve,
+        );
       });
+      this.checkCanPublish();
+      return true;
     } catch (err: any) {
-      wx.hideLoading();
       console.log("获取活动数据失败", err);
       wx.showModal({
         title: "获取活动数据失败",
         content: err.error + "，请稍后重试",
         showCancel: false,
       });
+      return false;
+    } finally {
+      wx.hideLoading();
     }
   },
 
@@ -370,14 +379,16 @@ Page({
     const requiredTypes = mediaRequirements.requiredTypes || [];
     const hasImage = requiredTypes.includes("image");
     const hasVideo = requiredTypes.includes("video");
-    const hasAudio = requiredTypes.includes("audio");
-    const hasMediaRequirement = hasImage || hasVideo || hasAudio;
-
-    // 有图片要求时最多 8 张；仅视频/录音时仍需要 1 张封面图。
-    // 没有活动媒体要求时，沿用默认的 8 张图片 + 1 个视频。
+    const hasMediaRequirement = requiredTypes.length > 0;
     const maxImageCount =
       hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
-    const maxVideoCount = hasMediaRequirement && !hasVideo ? 0 : MIN_IMAGE;
+    const maxVideoCount = hasMediaRequirement && !hasVideo ? 0 : 1;
+    const ruleDescription = [
+      hasImage ? "图片：1-8张" : "图片：1张",
+      hasVideo
+        ? `视频：1个，且不能超过${MAX_VIDEO_BURATION}秒`
+        : "视频：不允许上传",
+    ].join("\n");
     const currentImageCount = this.data.imageList.filter(
       (file) => file.type === "image",
     ).length;
@@ -389,7 +400,15 @@ Page({
     const maxCount = remainingImageCount + remainingVideoCount;
 
     if (maxCount === 0) {
-      wx.showToast({ title: "已达到媒体数量上限", icon: "none" });
+      if (hasMediaRequirement) {
+        wx.showModal({
+          title: "已达到该活动媒体上限",
+          content: ruleDescription,
+          showCancel: false,
+        });
+      } else {
+        wx.showToast({ title: "已达到媒体数量上限", icon: "none" });
+      }
       return;
     }
 
@@ -429,10 +448,7 @@ Page({
           ) {
             wx.showModal({
               title: "提示",
-              content:
-                maxVideoCount > 0
-                  ? `最多选择${maxImageCount}张图片和1个视频`
-                  : `最多选择${maxImageCount}张图片`,
+              content: ruleDescription,
               showCancel: false,
             });
             return;
@@ -574,19 +590,16 @@ Page({
   },
 
   // 选中活动
-  onSelectActivity(e: any) {
-    const { id, title } = e.currentTarget.dataset;
+  async onSelectActivity(e: any) {
+    const { id } = e.currentTarget.dataset;
+    const hasUploadedMedia =
+      this.data.imageList.length > 0 || Boolean(this.data.audioUrl);
+    const loaded = await this.loadTrack(id);
 
-    this.setData(
-      {
-        selectedActivity: { id, title },
-        activityPopupVisible: false,
-      },
-      async () => {
-        await this.loadTrack(id);
-      },
-    );
-    this.checkCanPublish();
+    if (loaded) {
+      this.setData({ activityPopupVisible: false });
+      this.checkCanPublish(hasUploadedMedia);
+    }
   },
 
   // 添加话题
@@ -711,29 +724,45 @@ Page({
 
     const requiredTypes =
       selectedActivity?.mediaRequirements?.requiredTypes || [];
-
-    if (!selectedType) {
-      return { canPublish: false, message: "请选择类型" };
-    }
+    const hasImage = requiredTypes.includes("image");
+    const hasVideo = requiredTypes.includes("video");
+    const hasAudio = requiredTypes.includes("audio");
+    const hasMediaRequirement = requiredTypes.length > 0;
+    const maxImageCount =
+      hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
+    const violations: string[] = [];
 
     const hasBasicContent =
       title.trim() || content.trim() || imageList.length > 0 || audioUrl;
 
-    if (!hasBasicContent) {
-      return { canPublish: false, message: "请填写内容或上传媒体" };
-    }
-
     const imageCount = imageList.filter((i) => i.type === "image").length;
-    if (imageCount < MIN_IMAGE) {
-      return { canPublish: false, message: "请至少上传一张图片" };
-    }
+    const videoCount = imageList.filter((i) => i.type === "video").length;
 
-    if (requiredTypes.includes("image")) {
-      if (imageCount > MAX_IMAGE) {
-        return {
-          canPublish: false,
-          message: "图片不能多于" + MAX_IMAGE + "张",
-        };
+    if (hasMediaRequirement) {
+      if (imageCount < MIN_IMAGE || imageCount > maxImageCount) {
+        violations.push(
+          imageCount < MIN_IMAGE
+            ? "缺少图片，至少需要1张"
+            : maxImageCount === MIN_IMAGE
+              ? `图片只能上传1张，当前有${imageCount}张`
+              : `图片最多上传${MAX_IMAGE}张，当前有${imageCount}张`,
+        );
+      }
+
+      if (hasVideo && videoCount !== 1) {
+        violations.push(
+          videoCount < 1
+            ? "缺少视频，需要上传1个视频"
+            : `视频只能上传1个，当前有${videoCount}个`,
+        );
+      } else if (!hasVideo && videoCount > 0) {
+        violations.push("该活动不允许上传视频");
+      }
+
+      if (hasAudio && !audioUrl) {
+        violations.push("缺少录音，需要上传1个录音");
+      } else if (!hasAudio && audioUrl) {
+        violations.push("该活动不允许上传录音");
       }
     }
 
@@ -744,31 +773,47 @@ Page({
         i.durationSec > MAX_VIDEO_BURATION,
     );
     if (overDurationVideo) {
-      return {
-        canPublish: false,
-        message: "视频不能多于" + maxVideoDuration + "秒",
-      };
-    }
-
-    if (requiredTypes.includes("audio") && !audioUrl) {
-      return { canPublish: false, message: "请上传录音" };
+      violations.push(`视频不能超过${MAX_VIDEO_BURATION}秒`);
     }
 
     if (audioUrl && audioDuration > MAX_AUDIO_DURATION) {
-      return {
-        canPublish: false,
-        message: "录音不能多于" + MAX_AUDIO_DURATION + "秒",
-      };
+      violations.push(`录音不能超过${MAX_AUDIO_DURATION}秒`);
     }
 
-    return { canPublish: true, message: "" };
+    return {
+      canPublish:
+        Boolean(selectedType) &&
+        Boolean(hasBasicContent) &&
+        violations.length === 0,
+      message: !selectedType
+        ? "请选择类型"
+        : !hasBasicContent
+          ? "请填写内容或上传媒体"
+          : violations[0] || "",
+      violations,
+    };
   },
 
   // 检查是否可以发布
-  checkCanPublish() {
-    const { canPublish, message } = this.getPublishValidation();
+  checkCanPublish(showMediaRuleError = false) {
+    const { canPublish, message, violations = [] } =
+      this.getPublishValidation();
     console.log("message:", message);
     this.setData({ canPublish });
+
+    if (!showMediaRuleError) {
+      return;
+    }
+
+    if (violations.length > 0) {
+      wx.showModal({
+        title: "当前媒体不符合活动规则",
+        content:
+          violations.map((item) => `• ${item}`).join("\n") +
+          "\n\n请调整后再发布。",
+        showCancel: false,
+      });
+    }
   },
   // 取消发布
   onCancel() {
@@ -930,6 +975,21 @@ Page({
 
   // 切换录音弹窗
   onToggleRecordPopup() {
+    const mediaRequirements =
+      this.data.selectedActivity?.mediaRequirements || {};
+    const requiredTypes = mediaRequirements.requiredTypes || [];
+    const hasAudio = requiredTypes.includes("audio");
+    const hasMediaRequirement = requiredTypes.length > 0;
+
+    if (hasMediaRequirement && !hasAudio) {
+      wx.showModal({
+        title: "该活动不允许上传录音",
+        content: "当前活动不包含录音投稿要求",
+        showCancel: false,
+      });
+      return;
+    }
+
     this.setData({ recordPopupVisible: true });
   },
 
