@@ -476,12 +476,14 @@ Page({
           });
           this.checkCanPublish();
         } catch (err: any) {
+          console.error(err);
           wx.showModal({
             title: "上传失败",
-            content: err?.message || "请稍后重试",
+            content:
+              (err?.message || err?.errMsg || err?.error || "操作失败") +
+              "，请稍后重试",
             showCancel: false,
           });
-          console.error(err);
         } finally {
           wx.hideLoading();
         }
