@@ -1255,14 +1255,17 @@ Page({
 
   // 转文字弹窗：发原语音，保存录音文件
   onAsrUseAudio() {
-    this.setData({
-      audioUrl: this.data.pendingAudioUrl,
-      audioDuration: this.data.pendingAudioDuration,
-      asrPopupVisible: false,
-      asrText: "",
-      pendingAudioUrl: "",
-      pendingAudioDuration: 0,
-    });
+    this.setData(
+      {
+        audioUrl: this.data.pendingAudioUrl,
+        audioDuration: this.data.pendingAudioDuration,
+        asrPopupVisible: false,
+        asrText: "",
+        pendingAudioUrl: "",
+        pendingAudioDuration: 0,
+      },
+      () => this.checkCanPublish(),
+    );
   },
 
   // 转文字弹窗：确认，把文字追加到正文
@@ -1290,10 +1293,13 @@ Page({
       content: "确定要删除录音吗？",
       success: (res) => {
         if (res.confirm) {
-          this.setData({
-            audioUrl: "",
-            audioDuration: 0,
-          });
+          this.setData(
+            {
+              audioUrl: "",
+              audioDuration: 0,
+            },
+            () => this.checkCanPublish(),
+          );
         }
       },
     });
