@@ -211,6 +211,22 @@
   background: linear-gradient(90deg, #ffffff 50%, #111 50%);
 }
 
+.theme-action-sheet {
+  --td-action-sheet-border-color: transparent;
+  background-color: var(--bg-card) !important;
+}
+
+.theme-action-sheet .t-popup,
+.theme-action-sheet .t-popup__content {
+  background-color: var(--bg-card) !important;
+}
+
+.theme-action-sheet .t-action-sheet__description::after,
+.theme-action-sheet .t-action-sheet__list-item::after,
+.theme-action-sheet .t-action-sheet__gap-grid {
+  display: none;
+}
+
 /* 退出 */
 
 .logout-btn {

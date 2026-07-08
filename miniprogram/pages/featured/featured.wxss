@@ -442,12 +442,24 @@
 .arrow-bottom {
   position: absolute;
   left: 50%;
-  bottom: -20rpx;
-  transform: translateX(-50%) rotate(45deg);
+  bottom: -32rpx;
+  width: 64rpx;
+  height: 32rpx;
+  overflow: hidden;
+  transform: translateX(-50%);
+}
+
+.arrow-bottom::before {
+  content: "";
+  position: absolute;
+  left: 12rpx;
+  top: -20rpx;
   width: 40rpx;
   height: 40rpx;
   background: var(--bg-card);
-  box-shadow: var(--shadow-primary);
+  border-right: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  transform: rotate(45deg);
 }
 
 /* tabs */
@@ -547,13 +559,17 @@
   overflow: hidden;
 }
 
+.tracks-popup-host {
+  background: var(--bg-page) !important;
+}
+
 .tracks-popup {
   display: flex;
   flex-direction: column;
   height: 78vh;
-  padding: 24rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
+  padding: 24rpx;
   box-sizing: border-box;
-  background: var(--accent-bg);
+  background: var(--bg-page);
 }
 
 .tracks-popup-handle {
@@ -561,7 +577,7 @@
   height: 10rpx;
   margin: 0 auto 56rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.45);
+  background: var(--bg-page);
 }
 
 .tracks-popup-list {

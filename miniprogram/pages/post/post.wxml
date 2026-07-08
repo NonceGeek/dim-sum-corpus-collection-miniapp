@@ -85,8 +85,8 @@
       </view>
 
       <!-- 活动选择弹窗 -->
-      <t-popup visible="{{activityPopupVisible}}" placement="bottom" bind:visible-change="onActivityPopupClose">
-        <view class="topic-popup">
+      <t-popup visible="{{activityPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onActivityPopupClose">
+        <view class="topic-popup theme-{{currentTheme}}">
           <view class="topic-popup-header">
             <text class="topic-popup-title">选择活动</text>
             <view class="topic-popup-close" bind:tap="onActivityPopupClose">
@@ -152,14 +152,14 @@
       </view>
 
       <!-- Picker 弹出层 -->
-      <t-picker visible="{{pickerVisible}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
+      <t-picker class="post-picker-root theme-{{currentTheme}}" t-class="post-picker-panel theme-{{currentTheme}}" visible="{{pickerVisible}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
         title="选择投稿类型">
         <t-picker-item options="{{typeOptions}}" />
       </t-picker>
 
       <!-- 话题选择弹窗 -->
-      <t-popup visible="{{topicPopupVisible}}" placement="bottom" bind:visible-change="onTopicPopupClose">
-        <view class="topic-popup">
+      <t-popup visible="{{topicPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onTopicPopupClose">
+        <view class="topic-popup theme-{{currentTheme}}">
           <view class="topic-popup-header">
             <text class="topic-popup-title">选择标签</text>
             <view class="topic-popup-close" bind:tap="onTopicPopupClose">
@@ -198,9 +198,9 @@
     </view>
 
     <!-- 录音弹窗 -->
-    <t-popup visible="{{recordPopupVisible}}" placement="bottom" bind:visible-change="onRecordPopupClose"
+    <t-popup visible="{{recordPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onRecordPopupClose"
       close-on-overlay-click="{{true}}">
-      <view class="record-popup">
+      <view class="record-popup theme-{{currentTheme}}">
         <view class="record-hint">长按录音，最长60秒；左右滑动可取消或转文字</view>
         <view class="record-btn-area {{recordActionsAnimating ? 'actions-entering' : ''}}">
           <view
@@ -224,8 +224,8 @@
     </t-popup>
 
     <!-- 转文字结果弹窗 -->
-    <t-popup visible="{{asrPopupVisible}}" placement="bottom" close-on-overlay-click="{{false}}">
-      <view class="asr-popup">
+    <t-popup visible="{{asrPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" close-on-overlay-click="{{false}}">
+      <view class="asr-popup theme-{{currentTheme}}">
         <view class="asr-popup-title">语音转文字</view>
         <t-textarea class="asr-textarea" value="{{asrText}}" placeholder="转换结果将显示在这里，可直接编辑"
           placeholder-style="color: var(--text-muted)" autosize="{{false}}" borderless="{{true}}"

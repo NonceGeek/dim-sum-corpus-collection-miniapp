@@ -58,14 +58,6 @@
   border-top-color: var(--border-color) !important;
 }
 
-.theme-dark
-  .t-tab-bar-item
-  .t-tab-bar-item__content--checked
-  .t-tab-bar-item__text,
-.theme-dark .t-tab-bar-item .t-tab-bar-item__content--checked .t-icon {
-  color: var(--primary) !important;
-}
-
 /* ============================================
    深色模式
    ============================================ */

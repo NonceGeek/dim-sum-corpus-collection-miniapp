@@ -12,8 +12,6 @@
   gap: 24rpx;
 }
 
-/* TDesign Navbar 样式覆盖 */
-
 .upload-page .custom-navbar-title {
   font-size: 28rpx;
   color: var(--text-primary);
@@ -197,6 +195,7 @@
   border-radius: var(--radius-lg);
   padding-left: 12rpx !important;
   padding-top: 12rpx !important;
+  background-color: var(--bg-card);
 }
 
 .word-count {
@@ -312,6 +311,28 @@
 
 .add-topic .topic-text {
   color: var(--text-secondary);
+}
+
+.post-popup-host {
+  background-color: var(--bg-page) !important;
+}
+
+.post-popup-host .t-popup,
+.post-popup-host .t-popup__content {
+  background-color: var(--bg-page) !important;
+}
+
+.post-picker-root {
+  background-color: var(--bg-card) !important;
+}
+
+.post-picker-root .t-popup,
+.post-picker-root .t-popup__content {
+  background-color: var(--bg-card) !important;
+}
+
+.post-picker-panel {
+  background-color: var(--bg-card) !important;
 }
 
 /* 话题弹窗样式 */
@@ -809,7 +830,6 @@
 .view-footer-action {
   height: 88rpx;
   border-radius: 999rpx;
-  background: var(--bg-input);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -903,10 +923,6 @@
   width: 52rpx;
   height: 52rpx;
   color: var(--danger);
-}
-
-.t-picker-item__item.t-picker-item__item--active {
-  color: var(--text-on-light) !important;
 }
 
 .t-icon-search.t-icon-base {

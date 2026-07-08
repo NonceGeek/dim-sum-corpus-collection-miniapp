@@ -63,7 +63,7 @@
     </view>
 
   <!-- 外观模式选择 -->
-  <t-action-sheet visible="{{showThemeSheet}}" items="{{themeOptions}}" bind:selected="onThemeSelect"
+  <t-action-sheet class="theme-action-sheet theme-{{currentTheme}}" visible="{{showThemeSheet}}" items="{{themeOptions}}" bind:selected="onThemeSelect"
     bind:cancel="onThemeSheetClose" bind:close="onThemeSheetClose" />
 
 </view>

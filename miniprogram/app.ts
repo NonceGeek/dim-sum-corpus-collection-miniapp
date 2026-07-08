@@ -100,7 +100,15 @@ App<IAppOption>({
       }
     });
 
-    // 设置导航栏样式
+    this.applyNavigationBarTheme(theme);
+
+    console.log("主题已应用:", theme);
+  },
+
+  /**
+   * 应用原生导航栏主题
+   */
+  applyNavigationBarTheme(theme: ThemeValue) {
     const navBarStyle =
       theme === "dark"
         ? { backgroundColor: "#161B22", frontColor: "#ffffff" }
@@ -111,8 +119,6 @@ App<IAppOption>({
       backgroundColor: navBarStyle.backgroundColor,
       animation: { duration: 300, timingFunc: "easeInOut" },
     });
-
-    console.log("主题已应用:", theme);
   },
 
   /**
@@ -126,6 +132,7 @@ App<IAppOption>({
    * 获取当前实际主题
    */
   getTheme(): ThemeValue {
+    this.applyNavigationBarTheme(this.globalData.theme as ThemeValue);
     return this.globalData.theme as ThemeValue;
   },
 

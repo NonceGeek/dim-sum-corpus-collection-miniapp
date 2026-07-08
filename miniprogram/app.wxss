@@ -118,10 +118,44 @@ page {
   /* TDesign 覆盖 */
   --td-bg-color-container: var(--bg-card);
   --td-bg-color-page: var(--bg-page);
+  --td-bg-color-secondarycontainer: var(--bg-input);
   --td-text-color-primary: var(--text-primary);
+  --td-text-color-secondary: var(--text-secondary);
   --td-text-color-placeholder: var(--text-muted);
   --td-border-color: var(--border-color);
+  --td-component-stroke: var(--border-color);
+  --td-component-border: var(--border-color);
   --td-brand-color: var(--primary);
+  --td-popup-bg-color: var(--bg-page);
+  --td-cell-bg-color: var(--bg-card);
+  --td-navbar-bg-color: var(--bg-card);
+  --td-navbar-background: var(--bg-card);
+  --td-navbar-color: var(--text-primary);
+  --td-tab-bar-bg-color: var(--bg-card);
+  --td-tab-bar-color: var(--text-muted);
+  --td-tab-bar-active-color: var(--primary);
+  --td-tab-bar-item-color: var(--text-muted);
+  --td-tab-bar-item-active-color: var(--primary);
+  --td-input-bg-color: var(--bg-card);
+  --td-input-default-text-color: var(--text-primary);
+  --td-input-placeholder-text-color: var(--text-muted);
+  --td-input-border-color: var(--border-color);
+  --td-textarea-background-color: var(--bg-card);
+  --td-textarea-text-color: var(--text-primary);
+  --td-textarea-placeholder-color: var(--text-muted);
+  --td-textarea-border-color: var(--border-color);
+  --td-picker-bg-color: var(--bg-card);
+  --td-picker-title-color: var(--text-primary);
+  --td-picker-cancel-color: var(--text-secondary);
+  --td-picker-confirm-color: var(--primary);
+  --td-picker-item-color: var(--text-secondary);
+  --td-picker-item-active-color: var(--text-primary);
+  --td-picker-indicator-bg-color: var(--bg-input);
+  --td-picker-transparent-color: transparent;
+  --td-action-sheet-color: var(--text-primary);
+  --td-action-sheet-cancel-color: var(--text-primary);
+  --td-action-sheet-description-color: var(--text-muted);
+  --td-action-sheet-gap-color: var(--bg-page);
   --td-font-family:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto,
     sans-serif;
@@ -188,16 +222,44 @@ page {
     /* TDesign 覆盖 */
     --td-bg-color-container: var(--bg-card);
     --td-bg-color-page: var(--bg-page);
+    --td-bg-color-secondarycontainer: var(--bg-input);
     --td-text-color-primary: var(--text-primary);
     --td-text-color-secondary: var(--text-secondary);
     --td-text-color-placeholder: var(--text-muted);
     --td-border-color: var(--border-color);
+    --td-component-stroke: var(--border-color);
+    --td-component-border: var(--border-color);
     --td-brand-color: var(--primary);
+    --td-popup-bg-color: var(--bg-page);
     --td-cell-bg-color: var(--bg-card);
     --td-navbar-bg-color: var(--bg-card);
+    --td-navbar-background: var(--bg-card);
+    --td-navbar-color: var(--text-primary);
     --td-tab-bar-bg-color: var(--bg-card);
+    --td-tab-bar-color: var(--text-muted);
+    --td-tab-bar-active-color: var(--primary);
     --td-tab-bar-item-color: var(--text-muted);
     --td-tab-bar-item-active-color: var(--primary);
+    --td-input-bg-color: var(--bg-card);
+    --td-input-default-text-color: var(--text-primary);
+    --td-input-placeholder-text-color: var(--text-muted);
+    --td-input-border-color: var(--border-color);
+    --td-textarea-background-color: var(--bg-card);
+    --td-textarea-text-color: var(--text-primary);
+    --td-textarea-placeholder-color: var(--text-muted);
+    --td-textarea-border-color: var(--border-color);
+    --td-picker-bg-color: var(--bg-card);
+    --td-picker-title-color: var(--text-primary);
+    --td-picker-cancel-color: var(--text-secondary);
+    --td-picker-confirm-color: var(--primary);
+    --td-picker-item-color: var(--text-secondary);
+    --td-picker-item-active-color: var(--text-primary);
+    --td-picker-indicator-bg-color: var(--bg-input);
+    --td-picker-transparent-color: transparent;
+    --td-action-sheet-color: var(--text-primary);
+    --td-action-sheet-cancel-color: var(--text-primary);
+    --td-action-sheet-description-color: var(--text-muted);
+    --td-action-sheet-gap-color: var(--bg-page);
 
     background-color: var(--bg-page);
   }
@@ -299,6 +361,76 @@ page {
   font-weight: 500;
 }
 
+/* TDesign 组件主题兜底：颜色 token 统一在这里维护 */
+.t-popup,
+.t-popup__content {
+  background-color: var(--td-popup-bg-color) !important;
+}
+
+.t-navbar,
+.t-navbar__content {
+  background-color: var(--td-navbar-bg-color) !important;
+  color: var(--td-navbar-color) !important;
+}
+
+.t-navbar .t-navbar__title,
+.t-navbar__title,
+.t-navbar__center-title {
+  color: var(--td-navbar-color) !important;
+}
+
+.t-navbar .t-icon,
+.t-navbar__btn,
+.t-navbar__left-arrow {
+  color: var(--td-navbar-color) !important;
+}
+
+.t-input {
+  background-color: var(--td-input-bg-color) !important;
+}
+
+.t-input__control {
+  color: var(--td-input-default-text-color) !important;
+}
+
+.t-textarea {
+  background-color: var(--td-textarea-background-color) !important;
+}
+
+.t-textarea__wrapper-inner {
+  color: var(--td-textarea-text-color) !important;
+}
+
+.t-picker {
+  background-color: var(--td-picker-bg-color) !important;
+}
+
+.t-picker__title,
+.t-picker-item__item--active {
+  color: var(--td-picker-item-active-color) !important;
+}
+
+.t-picker-item__item {
+  color: var(--td-picker-item-color);
+}
+
+.t-tab-bar-item__content--checked .t-tab-bar-item__icon,
+.t-tab-bar-item__content--checked .t-tab-bar-item__text,
+.t-tab-bar-item__content--checked .t-icon {
+  color: var(--td-tab-bar-active-color) !important;
+}
+
+.t-action-sheet__content,
+.t-action-sheet__footer,
+.t-action-sheet__cancel {
+  background-color: var(--td-bg-color-container) !important;
+  color: var(--td-action-sheet-color) !important;
+}
+
+.t-action-sheet__gap-list {
+  background-color: var(--td-action-sheet-gap-color) !important;
+}
+
 /* ============================================
    手动主题切换支持 - JS 控制的主题类
    使用 .theme-dark 类实现手动深色模式
@@ -351,6 +483,48 @@ page {
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+
+  /* TDesign 覆盖 */
+  --td-bg-color-container: var(--bg-card) !important;
+  --td-bg-color-page: var(--bg-page) !important;
+  --td-bg-color-secondarycontainer: var(--bg-input) !important;
+  --td-text-color-primary: var(--text-primary) !important;
+  --td-text-color-secondary: var(--text-secondary) !important;
+  --td-text-color-placeholder: var(--text-muted) !important;
+  --td-border-color: var(--border-color) !important;
+  --td-component-stroke: var(--border-color) !important;
+  --td-component-border: var(--border-color) !important;
+  --td-brand-color: var(--primary) !important;
+  --td-popup-bg-color: var(--bg-page) !important;
+  --td-cell-bg-color: var(--bg-card) !important;
+  --td-navbar-bg-color: var(--bg-card) !important;
+  --td-navbar-background: var(--bg-card) !important;
+  --td-navbar-color: var(--text-primary) !important;
+  --td-tab-bar-bg-color: var(--bg-card) !important;
+  --td-tab-bar-color: var(--text-muted) !important;
+  --td-tab-bar-active-color: var(--primary) !important;
+  --td-tab-bar-item-color: var(--text-muted) !important;
+  --td-tab-bar-item-active-color: var(--primary) !important;
+  --td-input-bg-color: var(--bg-card) !important;
+  --td-input-default-text-color: var(--text-primary) !important;
+  --td-input-placeholder-text-color: var(--text-muted) !important;
+  --td-input-border-color: var(--border-color) !important;
+  --td-textarea-background-color: var(--bg-card) !important;
+  --td-textarea-text-color: var(--text-primary) !important;
+  --td-textarea-placeholder-color: var(--text-muted) !important;
+  --td-textarea-border-color: var(--border-color) !important;
+  --td-picker-bg-color: var(--bg-card) !important;
+  --td-picker-title-color: var(--text-primary) !important;
+  --td-picker-cancel-color: var(--text-secondary) !important;
+  --td-picker-confirm-color: var(--primary) !important;
+  --td-picker-item-color: var(--text-secondary) !important;
+  --td-picker-item-active-color: var(--text-primary) !important;
+  --td-picker-indicator-bg-color: var(--bg-input) !important;
+  --td-picker-transparent-color: transparent !important;
+  --td-action-sheet-color: var(--text-primary) !important;
+  --td-action-sheet-cancel-color: var(--text-primary) !important;
+  --td-action-sheet-description-color: var(--text-muted) !important;
+  --td-action-sheet-gap-color: var(--bg-page) !important;
 
   background-color: var(--bg-page) !important;
   color: var(--text-primary) !important;
@@ -408,16 +582,44 @@ page {
   /* TDesign 覆盖 */
   --td-bg-color-container: var(--bg-card) !important;
   --td-bg-color-page: var(--bg-page) !important;
+  --td-bg-color-secondarycontainer: var(--bg-input) !important;
   --td-text-color-primary: var(--text-primary) !important;
   --td-text-color-secondary: var(--text-secondary) !important;
   --td-text-color-placeholder: var(--text-muted) !important;
   --td-border-color: var(--border-color) !important;
+  --td-component-stroke: var(--border-color) !important;
+  --td-component-border: var(--border-color) !important;
   --td-brand-color: var(--primary) !important;
+  --td-popup-bg-color: var(--bg-page) !important;
   --td-cell-bg-color: var(--bg-card) !important;
   --td-navbar-bg-color: var(--bg-card) !important;
+  --td-navbar-background: var(--bg-card) !important;
+  --td-navbar-color: var(--text-primary) !important;
   --td-tab-bar-bg-color: var(--bg-card) !important;
+  --td-tab-bar-color: var(--text-muted) !important;
+  --td-tab-bar-active-color: var(--primary) !important;
   --td-tab-bar-item-color: var(--text-muted) !important;
   --td-tab-bar-item-active-color: var(--primary) !important;
+  --td-input-bg-color: var(--bg-card) !important;
+  --td-input-default-text-color: var(--text-primary) !important;
+  --td-input-placeholder-text-color: var(--text-muted) !important;
+  --td-input-border-color: var(--border-color) !important;
+  --td-textarea-background-color: var(--bg-card) !important;
+  --td-textarea-text-color: var(--text-primary) !important;
+  --td-textarea-placeholder-color: var(--text-muted) !important;
+  --td-textarea-border-color: var(--border-color) !important;
+  --td-picker-bg-color: var(--bg-card) !important;
+  --td-picker-title-color: var(--text-primary) !important;
+  --td-picker-cancel-color: var(--text-secondary) !important;
+  --td-picker-confirm-color: var(--primary) !important;
+  --td-picker-item-color: var(--text-secondary) !important;
+  --td-picker-item-active-color: var(--text-primary) !important;
+  --td-picker-indicator-bg-color: var(--bg-input) !important;
+  --td-picker-transparent-color: transparent !important;
+  --td-action-sheet-color: var(--text-primary) !important;
+  --td-action-sheet-cancel-color: var(--text-primary) !important;
+  --td-action-sheet-description-color: var(--text-muted) !important;
+  --td-action-sheet-gap-color: var(--bg-page) !important;
 
   background-color: var(--bg-page) !important;
   color: var(--text-primary) !important;

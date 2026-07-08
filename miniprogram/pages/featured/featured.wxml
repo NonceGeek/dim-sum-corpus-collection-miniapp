@@ -135,7 +135,7 @@
       <text>目前暂无活动</text>
     </view>
   </block>
-  <t-popup visible="{{allTracksPopupVisible}}" placement="bottom" t-class="tracks-popup-host"
+  <t-popup visible="{{allTracksPopupVisible}}" placement="bottom" t-class="tracks-popup-host theme-{{currentTheme}}"
     bind:visible-change="onAllTracksPopupChange">
     <view class="tracks-popup theme-{{currentTheme}}">
       <view class="tracks-popup-handle"></view>
