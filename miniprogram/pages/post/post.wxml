@@ -1,8 +1,8 @@
 <view class="upload-page theme-{{currentTheme}}">
   <block wx:if="{{mode === 'edit'}}">
-    <t-navbar fixed="{{false}}" class="custom-navbar">
-      <view slot="left" bind:tap="onNavbarBack">
-        <t-icon name="chevron-left" size="24" />
+    <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">
+      <view slot="left" class="custom-navbar-back" bind:tap="onNavbarBack">
+        <t-icon name="chevron-left" size="28px" />
       </view>
       <view slot="title" class="custom-navbar-title">我要投稿</view>
     </t-navbar>
@@ -240,9 +240,9 @@
     </t-popup>
   </block>
   <block wx:else>
-    <t-navbar fixed="{{false}}" class="custom-navbar">
-      <view slot="left" bind:tap="onViewNavbarBack">
-        <t-icon name="chevron-left" size="24" />
+    <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">
+      <view slot="left" class="custom-navbar-back" bind:tap="onViewNavbarBack">
+        <t-icon name="chevron-left" size="28px" />
       </view>
     </t-navbar>
 
