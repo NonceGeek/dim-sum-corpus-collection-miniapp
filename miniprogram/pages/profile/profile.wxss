@@ -58,7 +58,7 @@
 
 .avatar-placeholder {
   background: var(--primary, #4f46e5);
-  color: #fff;
+  color: var(--text-white);
   font-size: 56rpx;
   font-weight: 700;
   display: flex;
@@ -78,7 +78,7 @@
 .nickname {
   font-size: 42rpx;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-white);
 }
 
 .vip-tag {
@@ -88,7 +88,7 @@
   border-radius: 999rpx;
 
   font-size: 22rpx;
-  color: #fff;
+  color: var(--text-white);
 
   background: rgba(255, 255, 255, 0.16);
 
@@ -114,7 +114,7 @@
   border-radius: 999rpx;
 
   font-size: 24rpx;
-  color: #fff;
+  color: var(--text-white);
 
   background: rgba(255, 255, 255, 0.12);
 
@@ -141,8 +141,8 @@
   padding: 0 10rpx;
   border-radius: 999rpx;
   font-size: 22rpx;
-  color: #fff;
-  background: #ff4d4f;
+  color: var(--text-white);
+  background: var(--danger);
 }
 
 /* 外观模式 */
@@ -152,7 +152,7 @@
 
   padding: 32rpx 28rpx;
 
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 32rpx;
 
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
@@ -161,7 +161,7 @@
 .theme-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #222;
+  color: var(--text-primary);
 }
 
 .theme-options {
@@ -186,8 +186,8 @@
 }
 
 .theme-option.active {
-  border-color: #6b6bff;
-  background: rgba(107, 107, 255, 0.06);
+  border-color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .theme-preview {
@@ -216,7 +216,7 @@
 .logout-btn {
   margin: 24rpx;
 
-  height: 96rpx;
+  height: var(--btn-height-lg);
 
   border-radius: 999rpx;
 
@@ -228,7 +228,7 @@
   font-weight: 700;
 
   background: var(--danger);
-  color: #fff;
+  color: var(--text-white);
 
   box-shadow: var(--shadow-primary);
 }

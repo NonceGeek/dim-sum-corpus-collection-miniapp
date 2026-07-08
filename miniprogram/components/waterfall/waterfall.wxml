@@ -12,7 +12,7 @@
               item.reviewStatus === 'rejected'
             )}}" class="work-status status-{{item.reviewStatus}}">
               <view class="work-status-icon">
-                <t-icon name="verified" size="24rpx" color="#fff" t-class="icon-class" />
+                <t-icon name="verified" size="24rpx" color="var(--text-white)" t-class="icon-class" />
               </view>
               <view class="work-status-text" wx:if="{{item.reviewStatus === 'pending_review' || item.reviewStatus === 'ai_reviewing' || item.reviewStatus === 'review_needed'}}">审核中</view>
               <view class="work-status-text" wx:else>审核失败</view>
@@ -23,7 +23,7 @@
               item.awardStatus === 'expired'
             )}}" class="work-status status-{{item.awardStatus}}">
               <view class="work-status-icon">
-                <t-icon name="gift" size="24rpx" color="#fff" t-class="icon-class"/>
+                <t-icon name="gift" size="24rpx" color="var(--text-white)" t-class="icon-class"/>
               </view>
               <view class="work-status-text" wx:if="{{item.awardStatus === 'awarded'}}">已获奖</view>
               <view class="work-status-text" wx:elif="{{item.awardStatus === 'claimed'}}">已兑奖</view>
@@ -31,7 +31,7 @@
             </view>
             <view wx:if="{{showFeatured && item.isFeatured && item.reviewStatus === 'approved'}}" class="work-status status-pending_review">
               <view class="work-status-icon">
-                <t-icon name="star" size="24rpx" color="#fff" t-class="icon-class"/>
+                <t-icon name="star" size="24rpx" color="var(--text-white)" t-class="icon-class"/>
               </view>
               <view class="work-status-text">精选</view>
             </view>
@@ -72,7 +72,7 @@
               item.reviewStatus === 'rejected'
             )}}" class="work-status status-{{item.reviewStatus}}">
               <view class="work-status-icon">
-                <t-icon name="verified" size="24rpx" color="#fff" t-class="icon-class" />
+                <t-icon name="verified" size="24rpx" color="var(--text-white)" t-class="icon-class" />
               </view>
               <view class="work-status-text" wx:if="{{item.reviewStatus === 'pending_review' || item.reviewStatus === 'ai_reviewing' || item.reviewStatus === 'review_needed'}}">审核中</view>
               <view class="work-status-text" wx:else>审核失败</view>
@@ -83,7 +83,7 @@
               item.awardStatus === 'expired'
             )}}" class="work-status status-{{item.awardStatus}}">
               <view class="work-status-icon">
-                <t-icon name="gift" size="24rpx" color="#fff" t-class="icon-class"/>
+                <t-icon name="gift" size="24rpx" color="var(--text-white)" t-class="icon-class"/>
               </view>
               <view class="work-status-text" wx:if="{{item.awardStatus === 'awarded'}}">已获奖</view>
               <view class="work-status-text" wx:elif="{{item.awardStatus === 'claimed'}}">已兑奖</view>
@@ -91,7 +91,7 @@
             </view>
             <view wx:if="{{showFeatured && item.isFeatured  && item.reviewStatus === 'approved'}}" class="work-status status-pending_review">
               <view class="work-status-icon">
-                <t-icon name="star" size="24rpx" color="#fff" t-class="icon-class" />
+                <t-icon name="star" size="24rpx" color="var(--text-white)" t-class="icon-class" />
               </view>
               <view class="work-status-text">精选</view>
             </view>

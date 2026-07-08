@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   background: var(--bg-page);
-  color: #121212;
+  color: var(--text-primary);
   box-sizing: border-box;
 }
 
@@ -19,7 +19,7 @@
   width: 56rpx;
   height: 56rpx;
   border-radius: 12rpx;
-  background: #fb285d;
+  background: var(--deco-pink);
   transform: rotate(35deg);
   opacity: 0.9;
 }
@@ -32,7 +32,7 @@
 .hero::after {
   right: 94rpx;
   bottom: 72rpx;
-  background: #2442ff;
+  background: var(--deco-blue);
 }
 
 .top-actions {
@@ -53,7 +53,7 @@
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0;
-  background: linear-gradient(90deg, #4a7cf3, #7c5cff, #ffffff, #4a7cf3);
+  background: var(--gradient-shimmer);
   background-size: 300% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -77,7 +77,7 @@
   padding: 12rpx 18rpx;
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.92);
-  color: #7a6331;
+  color: var(--accent);
   font-size: 24rpx;
   font-weight: 600;
   line-height: 1.2;
@@ -257,7 +257,7 @@
   left: 0;
   width: 100%;
   border-radius: 999rpx;
-  background: linear-gradient(90deg, #7c3aed 0%, #4f46e5 100%);
+  background: var(--gradient-accent);
   transform-origin: left center;
 }
 
@@ -314,8 +314,8 @@
 }
 
 .track-grid-item.active {
-  background: #2b2b31;
-  color: #fff;
+  background: var(--chip-active-bg);
+  color: var(--text-white);
 }
 
 .sort-section {
@@ -346,8 +346,8 @@
 }
 
 .sort-btn.active {
-  background: #2b2b31;
-  color: #fff;
+  background: var(--chip-active-bg);
+  color: var(--text-white);
 }
 
 .works-section {
@@ -366,7 +366,6 @@
   font-size: 26rpx;
 }
 
-
 .bottom-btn {
   min-width: 240rpx;
   height: 76rpx !important;
@@ -380,7 +379,7 @@
   outline: none !important;
   --td-button-default-border-color: transparent !important;
   --td-button-default-color: transparent !important;
-  color: #fff !important;
+  color: var(--text-white) !important;
   border-radius: var(--radius-full) !important;
   box-shadow: var(--shadow-primary) !important;
 }

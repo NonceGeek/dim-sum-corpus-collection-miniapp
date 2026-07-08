@@ -16,7 +16,7 @@
             <view class="image-item">
               <image src="{{item.url}}" mode="aspectFill" class="uploaded-image" />
               <view class="delete-btn" catch:tap="onDeleteImage" data-index="{{index}}">
-                <t-icon name="close" size="16" color="#fff" />
+                <t-icon name="close" size="16" color="var(--text-white)" />
               </view>
             </view>
           </block>
@@ -210,7 +210,7 @@
           </view>
           <view class="record-btn {{recording ? 'recording' : ''}}" bind:touchstart="onStartRecord"
             bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord" bind:touchcancel="onStopRecord">
-            <t-icon name="mic" size="32" color="{{recording ? '#fff' : 'var(--primary)'}}" />
+            <t-icon name="mic" size="32" color="{{recording ? 'var(--text-white)' : 'var(--primary)'}}" />
             <text class="record-btn-text">{{recording ? '松开 结束' : '按住 录音'}}</text>
             <text class="record-timer" wx:if="{{recording}}">{{recordTime}}s</text>
           </view>
@@ -250,7 +250,7 @@
     <!-- 媒体轮播 -->
     <view class="view-swiper-wrap" wx:if="{{imageList && imageList.length > 0}}">
       <swiper class="view-swiper" indicator-dots="{{imageList.length > 1}}" indicator-color="rgba(255,255,255,0.5)"
-        indicator-active-color="#fff">
+        indicator-active-color="var(--text-white)">
         <swiper-item wx:for="{{imageList}}" wx:key="index">
           <block wx:if="{{item.type === 'video'}}">
             <video class="view-media" src="{{item.url}}" controls show-fullscreen-btn object-fit="contain" />

@@ -8,7 +8,7 @@
 /* Banner */
 .top-banner {
   padding: 32rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .banner-title {
@@ -16,7 +16,7 @@
   font-size: 72rpx;
   font-weight: 700;
   line-height: 1.2;
-  background: linear-gradient(90deg, #4a7cf3, #7c5cff, #ffffff, #4a7cf3);
+  background: var(--gradient-shimmer);
   background-size: 300% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -38,7 +38,7 @@
   margin-top: 12rpx;
   font-size: 56rpx;
   font-weight: 700;
-  background: linear-gradient(90deg, #4a7cf3, #7c5cff, #ffffff, #4a7cf3);
+  background: var(--gradient-shimmer);
   background-size: 300% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -50,7 +50,7 @@
 .banner-desc {
   margin-top: 8rpx;
   font-size: 30rpx;
-  color: #7a6331;
+  color: var(--accent);
   height: 40rpx;
   overflow: hidden;
   position: relative;
@@ -60,7 +60,7 @@
   position: absolute;
   width: 100%;
   font-size: 30rpx;
-  color: #7a6331;
+  color: var(--accent);
   transition:
     opacity 0.5s ease,
     transform 0.5s ease;
@@ -110,7 +110,7 @@
 }
 
 .card-en {
-  color: #7a6331;
+  color: var(--accent);
   font-size: 28rpx;
 }
 
@@ -135,7 +135,7 @@
 }
 
 .container .media-requirement-icon.media-requirement-icon {
-  color: #8b949e !important;
+  color: var(--text-secondary) !important;
 }
 
 .media-requirement-item {
@@ -145,10 +145,10 @@
   justify-content: center;
   gap: 8rpx;
   padding: 8rpx 14rpx;
-  border: 1px solid #e2e8f0;
-  border-radius: 999rpx;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
   background: var(--bg-input);
-  color: #8b949e;
+  color: var(--text-secondary);
   font-size: 24rpx;
   line-height: 1.2;
   white-space: nowrap;
@@ -178,7 +178,7 @@
   width: 210rpx;
   height: 320rpx;
   border-radius: 24rpx;
-  background: #eee;
+  background: var(--bg-placeholder);
 }
 
 .play-icon {
@@ -248,7 +248,7 @@
   height: 8rpx;
   border-radius: 50%;
   opacity: 0;
-  background: #fff;
+  background: var(--text-white);
   transform: scale(0.2);
 }
 
@@ -428,11 +428,11 @@
 
 .btn-row .t-button {
   flex: 1;
-  height: 88rpx;
+  height: var(--btn-height);
   font-size: 30rpx;
 }
 .post-btn {
-  color: #fff;
+  color: var(--text-white);
 }
 .post-btn.unactive {
   background: var(--text-muted) !important;
@@ -486,12 +486,12 @@
 .tab-item.active {
   transform: scale(1);
   opacity: 1;
-  background: #7a6331;
+  background: var(--accent);
 }
 
 .tab-item.active .tab-title,
 .tab-item.active .tab-sub {
-  color: #fff !important;
+  color: var(--text-white) !important;
 }
 
 .tab-title {
@@ -506,13 +506,13 @@
 .tab-sub {
   margin-top: 10rpx;
   font-size: 22rpx;
-  color: #fff;
+  color: var(--text-white);
 }
 
 .slide-tips {
   margin-top: 24rpx;
   text-align: center;
-  color: #8a7a4a;
+  color: var(--accent-muted);
   font-size: 24rpx;
 }
 
@@ -527,7 +527,7 @@
 .bottom-btn {
   background: var(--gradient-primary) !important;
   border: none !important;
-  color: #fff !important;
+  color: var(--text-white) !important;
   border-radius: var(--radius-full) !important;
   box-shadow: var(--shadow-primary) !important;
 }
@@ -553,7 +553,7 @@
   height: 78vh;
   padding: 24rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
-  background: #b1844b;
+  background: var(--accent-bg);
 }
 
 .tracks-popup-handle {
@@ -579,13 +579,9 @@
   margin-bottom: 40rpx;
   box-sizing: border-box;
   overflow: hidden;
-  background: #d9d9d9;
+  background: var(--bg-muted);
   border: 2rpx solid var(--border-color);
   border-radius: 24rpx;
-}
-
-.theme-dark .tracks-popup-card {
-  background: var(--bg-input);
 }
 
 .tracks-popup-card:active {
@@ -697,11 +693,7 @@
   justify-content: space-between;
   gap: 20rpx;
   padding: 28rpx;
-  background: #d9d9d9;
-}
-
-.theme-dark .tracks-popup-card-footer {
-  background: var(--bg-input);
+  background: var(--bg-muted);
 }
 
 .tracks-popup-rule {
@@ -722,7 +714,7 @@
 .tracks-popup-status.active {
   background: var(--gradient-primary);
   border: 0;
-  color: #fff;
+  color: var(--text-white);
 }
 
 .info {

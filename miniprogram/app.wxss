@@ -23,38 +23,68 @@ text {
     "Helvetica Neue", Arial, sans-serif;
 }
 
-.nav {
-  text-align: center;
+:root {
 }
 
 /* ============================================
    Light Mode - CSS Variables
    ============================================ */
 page {
+  /* ==========================================
+     皮肤层 —— 换风格只改下面这些色值
+     ========================================== */
+
+  /* 常量 */
+  --text-white: #fff;
+
   /* 主色调 */
   --primary: #4a7cf3;
   --primary-light: #6b93f5;
-  --primary-dark: #3566d9;
+  --primary-soft: rgba(74, 124, 243, 0.12);
   --secondary: #7c5cff;
-  --secondary-light: #9178ff;
-  --tertiary-dark: #007595;
-  --tertiary-light: #00d3f3;
+  --secondary-bold: #7c3aed;
+  --secondary-bolder: #4f46e5;
+
+  /* 点缀色（金棕系 + 装饰色块） */
+  --accent: #7a6331;
+  --accent-muted: #8a7a4a;
+  --accent-bg: #b1844b;
+  --deco-pink: #fb285d;
+  --deco-blue: #2442ff;
+  --chip-active-bg: #2b2b31;
 
   /* 渐变 */
-  --gradient-primary: linear-gradient(135deg, #4a7cf3 0%, #7c5cff 100%);
-  --gradient-button: linear-gradient(135deg, #4a7cf3 0%, #6b93f5 100%);
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--secondary) 100%
+  );
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--secondary),
+    var(--text-white),
+    var(--primary)
+  );
+  --gradient-accent: linear-gradient(
+    90deg,
+    var(--secondary-bold) 0%,
+    var(--secondary-bolder) 100%
+  );
 
   /* 背景色 */
   --bg-page: #f5f7fa;
   --bg-card: #ffffff;
   --bg-input: #f8fafc;
-  --bg-elevated: #ffffff;
+  --bg-placeholder: #eeeeee;
+  --bg-muted: #d9d9d9;
 
   /* 文字色 */
   --text-primary: #1a1f36;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --text-inverse: #ffffff;
+  /* 永远浅色的表面上的文字（如系统弹层），不随主题变 */
+  --text-on-light: #1a1f36;
 
   /* 边框 */
   --border-color: #e2e8f0;
@@ -64,15 +94,15 @@ page {
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --info: #3b82f6;
+  --danger-strong: #f62459;
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-primary: 0 4px 14px rgba(74, 124, 243, 0.25);
+
+  /* ==========================================
+     结构层 —— 尺寸/圆角固定，换肤永不改
+     ========================================== */
 
   /* 圆角 */
   --radius-sm: 8rpx;
@@ -81,11 +111,14 @@ page {
   --radius-xl: 32rpx;
   --radius-full: 9999rpx;
 
+  /* 按钮 */
+  --btn-height: 88rpx;
+  --btn-height-lg: 96rpx;
+
   /* TDesign 覆盖 */
   --td-bg-color-container: var(--bg-card);
   --td-bg-color-page: var(--bg-page);
   --td-text-color-primary: var(--text-primary);
-  --td-text-color-secondary: var(--text-secondary);
   --td-text-color-placeholder: var(--text-muted);
   --td-border-color: var(--border-color);
   --td-brand-color: var(--primary);
@@ -108,25 +141,42 @@ page {
     /* 主色调 - 稍微提亮 */
     --primary: #5d8cf5;
     --primary-light: #7ba3f7;
-    --primary-dark: #4a7cf3;
+    --primary-soft: rgba(93, 140, 245, 0.16);
     --secondary: #9178ff;
-    --secondary-light: #a892ff;
+    --secondary-bold: #a78bff;
+    --secondary-bolder: #c4b5fd;
 
     /* 渐变 */
-    --gradient-primary: linear-gradient(135deg, #5d8cf5 0%, #9178ff 100%);
-    --gradient-button: linear-gradient(135deg, #5d8cf5 0%, #7ba3f7 100%);
+    --gradient-primary: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--secondary) 100%
+    );
+
+    --gradient-shimmer: linear-gradient(
+      90deg,
+      var(--primary),
+      var(--secondary),
+      var(--text-white),
+      var(--primary)
+    );
+    --gradient-accent: linear-gradient(
+      90deg,
+      var(--secondary-bold) 0%,
+      var(--secondary-bolder) 100%
+    );
 
     /* 背景色 */
     --bg-page: #0d1117;
     --bg-card: #161b22;
     --bg-input: #21262d;
-    --bg-elevated: #1c2128;
+    --bg-placeholder: #21262d;
+    --bg-muted: #21262d;
 
     /* 文字色 */
     --text-primary: #f0f6fc;
     --text-secondary: #8b949e;
     --text-muted: #6e7681;
-    --text-inverse: #0d1117;
 
     /* 边框 */
     --border-color: #30363d;
@@ -134,9 +184,6 @@ page {
 
     /* 阴影 - 深色模式使用发光效果 */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-    --shadow-primary: 0 4px 20px rgba(93, 140, 245, 0.3);
 
     /* TDesign 覆盖 */
     --td-bg-color-container: var(--bg-card);
@@ -166,14 +213,8 @@ page {
     color: var(--text-primary) !important;
   }
 
-  .t-cell .t-cell__note {
-    color: var(--text-secondary) !important;
-  }
-
-  .t-cell .t-cell__left-icon,
-  .t-icon {
-    color: var(--text-primary) !important;
-  }
+  /* 不要给 .t-icon / .t-cell__left-icon 加全局颜色覆盖：
+     会盖掉 message 语义色和 profile 自定义图标色，图标色一律由各页面/组件自管 */
 
   /* TDesign Navbar 深色适配 */
   .t-navbar {
@@ -229,20 +270,6 @@ page {
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
   }
-
-  /* TDesign Collapse 深色适配 */
-  .t-collapse-panel {
-    background-color: var(--bg-card) !important;
-  }
-
-  .t-collapse-panel__header {
-    color: var(--text-primary) !important;
-  }
-
-  /* TDesign Empty 深色适配 */
-  .t-empty__description {
-    color: var(--text-secondary) !important;
-  }
 }
 
 /* ============================================
@@ -262,45 +289,6 @@ page {
   }
 }
 
-/* 渐变按钮基础样式 */
-.btn-gradient {
-  background: var(--gradient-primary);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-primary);
-  transition: all 0.2s ease;
-}
-
-.btn-gradient:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-
-/* 卡片基础样式 */
-.card {
-  background-color: var(--bg-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
-}
-
-/* 输入框样式 */
-.input-field {
-  background-color: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.input-field:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(74, 124, 243, 0.15);
-}
-
 /* 状态标签 */
 .badge {
   display: inline-flex;
@@ -309,51 +297,6 @@ page {
   border-radius: var(--radius-full);
   font-size: 24rpx;
   font-weight: 500;
-}
-
-.badge-primary {
-  background: rgba(74, 124, 243, 0.15);
-  color: var(--primary);
-}
-
-.badge-success {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
-}
-
-.badge-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
-}
-
-.badge-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
-}
-
-/* 分隔线 */
-.divider {
-  height: 1px;
-  background-color: var(--border-color);
-  margin: 24rpx 0;
-}
-
-/* 图标按钮 */
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: var(--radius-full);
-  background-color: var(--bg-input);
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.icon-btn:active {
-  background-color: var(--border-color);
-  transform: scale(0.95);
 }
 
 /* ============================================
@@ -366,33 +309,41 @@ page {
   /* 主色调 */
   --primary: #4a7cf3 !important;
   --primary-light: #6b93f5 !important;
-  --primary-dark: #3566d9 !important;
+  --primary-soft: rgba(74, 124, 243, 0.12) !important;
   --secondary: #7c5cff !important;
-  --secondary-light: #9178ff !important;
+  --secondary-bold: #7c3aed !important;
+  --secondary-bolder: #4f46e5 !important;
 
   /* 渐变 */
   --gradient-primary: linear-gradient(
     135deg,
-    #4a7cf3 0%,
-    #7c5cff 100%
-  ) !important;
-  --gradient-button: linear-gradient(
-    135deg,
-    #4a7cf3 0%,
-    #6b93f5 100%
-  ) !important;
+    var(--primary) 0%,
+    var(--secondary) 100%
+  );
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--secondary),
+    var(--text-white),
+    var(--primary)
+  );
+  --gradient-accent: linear-gradient(
+    90deg,
+    var(--secondary-bold) 0%,
+    var(--secondary-bolder) 100%
+  );
 
   /* 背景色 */
   --bg-page: #f5f7fa !important;
   --bg-card: #ffffff !important;
   --bg-input: #f8fafc !important;
-  --bg-elevated: #ffffff !important;
+  --bg-placeholder: #eeeeee !important;
+  --bg-muted: #d9d9d9 !important;
 
   /* 文字色 */
   --text-primary: #1a1f36 !important;
   --text-secondary: #64748b !important;
   --text-muted: #94a3b8 !important;
-  --text-inverse: #ffffff !important;
 
   /* 边框 */
   --border-color: #e2e8f0 !important;
@@ -400,11 +351,6 @@ page {
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  --shadow-md:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
-  --shadow-lg:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
-  --shadow-primary: 0 4px 14px rgba(74, 124, 243, 0.25) !important;
 
   background-color: var(--bg-page) !important;
   color: var(--text-primary) !important;
@@ -415,33 +361,42 @@ page {
   /* 主色调 - 稍微提亮 */
   --primary: #5d8cf5 !important;
   --primary-light: #7ba3f7 !important;
-  --primary-dark: #4a7cf3 !important;
+  --primary-soft: rgba(93, 140, 245, 0.16) !important;
   --secondary: #9178ff !important;
-  --secondary-light: #a892ff !important;
+  --secondary-bold: #a78bff !important;
+  --secondary-bolder: #c4b5fd !important;
 
   /* 渐变 */
   --gradient-primary: linear-gradient(
     135deg,
-    #5d8cf5 0%,
-    #9178ff 100%
-  ) !important;
-  --gradient-button: linear-gradient(
-    135deg,
-    #5d8cf5 0%,
-    #7ba3f7 100%
-  ) !important;
+    var(--primary) 0%,
+    var(--secondary) 100%
+  );
+
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--secondary),
+    var(--text-white),
+    var(--primary)
+  );
+  --gradient-accent: linear-gradient(
+    90deg,
+    var(--secondary-bold) 0%,
+    var(--secondary-bolder) 100%
+  );
 
   /* 背景色 */
   --bg-page: #0d1117 !important;
   --bg-card: #161b22 !important;
   --bg-input: #21262d !important;
-  --bg-elevated: #1c2128 !important;
+  --bg-placeholder: #21262d !important;
+  --bg-muted: #21262d !important;
 
   /* 文字色 */
   --text-primary: #f0f6fc !important;
   --text-secondary: #8b949e !important;
   --text-muted: #6e7681 !important;
-  --text-inverse: #0d1117 !important;
 
   /* 边框 */
   --border-color: #30363d !important;
@@ -449,9 +404,6 @@ page {
 
   /* 阴影 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4) !important;
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5) !important;
-  --shadow-primary: 0 4px 20px rgba(93, 140, 245, 0.3) !important;
 
   /* TDesign 覆盖 */
   --td-bg-color-container: var(--bg-card) !important;
@@ -471,17 +423,6 @@ page {
   color: var(--text-primary) !important;
 }
 
-/* 容器包裹层，确保背景色铺满且变量穿透 */
-.container-wrap {
-  min-height: 100vh;
-  background-color: var(--bg-page);
-  color: var(--text-primary);
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
-  box-sizing: border-box;
-}
-
 /* 深色主题下的组件样式覆盖 */
 .theme-dark .t-cell {
   background-color: var(--bg-card) !important;
@@ -492,14 +433,7 @@ page {
   color: var(--text-primary) !important;
 }
 
-.theme-dark .t-cell .t-cell__note {
-  color: var(--text-secondary) !important;
-}
-
-.theme-dark .t-cell .t-cell__left-icon,
-.theme-dark .t-icon {
-  color: var(--text-primary) !important;
-}
+/* 见浅色块同名注释：不要给 .t-icon / .t-cell__left-icon 加全局颜色覆盖 */
 
 .theme-dark .t-navbar {
   background-color: var(--bg-card) !important;
@@ -529,7 +463,7 @@ page {
 .theme-dark .login-btn {
   background: var(--gradient-primary) !important;
   border: none !important;
-  color: #fff !important;
+  color: var(--text-white) !important;
 }
 
 /* 确保 outline 按钮背景透明 */
@@ -552,18 +486,6 @@ page {
 
 .theme-dark .t-tab-bar--tag .t-tab-bar-item--active .t-tab-bar-item__content {
   background-color: transparent !important;
-}
-
-.theme-dark .t-collapse-panel {
-  background-color: var(--bg-card) !important;
-}
-
-.theme-dark .t-collapse-panel__header {
-  color: var(--text-primary) !important;
-}
-
-.theme-dark .t-empty__description {
-  color: var(--text-secondary) !important;
 }
 
 .theme-dark .glass-effect {

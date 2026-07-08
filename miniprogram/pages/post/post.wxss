@@ -13,9 +13,6 @@
 }
 
 /* TDesign Navbar 样式覆盖 */
-.upload-page .t-navbar {
-  background-color: var(--bg-card);
-}
 
 .upload-page .custom-navbar-title {
   font-size: 28rpx;
@@ -346,7 +343,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-light);
+  color: var(--text-muted);
 }
 
 .topic-search {
@@ -530,7 +527,7 @@
   color: var(--text-muted) !important;
 }
 .theme-dark .record-cancel.hover .t-icon {
-  color: #fff !important;
+  color: var(--text-white) !important;
 }
 .record-btn-area.actions-entering .record-cancel.visible {
   animation: appear-left 0.7s ease-out forwards;
@@ -569,11 +566,11 @@
 }
 
 .theme-dark .record-asr .t-icon {
-  color: #6b93f5 !important;
+  color: var(--primary-light) !important;
 }
 
 .theme-dark .record-asr.hover .t-icon {
-  color: #fff !important;
+  color: var(--text-white) !important;
 }
 
 @keyframes appear-right {
@@ -616,7 +613,7 @@
 }
 
 .record-btn.recording .record-btn-text {
-  color: #fff;
+  color: var(--text-white);
 }
 
 .record-timer {
@@ -626,7 +623,7 @@
 }
 
 .record-btn.recording .record-timer {
-  color: #fff;
+  color: var(--text-white);
 }
 
 /* 侧边按钮悬停高亮 */
@@ -644,7 +641,7 @@
   transform: translate(72rpx, -70rpx) rotate(12deg) scale(1.08);
 }
 .record-side-btn.hover .record-side-text {
-  color: #fff;
+  color: var(--text-white);
 }
 
 /* ============================================
@@ -781,7 +778,7 @@
 
 .topic-text {
   font-size: 24rpx;
-  color: #4a7cf3;
+  color: var(--primary);
 }
 
 /* 底部栏 */
@@ -791,7 +788,7 @@
   right: 0;
   bottom: 0;
   padding: 20rpx 24rpx calc(env(safe-area-inset-bottom) + 20rpx);
-  background: var(--bg-primary);
+  background: var(--bg-card);
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: space-between;
@@ -800,7 +797,7 @@
 .view-footer-action {
   height: 88rpx;
   border-radius: 999rpx;
-  background: var(--card-bg);
+  background: var(--bg-input);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -816,7 +813,7 @@
 .post-actions-popup {
   padding: 24rpx;
   border-radius: 36rpx 36rpx 0 0;
-  background: var(--bg-primary);
+  background: var(--bg-card);
   box-sizing: border-box;
 }
 
@@ -864,14 +861,14 @@
 
 /* 删除文字 */
 .danger-text {
-  color: #f62459;
+  color: var(--danger-strong);
 }
 
 /* 取消按钮 */
 .post-action-cancel {
   height: 92rpx;
   border-radius: 999rpx;
-  background: var(--card-bg);
+  background: var(--bg-input);
 
   display: flex;
   align-items: center;
@@ -897,7 +894,7 @@
 }
 
 .t-picker-item__item.t-picker-item__item--active {
-  color: #1a1f36 !important;
+  color: var(--text-on-light) !important;
 }
 
 .t-icon-search.t-icon-base {
@@ -905,5 +902,5 @@
 }
 
 .t-search__input-box .t-input__keyword {
-  color: #1a1f36 !important;
+  color: var(--text-on-light) !important;
 }

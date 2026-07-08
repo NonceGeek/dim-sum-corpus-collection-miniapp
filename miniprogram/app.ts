@@ -288,35 +288,6 @@ App<IAppOption>({
     });
   },
 
-  // 执行手机号登录
-  doPhoneLogin(phone: string, smsCode: string): Promise<string> {
-    wx.showLoading({ title: "登录中..." });
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url: `${ENV.API_BASE_URL}/auth/login`,
-        method: "POST",
-        data: { phoneNumber: phone, verificationCode: smsCode },
-        timeout: 15000,
-        success: async (resp) => {
-          wx.hideLoading();
-
-          console.log("手机号登录返回结果：", resp);
-          if (resp.statusCode !== 200) {
-            return reject(resp.data);
-          } else {
-            console.log("登录接口返回", resp.data);
-            await this.handleLoginSuccess(resp.data);
-            resolve(this.globalData.accessToken);
-          }
-        },
-        fail: (err) => {
-          wx.hideLoading();
-          reject(err);
-        },
-      });
-    });
-  },
-
   // 处理登录成功后的公共逻辑
   async handleLoginSuccess(data: any) {
     const { accessToken, refreshToken, user } = data || {};
@@ -335,31 +306,5 @@ App<IAppOption>({
     ]);
 
     console.log("登录成功", user);
-  },
-
-  doSendSms(phone: string): Promise<any> {
-    wx.showLoading({ title: "发送验证码中..." });
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url: `${ENV.API_BASE_URL}/auth/send-sms`,
-        method: "POST",
-        data: { phoneNumber: phone },
-        timeout: 15000, // 审核环境可能较慢
-        success: async (resp) => {
-          wx.hideLoading();
-
-          console.log("返回结果：", resp);
-          if (resp.statusCode !== 200) {
-            return reject(resp.data);
-          } else {
-            resolve(resp.data);
-          }
-        },
-        fail: (err) => {
-          wx.hideLoading();
-          reject(err);
-        },
-      });
-    });
   },
 });

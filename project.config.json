@@ -12,7 +12,7 @@
       "outputPath": ""
     },
     "coverView": false,
-    "postcss": false,
+    "postcss": true,
     "minified": true,
     "enhance": false,
     "showShadowRootInWxmlPanel": false,
@@ -21,15 +21,15 @@
     "skylineRenderEnable": true,
     "es6": true,
     "compileWorklet": false,
-    "uglifyFileName": false,
+    "uglifyFileName": true,
     "uploadWithSourceMap": true,
     "packNpmManually": true,
     "minifyWXSS": true,
     "minifyWXML": true,
     "localPlugins": false,
-    "condition": false,
-    "swc": false,
-    "disableSWC": true,
+    "condition": true,
+    "swc": true,
+    "disableSWC": false,
     "disableUseStrict": false,
     "packNpmRelationList": [
       {
@@ -47,7 +47,7 @@
     "tabIndent": "insertSpaces",
     "tabSize": 2
   },
-  "libVersion": "trial",
+  "libVersion": "3.15.2",
   "packOptions": {
     "ignore": [],
     "include": []

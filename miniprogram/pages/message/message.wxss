@@ -105,7 +105,7 @@
 .bottom-btn {
   background: var(--gradient-primary) !important;
   border: none !important;
-  color: #fff !important;
+  color: var(--text-white) !important;
   border-radius: var(--radius-full) !important;
   box-shadow: var(--shadow-primary) !important;
   margin-right: 24rpx;
