@@ -670,7 +670,7 @@ Page({
       availableTopics,
       topicSearchKeyword: "",
       filteredTopicList: availableTopics,
-    });
+    }, () => this.checkCanPublish());
   },
 
   // 选择话题
@@ -688,14 +688,14 @@ Page({
       this.setData({
         selectedTopics: selectedTopics.filter((t) => t !== topic),
         selectedTopicMap,
-      });
+      }, () => this.checkCanPublish());
     } else {
       selectedTopicMap[topic] = true;
 
       this.setData({
         selectedTopics: [...selectedTopics, topic],
         selectedTopicMap,
-      });
+      }, () => this.checkCanPublish());
     }
   },
 
@@ -708,7 +708,9 @@ Page({
     );
     const selectedTopicMap = { ...this.data.selectedTopicMap };
     delete selectedTopicMap[topic];
-    this.setData({ selectedTopics, selectedTopicMap });
+    this.setData({ selectedTopics, selectedTopicMap }, () =>
+      this.checkCanPublish(),
+    );
   },
 
   getPublishValidation() {
@@ -718,6 +720,7 @@ Page({
       title,
       content,
       imageList,
+      selectedTopics,
       audioUrl,
       audioDuration,
     } = this.data;
@@ -731,6 +734,12 @@ Page({
     const maxImageCount =
       hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
     const violations: string[] = [];
+    const tags = [
+      ...(selectedActivity?.tags || []),
+      ...selectedTopics,
+    ]
+      .map((tag) => this.normalizeTopic(tag))
+      .filter(Boolean);
 
     const hasBasicContent =
       title.trim() || content.trim() || imageList.length > 0 || audioUrl;
@@ -784,12 +793,15 @@ Page({
       canPublish:
         Boolean(selectedType) &&
         Boolean(hasBasicContent) &&
+        tags.length > 0 &&
         violations.length === 0,
       message: !selectedType
         ? "请选择类型"
         : !hasBasicContent
           ? "请填写内容或上传媒体"
-          : violations[0] || "",
+          : tags.length === 0
+            ? "请添加标签"
+            : violations[0] || "",
       violations,
     };
   },

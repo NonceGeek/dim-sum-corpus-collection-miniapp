@@ -191,7 +191,7 @@
       <!-- 底部按钮 -->
       <view class="footer">
         <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
-          disabled="{{!canPublish}}">
+          disabled="{{!canPublish}}" hover-class="none">
           发布
         </t-button>
       </view>

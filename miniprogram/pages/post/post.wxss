@@ -447,6 +447,18 @@
   box-shadow: var(--shadow-primary) !important;
 }
 
+.btn-submit-inner:active,
+.btn-submit-inner.t-button--hover,
+.btn-submit-inner.t-button--active {
+  background: var(--gradient-primary) !important;
+  opacity: 1 !important;
+}
+
+.btn-submit-inner.t-button--disabled {
+  opacity: 0.5 !important;
+  box-shadow: none !important;
+}
+
 /* 录音弹窗 */
 .record-popup {
   background-color: var(--bg-card);
