@@ -8,7 +8,39 @@ import ENV from "../config/setting";
  */
 
 let isRefreshing = false;
-let refreshQueue: Function[] = [];
+let refreshQueue: Array<{ retry: () => void; reject: (e: any) => void }> = [];
+// 全局"正在跳转登录页"标志：保证无论多少请求同时失败，只跳一次、只弹一次 toast
+let isRedirecting = false;
+
+/**
+ * 统一跳转登录页
+ * 加锁保证只执行一次，避免多个失败请求各自 reLaunch 造成 login 页反复闪烁
+ */
+function redirectToLogin() {
+  if (isRedirecting) return;
+  isRedirecting = true;
+
+  wx.removeStorageSync("accessToken");
+  wx.removeStorageSync("refreshToken");
+
+  wx.showToast({
+    title: "登录已过期，请重新登录",
+    icon: "none",
+    duration: 1500,
+  });
+
+  setTimeout(() => {
+    wx.reLaunch({ url: "/pages/login/login" });
+  }, 800);
+}
+
+/**
+ * 复位跳转锁（由 login 页 onShow 调用），
+ * 以便下次登录再次过期时仍能正常跳转
+ */
+export function resetRedirectFlag() {
+  isRedirecting = false;
+}
 
 function request(url: string, options: any = {}): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -42,22 +74,7 @@ function request(url: string, options: any = {}): Promise<any> {
           const retryCount = options._retryCount || 0;
           if (retryCount >= 3) {
             console.error("[request] 重试 3 次仍失败");
-            wx.showToast({
-              title: "登录已过期，请重新登录",
-              icon: "none",
-              duration: 2000,
-            });
-
-            // 清空 token 并跳转到登录页
-            wx.removeStorageSync("accessToken");
-            wx.removeStorageSync("refreshToken");
-
-            setTimeout(() => {
-              wx.reLaunch({
-                url: "/pages/login/login",
-              });
-            }, 2000);
-
+            redirectToLogin();
             return reject(new Error("登录过期，请重新登录"));
           }
 
@@ -89,9 +106,11 @@ function handleTokenExpired(
 ) {
   if (isRefreshing) {
     // ✅ 已在刷新，排队等待
-    return refreshQueue.push(() =>
-      request(url, options).then(resolve).catch(reject),
-    );
+    refreshQueue.push({
+      retry: () => request(url, options).then(resolve).catch(reject),
+      reject,
+    });
+    return;
   }
 
   isRefreshing = true;
@@ -101,36 +120,25 @@ function handleTokenExpired(
       isRefreshing = false;
 
       if (!ok) {
+        // 刷新失败：拒绝所有排队请求，并统一跳转登录页（只跳一次）
         const queue = refreshQueue.slice();
         refreshQueue = [];
-        queue.forEach((cb) => cb());
-        wx.removeStorageSync("accessToken");
-        wx.removeStorageSync("refreshToken");
+        queue.forEach(({ reject: rj }) => rj(new Error("登录过期")));
 
-        wx.showToast({
-          title: "登录已过期，请重新登录",
-          icon: "none",
-          duration: 2000,
-        });
-
-        setTimeout(() => {
-          wx.reLaunch({
-            url: "/pages/login/login",
-          });
-        }, 2000);
-
+        redirectToLogin();
         return reject(new Error("登录过期"));
       }
 
       // ✅ 刷新成功，执行队列
-      refreshQueue.forEach((cb) => {
+      const queue = refreshQueue.slice();
+      refreshQueue = [];
+      queue.forEach(({ retry }) => {
         try {
-          cb();
+          retry();
         } catch (e) {
           console.error(e);
         }
       });
-      refreshQueue = [];
 
       // ✅ 当前请求重试
       request(url, options).then(resolve).catch(reject);

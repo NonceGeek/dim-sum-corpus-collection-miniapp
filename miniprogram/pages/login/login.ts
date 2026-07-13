@@ -1,5 +1,6 @@
 import { IAppOption } from "../../../typings";
 import ENV from "../../config/setting";
+import { resetRedirectFlag } from "../../utils/http";
 const { miniProgram } = wx.getAccountInfoSync();
 
 Page({
@@ -17,6 +18,8 @@ Page({
   },
 
   onShow() {
+    // 回到登录页说明跳转已完成，复位跳转锁，允许下次过期时再次跳转
+    resetRedirectFlag();
     this.syncTheme();
   },
 
