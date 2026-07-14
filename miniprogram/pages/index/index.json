@@ -9,6 +9,8 @@
     "t-tab-bar-item": "tdesign-miniprogram/tab-bar-item/tab-bar-item",
     "waterfall": "/components/waterfall/waterfall"
   },
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 80
 }

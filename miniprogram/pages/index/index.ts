@@ -1,5 +1,10 @@
 import { STATIC_FILE } from "../../app";
+import ENV from "../../config/setting";
 import request from "../../utils/http";
+
+const SHARE_TITLE = `${ENV.title}｜${ENV.subtitle}`;
+const SHARE_PATH = "/pages/index/index";
+const TIMELINE_IMAGE = "/public/image/logo.png";
 
 interface ISwiperList {
   id: string;
@@ -32,6 +37,9 @@ Page({
 
   async onLoad() {
     this.syncTheme();
+    wx.showShareMenu({
+      menus: ["shareAppMessage", "shareTimeline"],
+    });
     await this.loadSwiperData();
     await this.loadCardList();
     wx.nextTick(() => {
@@ -145,6 +153,21 @@ Page({
     Promise.all([this.loadSwiperData(), this.loadCardList()]).finally(() => {
       wx.stopPullDownRefresh();
     });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: SHARE_TITLE,
+      path: SHARE_PATH,
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: SHARE_TITLE,
+      query: "",
+      imageUrl: TIMELINE_IMAGE,
+    };
   },
 
   onWaterfallTap(e: any) {
