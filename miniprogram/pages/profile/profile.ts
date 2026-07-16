@@ -1,5 +1,6 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
+import { guardProtectedPage } from "../../utils/auth";
 const { miniProgram } = wx.getAccountInfoSync();
 
 // 主题模式选项
@@ -31,6 +32,15 @@ Page({
     version: miniProgram.version || `${ENV.VERSION}`,
   },
   async onLoad() {
+    if (
+      !guardProtectedPage(
+        "/pages/profile/profile",
+        "登录后才能使用个人中心，当前仍可继续浏览公开内容。",
+      )
+    ) {
+      return;
+    }
+
     this.syncUserInfo();
     await this.loadProfileSummary();
   },
@@ -170,8 +180,8 @@ Page({
       content: "确定要退出登录吗？",
       success: (res) => {
         if (res.confirm) {
-          wx.clearStorageSync();
-          wx.reLaunch({ url: "/pages/login/login" });
+          const app = getApp<any>();
+          app.logout();
         }
       },
     });

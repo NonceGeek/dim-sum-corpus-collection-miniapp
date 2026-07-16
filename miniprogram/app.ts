@@ -189,9 +189,9 @@ App<IAppOption>({
     wx.removeStorageSync("refreshToken");
     wx.removeStorageSync("userInfo");
 
-    // 跳转回登录页
+    // 退出后回到游客可浏览的首页
     wx.reLaunch({
-      url: "/pages/login/login",
+      url: "/pages/index/index",
     });
   },
 

@@ -1,4 +1,5 @@
 import request from "../../utils/http";
+import { guardProtectedPage } from "../../utils/auth";
 
 const STATUS = [
   {
@@ -56,6 +57,16 @@ Page({
 
   async onLoad() {
     this.syncTheme();
+
+    if (
+      !guardProtectedPage(
+        "/pages/mine/mine",
+        "登录后才能查看我的参赛作品，当前仍可继续浏览公开内容。",
+      )
+    ) {
+      return;
+    }
+
     await this.loadOwnTracks();
     await this.loadOwnWorks();
   },
@@ -106,6 +117,10 @@ Page({
       wx.hideLoading();
       console.log("获取我的投稿数据出错：", err);
 
+      if (err?.code === "AUTH_REQUIRED") {
+        return;
+      }
+
       wx.showModal({
         title: "获取失败",
         content: err.error || err.errMsg + "，请稍后再试",
@@ -140,6 +155,11 @@ Page({
     } catch (err: any) {
       wx.hideLoading();
       console.log("获取我的参赛活动数据出错：", err);
+
+      if (err?.code === "AUTH_REQUIRED") {
+        return;
+      }
+
       wx.showModal({
         title: "获取我的参赛活动数据出错",
         content: err.error || err.errMsg + "，请稍后重试",

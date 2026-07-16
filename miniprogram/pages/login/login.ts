@@ -1,7 +1,15 @@
 import { IAppOption } from "../../../typings";
 import ENV from "../../config/setting";
-import { resetRedirectFlag } from "../../utils/http";
 const { miniProgram } = wx.getAccountInfoSync();
+
+function decodeRedirect(rawRedirect: string): string {
+  try {
+    return decodeURIComponent(rawRedirect);
+  } catch (err) {
+    console.warn("登录回跳地址解析失败:", err);
+    return "";
+  }
+}
 
 Page({
   data: {
@@ -11,15 +19,21 @@ Page({
     title: ENV.title,
     subtitle: ENV.subtitle,
     version: miniProgram.version || `${ENV.VERSION}`,
+    redirectUrl: "",
   },
 
-  onLoad() {
+  onLoad(options: Record<string, string | undefined>) {
     this.syncTheme();
+    const redirect = decodeRedirect(options.redirect || "");
+    if (
+      redirect.startsWith("/pages/") &&
+      !redirect.startsWith("/pages/login/")
+    ) {
+      this.setData({ redirectUrl: redirect });
+    }
   },
 
   onShow() {
-    // 回到登录页说明跳转已完成，复位跳转锁，允许下次过期时再次跳转
-    resetRedirectFlag();
     this.syncTheme();
   },
 
@@ -54,16 +68,18 @@ Page({
         icon: "success",
       });
 
-      // Redirect to main page
+      const redirectUrl = this.data.redirectUrl;
       setTimeout(() => {
-        wx.reLaunch({
-          url: "/pages/index/index",
-        });
+        if (redirectUrl) {
+          wx.redirectTo({ url: redirectUrl });
+        } else {
+          wx.reLaunch({ url: "/pages/index/index" });
+        }
       }, 1500);
     } catch (err: any) {
       console.error("Login failed", err);
       wx.showToast({
-        title: String(err) || "登录失败",
+        title: err.error || err.errMsg || "登录失败",
         icon: "none",
         duration: 2000,
       });

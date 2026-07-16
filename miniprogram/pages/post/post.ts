@@ -1,6 +1,7 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
+import { guardProtectedPage } from "../../utils/auth";
 
 const MAX_AUDIO_DURATION = 60;
 const MAX_VIDEO_BURATION = 30;
@@ -92,8 +93,29 @@ Page({
 
   async onLoad(options) {
     const { tag, id, mode } = options;
-    const userInfo = wx.getStorageSync("userInfo");
     this.syncTheme();
+
+    const query = [
+      tag ? `tag=${encodeURIComponent(tag)}` : "",
+      id ? `id=${encodeURIComponent(id)}` : "",
+      `mode=${encodeURIComponent(mode || "edit")}`,
+    ]
+      .filter(Boolean)
+      .join("&");
+    const currentUrl = `/pages/post/post?${query}`;
+
+    if (
+      !guardProtectedPage(
+        currentUrl,
+        mode === "view"
+          ? "登录后才能查看作品详情，当前仍可继续浏览公开内容。"
+          : "登录后才能投稿，当前仍可继续浏览公开内容。",
+      )
+    ) {
+      return;
+    }
+
+    const userInfo = wx.getStorageSync("userInfo");
 
     this.setData(
       {

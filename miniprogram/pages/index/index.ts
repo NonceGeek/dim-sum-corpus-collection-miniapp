@@ -1,5 +1,6 @@
 import { STATIC_FILE } from "../../app";
 import ENV from "../../config/setting";
+import { navigateToProtectedPage } from "../../utils/auth";
 import request from "../../utils/http";
 
 const SHARE_TITLE = `${ENV.title}｜${ENV.subtitle}`;
@@ -68,7 +69,9 @@ Page({
   async loadSwiperData() {
     try {
       wx.showLoading({ title: "加载中..." });
-      const res = await request("/activities?timeStatus=ongoing");
+      const res = await request("/activities?timeStatus=ongoing", {
+        auth: false,
+      });
       wx.hideLoading();
       const activities = (res.items || []).slice(0, 5);
       const swiperList = activities.map((activity: ISwiperList) => ({
@@ -101,6 +104,7 @@ Page({
       const { page, pageSize } = this.data;
       const res = await request(
         `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
+        { auth: false },
       );
       const { items } = res;
       const newList = items;
@@ -172,7 +176,10 @@ Page({
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
+    navigateToProtectedPage(
+      `/pages/post/post?id=${id}&mode=view`,
+      "登录后才能查看作品详情，当前仍可继续浏览首页内容。",
+    );
   },
 
   onTabChange(e: any) {
@@ -181,9 +188,17 @@ Page({
     if (value === "featured") {
       wx.navigateTo({ url: "/pages/featured/featured" });
     } else if (value === "upload") {
-      wx.navigateTo({ url: "/pages/post/post?mode=edit" });
+      this.setData({ activeTab: "home" });
+      navigateToProtectedPage(
+        "/pages/post/post?mode=edit",
+        "登录后才能投稿，当前仍可继续浏览公开内容。",
+      );
     } else if (value === "profile") {
-      wx.navigateTo({ url: "/pages/profile/profile" });
+      this.setData({ activeTab: "home" });
+      navigateToProtectedPage(
+        "/pages/profile/profile",
+        "登录后才能使用个人中心，当前仍可继续浏览公开内容。",
+      );
     }
   },
   onClickToTrack(e) {

@@ -1,4 +1,5 @@
 import { formatDate } from "../../utils/date";
+import { navigateToProtectedPage } from "../../utils/auth";
 import request from "../../utils/http";
 
 interface ITrack {
@@ -142,7 +143,7 @@ Page({
   async loadTopTracks() {
     try {
       wx.showLoading({ title: "加载中..." });
-      const { items } = await request("/activities");
+      const { items } = await request("/activities", { auth: false });
       const tracks = items.map(formatTrack);
 
       wx.hideLoading();
@@ -288,9 +289,10 @@ Page({
   },
 
   onMyWorks() {
-    wx.navigateTo({
-      url: "/pages/mine/mine",
-    });
+    navigateToProtectedPage(
+      "/pages/mine/mine",
+      "登录后才能查看我的作品，当前仍可继续浏览精选内容。",
+    );
   },
 
   onMorePosts(e: any) {
@@ -326,9 +328,10 @@ Page({
 
   onPost(e: any) {
     const itemId = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: `/pages/post/post?tag=${itemId}&mode=edit`,
-    });
+    navigateToProtectedPage(
+      `/pages/post/post?tag=${itemId}&mode=edit`,
+      "登录后才能投稿，当前仍可继续浏览精选内容。",
+    );
   },
   onShowDetails(e) {
     const itemId = e.currentTarget.dataset.id;
@@ -352,6 +355,7 @@ Page({
 
       const res = await request(
         `/activities?page=${allTracksPage}&pageSize=${pageSize}&includeExpired=true`,
+        { auth: false },
       );
 
       wx.hideLoading();

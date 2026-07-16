@@ -1,4 +1,5 @@
 import { formatDate } from "../../utils/date";
+import { navigateToProtectedPage } from "../../utils/auth";
 import request from "../../utils/http";
 
 const TYPE_JSON = {
@@ -165,16 +166,19 @@ Page({
   },
   onCardTap(e: any) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
+    navigateToProtectedPage(`/pages/post/post?id=${id}&mode=view`);
   },
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
+    navigateToProtectedPage(`/pages/post/post?id=${id}&mode=view`);
   },
 
   onMyWorks() {
-    wx.navigateTo({ url: "/pages/mine/mine" });
+    navigateToProtectedPage(
+      "/pages/mine/mine",
+      "登录后才能查看我的参赛作品，当前仍可继续浏览活动内容。",
+    );
   },
 
   onAllTracks() {
@@ -213,8 +217,9 @@ Page({
   },
 
   onPost() {
-    wx.navigateTo({
-      url: "/pages/post/post?mode=edit&tag=" + this.data.track.id,
-    });
+    navigateToProtectedPage(
+      "/pages/post/post?mode=edit&tag=" + this.data.track.id,
+      "登录后才能投稿，当前仍可继续浏览活动内容。",
+    );
   },
 });

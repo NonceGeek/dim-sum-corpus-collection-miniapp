@@ -1,4 +1,5 @@
 import ENV from "../config/setting";
+import { promptCurrentPageLogin } from "./auth";
 
 /**
  * 小程序 request 封装
@@ -9,37 +10,27 @@ import ENV from "../config/setting";
 
 let isRefreshing = false;
 let refreshQueue: Array<{ retry: () => void; reject: (e: any) => void }> = [];
-// 全局"正在跳转登录页"标志：保证无论多少请求同时失败，只跳一次、只弹一次 toast
-let isRedirecting = false;
 
-/**
- * 统一跳转登录页
- * 加锁保证只执行一次，避免多个失败请求各自 reLaunch 造成 login 页反复闪烁
- */
-function redirectToLogin() {
-  if (isRedirecting) return;
-  isRedirecting = true;
-
+function clearAuthState() {
   wx.removeStorageSync("accessToken");
   wx.removeStorageSync("refreshToken");
-
-  wx.showToast({
-    title: "登录已过期，请重新登录",
-    icon: "none",
-    duration: 1500,
-  });
-
-  setTimeout(() => {
-    wx.reLaunch({ url: "/pages/login/login" });
-  }, 800);
+  const app = getApp<{
+    globalData?: { accessToken?: string; refreshToken?: string };
+  }>();
+  if (app?.globalData) {
+    app.globalData.accessToken = "";
+    app.globalData.refreshToken = "";
+  }
 }
 
-/**
- * 复位跳转锁（由 login 页 onShow 调用），
- * 以便下次登录再次过期时仍能正常跳转
- */
-export function resetRedirectFlag() {
-  isRedirecting = false;
+function createAuthRequiredError() {
+  const error = new Error("登录后才能使用该功能") as Error & {
+    code: string;
+    error: string;
+  };
+  error.code = "AUTH_REQUIRED";
+  error.error = error.message;
+  return error;
 }
 
 function request(url: string, options: any = {}): Promise<any> {
@@ -47,6 +38,7 @@ function request(url: string, options: any = {}): Promise<any> {
     const app = getApp<{ globalData: { accessToken?: string } }>();
     const token =
       wx.getStorageSync("accessToken") || app?.globalData?.accessToken || "";
+    const shouldAttachToken = options.auth !== false;
 
     wx.request({
       url: `${ENV.API_PRIMARY_URL}${url}`,
@@ -55,7 +47,9 @@ function request(url: string, options: any = {}): Promise<any> {
       timeout: 10000,
       header: {
         ...(options.header || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(shouldAttachToken && token
+          ? { Authorization: `Bearer ${token}` }
+          : {}),
       },
 
       success: async (res) => {
@@ -70,12 +64,19 @@ function request(url: string, options: any = {}): Promise<any> {
             return resolve(res.data);
           }
 
-          // 重试次数限制（最多重试 3 次）
+          if (!token) {
+            if (shouldAttachToken) {
+              promptCurrentPageLogin();
+            }
+            return reject(createAuthRequiredError());
+          }
+
+          // 刷新后仍返回 401 时停止重试，由发起操作的页面决定是否提示登录
           const retryCount = options._retryCount || 0;
-          if (retryCount >= 3) {
-            console.error("[request] 重试 3 次仍失败");
-            redirectToLogin();
-            return reject(new Error("登录过期，请重新登录"));
+          if (retryCount >= 1) {
+            clearAuthState();
+            promptCurrentPageLogin();
+            return reject(createAuthRequiredError());
           }
 
           handleTokenExpired(
@@ -120,13 +121,15 @@ function handleTokenExpired(
       isRefreshing = false;
 
       if (!ok) {
-        // 刷新失败：拒绝所有排队请求，并统一跳转登录页（只跳一次）
+        // 刷新失败只返回鉴权错误，不在请求层决定页面跳转
+        clearAuthState();
+        promptCurrentPageLogin();
+        const authError = createAuthRequiredError();
         const queue = refreshQueue.slice();
         refreshQueue = [];
-        queue.forEach(({ reject: rj }) => rj(new Error("登录过期")));
+        queue.forEach(({ reject: rj }) => rj(authError));
 
-        redirectToLogin();
-        return reject(new Error("登录过期"));
+        return reject(authError);
       }
 
       // ✅ 刷新成功，执行队列
@@ -145,8 +148,13 @@ function handleTokenExpired(
     })
     .catch(() => {
       isRefreshing = false;
+      clearAuthState();
+      promptCurrentPageLogin();
+      const authError = createAuthRequiredError();
+      const queue = refreshQueue.slice();
       refreshQueue = [];
-      reject(new Error("refresh error"));
+      queue.forEach(({ reject: rj }) => rj(authError));
+      reject(authError);
     });
 }
 
