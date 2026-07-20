@@ -2,11 +2,19 @@ import request from "../../utils/http";
 import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
 import { guardProtectedPage } from "../../utils/auth";
+import uploadFileWithAuth from "../../utils/upload";
 
 const MAX_AUDIO_DURATION = 60;
 const MAX_VIDEO_BURATION = 30;
 const MIN_IMAGE = 1;
 const MAX_IMAGE = 8;
+const sharedRecorderManager = wx.getRecorderManager();
+let activeRecorderStopHandler: ((res: any) => void) | null = null;
+
+sharedRecorderManager.onStop((res) => {
+  activeRecorderStopHandler?.(res);
+});
+
 const TYPES = [
   { label: "用语", value: "用语" },
   { label: "诗歌", value: "诗歌" },
@@ -87,7 +95,7 @@ Page({
     pendingAudioUrl: "",
     pendingAudioDuration: 0,
   },
-  recorderManager: null as any,
+  recorderManager: sharedRecorderManager,
   recordTouchActive: false,
   recordTouchSession: 0,
 
@@ -137,9 +145,7 @@ Page({
       },
     );
 
-    this.recorderManager = wx.getRecorderManager();
     this.handleRecordStop = this.handleRecordStop.bind(this);
-    this.recorderManager.onStop(this.handleRecordStop);
   },
   onUnload() {
     this.recordTouchActive = false;
@@ -153,10 +159,12 @@ Page({
     if (this.data.recordActionsAnimationTimer) {
       clearTimeout(this.data.recordActionsAnimationTimer);
     }
-    if (this.recorderManager) {
+    if (activeRecorderStopHandler === this.handleRecordStop) {
+      activeRecorderStopHandler = null;
+    }
+    if (this.recorderManager && this.data.recording) {
       this.setData({ recordMode: "discard" });
       this.recorderManager.stop();
-      this.recorderManager.offStop(this.handleRecordStop);
     }
   },
   async loadTrack(id: string) {
@@ -349,49 +357,33 @@ Page({
     return ext || (fileType === "video" ? "mp4" : "jpg");
   },
 
-  uploadMediaFile(
-    file: any,
-    token: string,
-    dateStr: string,
-    timestamp: string,
-  ) {
-    return new Promise((resolve, reject) => {
-      const uploadPath = file.url;
-      const ext = this.getFileExtension(uploadPath, file.type);
-
-      wx.uploadFile({
-        url: `${ENV.API_BASE_URL}/upload`,
-        filePath: uploadPath,
-        name: "file",
-        formData: {
-          fileName: `${dateStr}_corpus_collection_${file.type}_${timestamp}.${ext}`,
-        },
-        header: {
-          Authorization: `Bearer ${token}`,
-        },
-        success: (res) => {
-          let data: any = {};
-
-          try {
-            data = JSON.parse(res.data);
-          } catch (e) {
-            reject(new Error("返回数据解析失败"));
-            return;
-          }
-
-          if (res.statusCode !== 200) {
-            reject(new Error(data?.error || "上传失败"));
-            return;
-          }
-
-          resolve({
-            ...file,
-            url: data.url,
-          });
-        },
-        fail: reject,
-      });
+  async uploadMediaFile(file: any, dateStr: string, timestamp: string) {
+    const uploadPath = file.url;
+    const ext = this.getFileExtension(uploadPath, file.type);
+    const res = await uploadFileWithAuth({
+      url: `${ENV.API_BASE_URL}/upload`,
+      filePath: uploadPath,
+      name: "file",
+      formData: {
+        fileName: `${dateStr}_corpus_collection_${file.type}_${timestamp}.${ext}`,
+      },
     });
+
+    let data: any = {};
+    try {
+      data = JSON.parse(res.data);
+    } catch {
+      throw new Error("返回数据解析失败");
+    }
+
+    if (res.statusCode !== 200) {
+      throw new Error(data?.error || "上传失败");
+    }
+
+    return {
+      ...file,
+      url: data.url,
+    };
   },
 
   // 选择图片
@@ -495,14 +487,12 @@ Page({
 
           wx.showLoading({ title: "上传中..." });
 
-          const token = wx.getStorageSync("accessToken") || "";
           const timestamp = Date.now();
           const dateStr = formatDate(new Date(), "YYYYMMDD");
           const files = await Promise.all(
             compressedFiles.map((file, index) =>
               this.uploadMediaFile(
                 file,
-                token,
                 dateStr,
                 `${timestamp}_${index}`,
               ),
@@ -515,6 +505,9 @@ Page({
           this.checkCanPublish();
         } catch (err: any) {
           console.error(err);
+          if (err?.code === "AUTH_REQUIRED") {
+            return;
+          }
           wx.showModal({
             title: "上传失败",
             content:
@@ -1196,6 +1189,7 @@ Page({
 
   // 真正开始录音
   doStartRecord() {
+    activeRecorderStopHandler = this.handleRecordStop;
     this.setData({
       recording: true,
       recordActionsAnimating: true,
@@ -1339,42 +1333,30 @@ Page({
     });
   },
 
-  uploadAudioFile(filePath: string) {
-    return new Promise<string>((resolve, reject) => {
-      const token = wx.getStorageSync("accessToken") || "";
-      const dateStr = formatDate(new Date(), "YYYYMMDD");
-      const timestamp = Date.now();
-
-      wx.uploadFile({
-        url: `${ENV.API_BASE_URL}/upload`,
-        filePath,
-        name: "file",
-        formData: {
-          fileName: `${dateStr}_corpus_collection_audio_${timestamp}.mp3`,
-        },
-        header: {
-          Authorization: `Bearer ${token}`,
-        },
-        success: (uploadRes) => {
-          let data: any = {};
-
-          try {
-            data = JSON.parse(uploadRes.data);
-          } catch (err) {
-            reject(new Error("返回数据解析失败"));
-            return;
-          }
-
-          if (uploadRes.statusCode !== 200) {
-            reject(new Error(data?.error || "上传失败"));
-            return;
-          }
-
-          resolve(data.url);
-        },
-        fail: reject,
-      });
+  async uploadAudioFile(filePath: string): Promise<string> {
+    const dateStr = formatDate(new Date(), "YYYYMMDD");
+    const timestamp = Date.now();
+    const uploadRes = await uploadFileWithAuth({
+      url: `${ENV.API_BASE_URL}/upload`,
+      filePath,
+      name: "file",
+      formData: {
+        fileName: `${dateStr}_corpus_collection_audio_${timestamp}.mp3`,
+      },
     });
+
+    let data: any = {};
+    try {
+      data = JSON.parse(uploadRes.data);
+    } catch {
+      throw new Error("返回数据解析失败");
+    }
+
+    if (uploadRes.statusCode !== 200) {
+      throw new Error(data?.error || "上传失败");
+    }
+
+    return data.url;
   },
 
   async handleRecordStop(res: any) {
@@ -1436,6 +1418,9 @@ Page({
         });
       } catch (err: any) {
         console.error(err);
+        if (err?.code === "AUTH_REQUIRED") {
+          return;
+        }
 
         wx.showToast({
           title: err.error || err.message || "上传失败",
@@ -1479,10 +1464,13 @@ Page({
             asrText: asrRes.text,
           });
         }, 800);
-      } catch (err) {
+      } catch (err: any) {
         wx.hideLoading();
 
         console.error(err);
+        if (err?.code === "AUTH_REQUIRED") {
+          return;
+        }
 
         wx.showToast({
           title: err.error || err.errMsg || "上传失败",

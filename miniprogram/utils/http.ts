@@ -10,8 +10,9 @@ import { promptCurrentPageLogin } from "./auth";
 
 let isRefreshing = false;
 let refreshQueue: Array<{ retry: () => void; reject: (e: any) => void }> = [];
+let activeRefreshPromise: Promise<boolean> | null = null;
 
-function clearAuthState() {
+export function clearAuthState() {
   wx.removeStorageSync("accessToken");
   wx.removeStorageSync("refreshToken");
   const app = getApp<{
@@ -23,7 +24,7 @@ function clearAuthState() {
   }
 }
 
-function createAuthRequiredError() {
+export function createAuthRequiredError() {
   const error = new Error("登录后才能使用该功能") as Error & {
     code: string;
     error: string;
@@ -116,7 +117,7 @@ function handleTokenExpired(
 
   isRefreshing = true;
 
-  refreshToken()
+  refreshAccessToken()
     .then((ok) => {
       isRefreshing = false;
 
@@ -161,6 +162,16 @@ function handleTokenExpired(
 /**
  * 刷新 token
  */
+export function refreshAccessToken(): Promise<boolean> {
+  if (!activeRefreshPromise) {
+    activeRefreshPromise = refreshToken().finally(() => {
+      activeRefreshPromise = null;
+    });
+  }
+
+  return activeRefreshPromise;
+}
+
 function refreshToken(): Promise<boolean> {
   return new Promise((resolve) => {
     const refreshToken = wx.getStorageSync("refreshToken");
@@ -188,6 +199,13 @@ function refreshToken(): Promise<boolean> {
         };
         wx.setStorageSync("accessToken", accessToken);
         wx.setStorageSync("refreshToken", newRefreshToken);
+        const app = getApp<{
+          globalData?: { accessToken?: string; refreshToken?: string };
+        }>();
+        if (app?.globalData) {
+          app.globalData.accessToken = accessToken;
+          app.globalData.refreshToken = newRefreshToken;
+        }
         console.log("[refreshToken] 刷新成功");
         resolve(true);
       },

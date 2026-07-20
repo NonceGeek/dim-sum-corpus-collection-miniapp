@@ -65,6 +65,9 @@ Page({
       });
     } catch (err: any) {
       console.log("获取用户数据出错：", err);
+      if (err?.code === "AUTH_REQUIRED") {
+        return;
+      }
       wx.showModal({
         title: "获取用户数据出错",
         content: err.error,
