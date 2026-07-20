@@ -1,5 +1,15 @@
 <view class="upload-page theme-{{currentTheme}}">
   <block wx:if="{{mode === 'edit'}}">
+    <!-- 可滚动的假页面：既接管返回，也承载整页投稿内容。 -->
+    <page-container
+      show="{{exitGuardVisible}}"
+      duration="0"
+      overlay="{{false}}"
+      position="right"
+      z-index="0"
+      custom-style="width: 100vw; height: 100vh; overflow: scroll; -webkit-overflow-scrolling: touch; background: var(--bg-page);"
+      bind:beforeleave="onExitGuardBeforeLeave"
+    >
     <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">
       <view slot="left" class="custom-navbar-back" bind:tap="onNavbarBack">
         <t-icon name="chevron-left" size="28px" />
@@ -20,7 +30,7 @@
               </view>
             </view>
           </block>
-          <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" bind:tap="onChooseImage">
+          <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" catch:tap="onChooseImage">
             <t-icon name="add" size="48"
               color="{{currentTheme === 'dark' ? 'var(--text-secondary)' : 'var(--text-muted)'}}" />
           </view>
@@ -199,24 +209,29 @@
 
     <!-- 录音弹窗 -->
     <t-popup visible="{{recordPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onRecordPopupClose"
-      close-on-overlay-click="{{true}}">
+      close-on-overlay-click="{{!recordProcessing}}">
       <view class="record-popup theme-{{currentTheme}}">
-        <view class="record-hint">长按录音，最长60秒；左右滑动可取消或转文字</view>
+        <view class="record-hint">
+          {{recordReady ? '录音完成，请选择下一步' : (recording ? '正在录音，点击中间按钮结束' : '点击开始录音，最长60秒')}}
+        </view>
         <view class="record-btn-area {{recordActionsAnimating ? 'actions-entering' : ''}}">
           <view
-            class="record-side-btn record-cancel {{recording ? 'visible' : ''}} {{hoverTarget === 'cancel' ? 'hover' : ''}}">
+            class="record-side-btn record-cancel {{recordReady && !recordProcessing ? 'visible' : ''}}"
+            bind:tap="onCancelRecordedAudio">
             <t-icon name="close-circle" size="28" color="var(--text-muted)" />
             <text class="record-side-text">取消</text>
           </view>
-          <view class="record-btn {{recording ? 'recording' : ''}}" bind:touchstart="onStartRecord"
-            bind:touchmove="onRecordTouchMove" bind:touchend="onStopRecord" bind:touchcancel="onStopRecord">
-            <t-icon name="mic" size="32" color="{{recording ? 'var(--text-white)' : 'var(--primary)'}}" />
-            <text class="record-btn-text">{{recording ? '松开 结束' : '按住 录音'}}</text>
-            <text class="record-timer" wx:if="{{recording}}">{{recordTime}}s</text>
+          <view class="record-btn {{recording ? 'recording' : ''}} {{recordReady ? 'ready' : ''}} {{recordStarting || recordProcessing || recordStopping ? 'disabled' : ''}}"
+            bind:tap="onRecordButtonTap">
+            <text class="record-btn-text">
+              {{recordStarting ? '准备中' : (recordProcessing ? '处理中' : (recordStopping ? '结束中' : (recordReady ? '使用原音' : (recording ? '结束录音' : '开始录音'))))}}
+            </text>
+            <text class="record-timer" wx:if="{{recording || recordStopping || recordReady}}">{{recordTime}}'' / 60''</text>
           </view>
           <view
-            class="record-side-btn record-asr {{recording ? 'visible' : ''}} {{hoverTarget === 'asr' ? 'hover' : ''}}">
-            <t-icon name="chat" size="28" color="#6B93F5" />
+            class="record-side-btn record-asr {{recordReady && !recordProcessing ? 'visible' : ''}}"
+            bind:tap="onTranscribeRecordedAudio">
+            <t-icon name="chat" size="28" color="var(--primary-light)" />
             <text class="record-side-text">转文字</text>
           </view>
         </view>
@@ -238,6 +253,7 @@
         </view>
       </view>
     </t-popup>
+    </page-container>
   </block>
   <block wx:else>
     <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">
@@ -271,7 +287,7 @@
         <view class="audio-info">
           <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
           <text class="audio-label">录音</text>
-          <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}"</text>
+          <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}''</text>
         </view>
       </view>
 

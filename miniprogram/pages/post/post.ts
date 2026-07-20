@@ -5,14 +5,26 @@ import { guardProtectedPage } from "../../utils/auth";
 import uploadFileWithAuth from "../../utils/upload";
 
 const MAX_AUDIO_DURATION = 60;
-const MAX_VIDEO_BURATION = 30;
+const MAX_VIDEO_DURATION = 30;
 const MIN_IMAGE = 1;
 const MAX_IMAGE = 8;
 const sharedRecorderManager = wx.getRecorderManager();
+const sharedAudioManager = wx.getBackgroundAudioManager();
 let activeRecorderStopHandler: ((res: any) => void) | null = null;
+let activeAudioStateHandler: ((playing: boolean) => void) | null = null;
+let activeAudioErrorHandler: ((err: any) => void) | null = null;
 
 sharedRecorderManager.onStop((res) => {
   activeRecorderStopHandler?.(res);
+});
+
+sharedAudioManager.onPlay(() => activeAudioStateHandler?.(true));
+sharedAudioManager.onPause(() => activeAudioStateHandler?.(false));
+sharedAudioManager.onStop(() => activeAudioStateHandler?.(false));
+sharedAudioManager.onEnded(() => activeAudioStateHandler?.(false));
+sharedAudioManager.onError((err) => {
+  activeAudioStateHandler?.(false);
+  activeAudioErrorHandler?.(err);
 });
 
 const TYPES = [
@@ -74,30 +86,37 @@ Page({
     ],
     // 录音弹窗
     recordPopupVisible: false,
+    recordStarting: false,
     recording: false,
+    recordStopping: false,
+    recordReady: false,
+    recordProcessing: false,
     recordActionsAnimating: false,
     recordTime: 0,
     recordTimer: null as any,
     recordActionsAnimationTimer: null as any,
-    touchStartTime: 0,
-    touchStartTimer: null as number | null,
-    touchStartX: 0,
-    touchStartY: 0,
     justFinishedRecording: false,
     audioUrl: "",
     audioDuration: 0,
-    // 滑动悬停目标：'' | 'cancel' | 'asr'
-    hoverTarget: "",
-    recordMode: "normal" as "normal" | "discard" | "asr",
+    audioPlaying: false,
+    pendingRecordPath: "",
+    pendingRecordDuration: 0,
+    recordMode: "normal" as "normal" | "discard",
     // 转文字结果弹窗
     asrPopupVisible: false,
     asrText: "",
     pendingAudioUrl: "",
     pendingAudioDuration: 0,
+    // 用透明 page-container 接管左滑、安卓返回键和 navigateBack。
+    exitGuardVisible: false,
   },
   recorderManager: sharedRecorderManager,
-  recordTouchActive: false,
-  recordTouchSession: 0,
+  audioStateHandler: null as any,
+  audioErrorHandler: null as any,
+  allowRecordPopupClose: false,
+  recordCancelledOnHide: false,
+  exitConfirmVisible: false,
+  pageExitConfirmed: false,
 
   async onLoad(options) {
     const { tag, id, mode } = options;
@@ -129,13 +148,18 @@ Page({
       {
         mode: mode || "edit",
         userId: userInfo.id,
+        exitGuardVisible: (mode || "edit") === "edit",
       },
       async () => {
         try {
           tag && (await this.loadTrack(tag));
-          id && (await this.loadPost(id));
+          const postLoaded = id
+            ? await this.loadPost(id, {
+                retryOnFailure: mode === "view",
+              })
+            : false;
           const { mode } = this.data;
-          if (mode === "view") {
+          if (mode === "view" && postLoaded) {
             const view = await request(`/works/${id}/view`, { method: "POST" });
             this.setData({ view: view?.viewCount });
           }
@@ -146,23 +170,42 @@ Page({
     );
 
     this.handleRecordStop = this.handleRecordStop.bind(this);
+    this.audioStateHandler = (playing: boolean) => {
+      this.setData({ audioPlaying: playing });
+    };
+    this.audioErrorHandler = (err: any) => {
+      wx.showToast({
+        title: err.errMsg || `播放错误: ${err.errCode || "未知错误"}`,
+        icon: "none",
+        duration: 3000,
+      });
+    };
+    activeAudioStateHandler = this.audioStateHandler;
+    activeAudioErrorHandler = this.audioErrorHandler;
   },
   onUnload() {
-    this.recordTouchActive = false;
-    this.recordTouchSession += 1;
-    if (this.data.touchStartTimer) {
-      clearTimeout(this.data.touchStartTimer);
-    }
+    wx.disableAlertBeforeUnload();
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
     if (this.data.recordActionsAnimationTimer) {
       clearTimeout(this.data.recordActionsAnimationTimer);
     }
+    this.stopAudioPlayback();
+    if (activeAudioStateHandler === this.audioStateHandler) {
+      activeAudioStateHandler = null;
+    }
+    if (activeAudioErrorHandler === this.audioErrorHandler) {
+      activeAudioErrorHandler = null;
+    }
     if (activeRecorderStopHandler === this.handleRecordStop) {
       activeRecorderStopHandler = null;
     }
-    if (this.recorderManager && this.data.recording) {
+    if (
+      this.recorderManager &&
+      this.data.recording &&
+      !this.data.recordStopping
+    ) {
       this.setData({ recordMode: "discard" });
       this.recorderManager.stop();
     }
@@ -206,8 +249,14 @@ Page({
     }
   },
 
-  async loadPost(id: string) {
-    wx.showLoading({ title: "加载中..." });
+  async loadPost(
+    id: string,
+    options: { retryOnFailure?: boolean; showLoading?: boolean } = {},
+  ): Promise<boolean> {
+    const { retryOnFailure = false, showLoading = true } = options;
+    if (showLoading) {
+      wx.showLoading({ title: "加载中..." });
+    }
     try {
       const res = await request(`/submissions/${id}`);
       console.log("select:", this.data.selectedActivity);
@@ -216,12 +265,13 @@ Page({
       if (!this.data.selectedActivity?.id && res.activity && res.activity.id) {
         selectedActivity = await request(`/activities/${res.activity.id}`);
       }
-      wx.hideLoading();
       console.log("res:", res);
       console.log(
         "audio:",
         res.media.find((m) => m.type === "audio")?.url || "",
       );
+      const audioMedia = res.media.find((m) => m.type === "audio");
+      const audioDuration = audioMedia?.durationSec || 0;
       this.setData({
         post: res,
 
@@ -244,26 +294,56 @@ Page({
           ),
           ...this.data.availableTopics,
         ],
-        audioUrl: res.media.find((m) => m.type === "audio")?.url || "",
-        audioDuration:
-          res.media.find((m) => m.type === "audio")?.durationSec || 0,
+        audioUrl: audioMedia?.url || "",
+        audioDuration,
         selectedActivity,
         selectedType: res.submissionType,
       });
       this.checkCanPublish();
+      return true;
     } catch (err: any) {
-      wx.hideLoading();
       console.log("获取投稿数据失败：", err);
-      wx.showModal({
-        title: "获取投稿数据失败",
-        content: err.error + "，请稍后再试",
-        showCancel: false,
-      });
+      if (retryOnFailure && err?.code !== "AUTH_REQUIRED") {
+        return await this.loadPost(id, {
+          retryOnFailure: false,
+          showLoading: false,
+        });
+      }
+      if (err?.code !== "AUTH_REQUIRED") {
+        wx.showModal({
+          title: "获取投稿数据失败",
+          content: `${err?.error || err?.message || "请求失败"}，请稍后再试`,
+          showCancel: false,
+        });
+      }
+      return false;
+    } finally {
+      if (showLoading) {
+        wx.hideLoading();
+      }
     }
   },
 
   onShow() {
     this.syncTheme();
+    this.syncUnsavedExitGuard();
+    if (this.recordCancelledOnHide) {
+      this.recordCancelledOnHide = false;
+      wx.showToast({ title: "录音已因离开小程序取消", icon: "none" });
+    }
+  },
+
+  onHide() {
+    this.stopAudioPlayback();
+    if (!this.data.recording) return;
+
+    const alreadyStopping = this.data.recordStopping;
+    this.recordCancelledOnHide = true;
+    wx.disableAlertBeforeUnload();
+    this.setData({ recordMode: "discard", recordStopping: true });
+    if (!alreadyStopping) {
+      this.recorderManager.stop();
+    }
   },
 
   syncTheme() {
@@ -400,7 +480,7 @@ Page({
     const ruleDescription = [
       hasImage ? "图片：1-8张" : "图片：1张",
       hasVideo
-        ? `视频：1个，且不能超过${MAX_VIDEO_BURATION}秒`
+        ? "视频：1个，且不能超过30秒"
         : "视频：不允许上传",
     ].join("\n");
     const currentImageCount = this.data.imageList.filter(
@@ -430,14 +510,13 @@ Page({
       ...(remainingImageCount > 0 ? ["image" as const] : []),
       ...(remainingVideoCount > 0 ? ["video" as const] : []),
     ];
-    const maxDuration = MAX_VIDEO_BURATION;
-
     wx.chooseMedia({
       count: maxCount,
       mediaType,
       sourceType: ["album", "camera"],
       sizeType: ["compressed"],
-      maxDuration: maxDuration,
+      // wx.chooseMedia 只允许相机拍摄时长为 3～30 秒；相册视频同样校验30秒业务上限。
+      maxDuration: MAX_VIDEO_DURATION,
       success: async (res) => {
         try {
           wx.showLoading({ title: "压缩中..." });
@@ -469,13 +548,15 @@ Page({
           }
 
           const overDurationVideo = tempFiles.find(
-            (file) => file.type === "video" && file.durationSec > maxDuration,
+            (file) =>
+              file.type === "video" &&
+              file.durationSec > MAX_VIDEO_DURATION,
           );
 
           if (overDurationVideo) {
             wx.showModal({
               title: "提示",
-              content: "视频不能多于" + maxDuration + "秒",
+              content: `视频不能超过${MAX_VIDEO_DURATION}秒`,
               showCancel: false,
             });
             return;
@@ -491,11 +572,7 @@ Page({
           const dateStr = formatDate(new Date(), "YYYYMMDD");
           const files = await Promise.all(
             compressedFiles.map((file, index) =>
-              this.uploadMediaFile(
-                file,
-                dateStr,
-                `${timestamp}_${index}`,
-              ),
+              this.uploadMediaFile(file, dateStr, `${timestamp}_${index}`),
             ),
           );
 
@@ -518,6 +595,15 @@ Page({
         } finally {
           wx.hideLoading();
         }
+      },
+      fail: (err) => {
+        if (err.errMsg?.includes("cancel")) return;
+        console.error("选择图片或视频失败：", err);
+        wx.showModal({
+          title: "无法选择图片或视频",
+          content: err.errMsg || "请检查相册和相机权限后重试",
+          showCancel: false,
+        });
       },
     });
   },
@@ -676,16 +762,19 @@ Page({
       ? this.data.availableTopics
       : [topic, ...this.data.availableTopics];
 
-    this.setData({
-      selectedTopics: [...this.data.selectedTopics, topic],
-      selectedTopicMap: {
-        ...this.data.selectedTopicMap,
-        [topic]: true,
+    this.setData(
+      {
+        selectedTopics: [...this.data.selectedTopics, topic],
+        selectedTopicMap: {
+          ...this.data.selectedTopicMap,
+          [topic]: true,
+        },
+        availableTopics,
+        topicSearchKeyword: "",
+        filteredTopicList: availableTopics,
       },
-      availableTopics,
-      topicSearchKeyword: "",
-      filteredTopicList: availableTopics,
-    }, () => this.checkCanPublish());
+      () => this.checkCanPublish(),
+    );
   },
 
   // 选择话题
@@ -700,17 +789,23 @@ Page({
     if (selectedTopicMap[topic]) {
       delete selectedTopicMap[topic];
 
-      this.setData({
-        selectedTopics: selectedTopics.filter((t) => t !== topic),
-        selectedTopicMap,
-      }, () => this.checkCanPublish());
+      this.setData(
+        {
+          selectedTopics: selectedTopics.filter((t) => t !== topic),
+          selectedTopicMap,
+        },
+        () => this.checkCanPublish(),
+      );
     } else {
       selectedTopicMap[topic] = true;
 
-      this.setData({
-        selectedTopics: [...selectedTopics, topic],
-        selectedTopicMap,
-      }, () => this.checkCanPublish());
+      this.setData(
+        {
+          selectedTopics: [...selectedTopics, topic],
+          selectedTopicMap,
+        },
+        () => this.checkCanPublish(),
+      );
     }
   },
 
@@ -749,10 +844,7 @@ Page({
     const maxImageCount =
       hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
     const violations: string[] = [];
-    const tags = [
-      ...(selectedActivity?.tags || []),
-      ...selectedTopics,
-    ]
+    const tags = [...(selectedActivity?.tags || []), ...selectedTopics]
       .map((tag) => this.normalizeTopic(tag))
       .filter(Boolean);
 
@@ -794,10 +886,10 @@ Page({
       (i) =>
         i.type === "video" &&
         i.durationSec &&
-        i.durationSec > MAX_VIDEO_BURATION,
+        i.durationSec > MAX_VIDEO_DURATION,
     );
     if (overDurationVideo) {
-      violations.push(`视频不能超过${MAX_VIDEO_BURATION}秒`);
+      violations.push(`视频不能超过${MAX_VIDEO_DURATION}秒`);
     }
 
     if (audioUrl && audioDuration > MAX_AUDIO_DURATION) {
@@ -823,10 +915,14 @@ Page({
 
   // 检查是否可以发布
   checkCanPublish(showMediaRuleError = false) {
-    const { canPublish, message, violations = [] } =
-      this.getPublishValidation();
+    const {
+      canPublish,
+      message,
+      violations = [],
+    } = this.getPublishValidation();
     console.log("message:", message);
     this.setData({ canPublish });
+    this.syncUnsavedExitGuard();
 
     if (!showMediaRuleError) {
       return;
@@ -844,23 +940,99 @@ Page({
   },
   // 取消发布
   onCancel() {
+    // page-container 会统一接管左上角、左滑和安卓返回键。
+    wx.navigateBack();
+  },
+
+  hasUnsavedPostContent() {
+    const {
+      title,
+      content,
+      imageList,
+      audioUrl,
+      recordReady,
+      pendingRecordPath,
+      selectedTopics,
+    } = this.data;
+
+    return Boolean(
+      title.trim() ||
+      content.trim() ||
+      imageList.length > 0 ||
+      audioUrl ||
+      recordReady ||
+      pendingRecordPath ||
+      selectedTopics.length > 0,
+    );
+  },
+
+  syncUnsavedExitGuard() {
     if (
-      this.data.title ||
-      this.data.content ||
-      this.data.imageList.length > 0
+      this.data.mode === "edit" &&
+      !this.pageExitConfirmed &&
+      !this.exitConfirmVisible &&
+      !this.data.exitGuardVisible
     ) {
-      wx.showModal({
-        title: "提示",
-        content: "确定要放弃编辑吗？",
-        success: (res) => {
-          if (res.confirm) {
-            wx.navigateBack();
-          }
-        },
-      });
-    } else {
-      wx.navigateBack();
+      this.setData({ exitGuardVisible: true });
     }
+  },
+
+  // page-container 会先吃掉一次返回，再由这里决定恢复页面还是正式退出。
+  onExitGuardBeforeLeave() {
+    if (this.pageExitConfirmed || this.data.mode !== "edit") {
+      return;
+    }
+
+    this.setData({ exitGuardVisible: false });
+
+    if (this.exitConfirmVisible) {
+      return;
+    }
+
+    const isRecording = this.data.recording || this.data.recordStopping;
+    if (!isRecording && !this.hasUnsavedPostContent()) {
+      this.leavePostPage();
+      return;
+    }
+
+    this.exitConfirmVisible = true;
+    wx.showModal({
+      title: isRecording ? "录音正在进行" : "提示",
+      content: isRecording
+        ? "退出将取消本次录音，是否确认退出？"
+        : "确定要放弃编辑吗？",
+      confirmText: "确认退出",
+      confirmColor: isRecording ? "#d54941" : "#576b95",
+      success: (res) => {
+        if (!res.confirm) {
+          this.setData({ exitGuardVisible: true });
+          return;
+        }
+
+        if (isRecording) {
+          const alreadyStopping = this.data.recordStopping;
+          this.setData({ recordMode: "discard", recordStopping: true });
+          if (!alreadyStopping) {
+            this.recorderManager.stop();
+          }
+        }
+        this.leavePostPage();
+      },
+      fail: () => {
+        this.setData({ exitGuardVisible: true });
+      },
+      complete: () => {
+        this.exitConfirmVisible = false;
+      },
+    });
+  },
+
+  leavePostPage() {
+    this.pageExitConfirmed = true;
+    wx.disableAlertBeforeUnload();
+    this.setData({ exitGuardVisible: false }, () => {
+      setTimeout(() => wx.navigateBack(), 80);
+    });
   },
 
   // 导航栏返回
@@ -986,7 +1158,7 @@ Page({
           duration: 1500,
         });
         setTimeout(() => {
-          wx.navigateBack();
+          this.leavePostPage();
         }, 1500);
       }
     } catch (err: any) {
@@ -1002,6 +1174,7 @@ Page({
 
   // 切换录音弹窗
   onToggleRecordPopup() {
+    this.stopAudioPlayback();
     const mediaRequirements =
       this.data.selectedActivity?.mediaRequirements || {};
     const requiredTypes = mediaRequirements.requiredTypes || [];
@@ -1017,145 +1190,128 @@ Page({
       return;
     }
 
+    this.allowRecordPopupClose = false;
     this.setData({ recordPopupVisible: true });
+  },
+
+  closeRecordPopup() {
+    this.allowRecordPopupClose = true;
+    this.setData({ recordPopupVisible: false }, () => {
+      setTimeout(() => {
+        this.allowRecordPopupClose = false;
+      }, 100);
+    });
   },
 
   // 关闭录音弹窗
   onRecordPopupClose(e?: any) {
     if (e?.detail?.visible === false || !e?.detail) {
-      this.recordTouchActive = false;
-      this.recordTouchSession += 1;
-      if (this.data.touchStartTimer) {
-        clearTimeout(this.data.touchStartTimer);
+      if (this.allowRecordPopupClose) return;
+
+      if (this.data.recordProcessing) {
+        wx.showToast({ title: "正在处理中，请稍候", icon: "none" });
+        this.setData({ recordPopupVisible: true });
+        return;
       }
-      if (this.data.recording) {
-        this.setData({
-          recordMode: "discard",
+
+      if (this.data.recording || this.data.recordStopping) {
+        const alreadyStopping = this.data.recordStopping;
+        wx.showModal({
+          title: "录音正在进行",
+          content: "退出将取消本次录音，是否确认退出？",
+          confirmText: "取消录音",
+          confirmColor: "#d54941",
+          success: (res) => {
+            if (!res.confirm) {
+              this.setData({ recordPopupVisible: true });
+              return;
+            }
+
+            wx.disableAlertBeforeUnload();
+            this.setData({
+              recordMode: "discard",
+              recording: false,
+              recordStopping: true,
+            });
+            this.closeRecordPopup();
+            if (!alreadyStopping) {
+              this.recorderManager.stop();
+            }
+          },
         });
-        this.recorderManager.stop();
+        this.setData({ recordPopupVisible: true });
+        return;
       }
-      this.setData({
-        recordPopupVisible: false,
-        recordActionsAnimating: false,
-        touchStartTimer: null,
-        hoverTarget: "",
-      });
+
+      this.setData(
+        {
+          recordReady: false,
+          recordActionsAnimating: false,
+          recordTime: 0,
+          pendingRecordPath: "",
+          pendingRecordDuration: 0,
+        },
+        () => this.syncUnsavedExitGuard(),
+      );
+      this.closeRecordPopup();
     }
   },
 
-  // 开始录音
-  onStartRecord(e: any) {
-    if (this.data.recording || !this.data.recordPopupVisible) return;
-
-    const touch = e.touches[0];
-    const touchSession = ++this.recordTouchSession;
-    this.recordTouchActive = true;
-
-    this.setData({
-      touchStartTime: Date.now(),
-      touchStartX: touch.clientX,
-      touchStartY: touch.clientY,
-    });
-
-    if (this.data.touchStartTimer) {
-      clearTimeout(this.data.touchStartTimer);
-    }
-
-    const timer = setTimeout(() => {
-      this.setData({ touchStartTimer: null });
-      this.checkAndStartRecord(touchSession);
-    }, 200) as unknown as number;
-
-    this.setData({ touchStartTimer: timer });
-  },
-
-  // 录音按钮触摸移动：检测悬停目标
-  onRecordTouchMove(e: any) {
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - this.data.touchStartX;
-    const deltaY = touch.clientY - this.data.touchStartY;
-
-    if (!this.data.recording) {
-      if (Math.abs(deltaX) > 15 || Math.abs(deltaY) > 15) {
-        this.recordTouchActive = false;
-        if (this.data.touchStartTimer) {
-          clearTimeout(this.data.touchStartTimer);
-          this.setData({ touchStartTimer: null });
-        }
-      }
+  // 主按钮：开始录音、结束录音或使用已完成的原音
+  onRecordButtonTap() {
+    if (
+      this.data.recordStarting ||
+      this.data.recordProcessing ||
+      this.data.recordStopping
+    ) {
       return;
     }
 
-    // 向左滑 -> 悬停取消，向右滑 -> 悬停转文字，居中 -> 无悬停
-    let hoverTarget = "";
-    if (deltaX < -40) hoverTarget = "cancel";
-    else if (deltaX > 40) hoverTarget = "asr";
-
-    if (hoverTarget !== this.data.hoverTarget) {
-      this.setData({ hoverTarget });
-    }
-  },
-
-  // 停止录音（由 touchend 触发）
-  onStopRecord(e: any) {
-    this.recordTouchActive = false;
-
-    if (this.data.touchStartTimer) {
-      clearTimeout(this.data.touchStartTimer);
-      this.setData({ touchStartTimer: null });
+    if (this.data.recording) {
+      this.setData({ recordStopping: true, recordMode: "normal" });
+      this.recorderManager.stop();
+      return;
     }
 
-    if (!this.data.recording) return;
-
-    const { hoverTarget } = this.data;
-    this.setData({ hoverTarget: "" });
-
-    if (hoverTarget === "cancel") {
-      this.setData({
-        recordMode: "discard",
-        recordPopupVisible: false,
-      });
-
-      this.recorderManager.stop();
-    } else if (hoverTarget === "asr") {
-      this.setData({
-        recordMode: "asr",
-      });
-
-      this.recorderManager.stop();
-    } else {
-      this.setData({
-        recordMode: "normal",
-        recordPopupVisible: false,
-      });
-
-      this.recorderManager.stop();
+    if (this.data.recordReady) {
+      this.onUseRecordedAudio();
+      return;
     }
+
+    this.checkAndStartRecord();
   },
 
   // 检查并开始录音
-  checkAndStartRecord(touchSession: number) {
+  checkAndStartRecord() {
+    if (this.data.recordStarting) return;
+
     const canStart = () =>
-      this.recordTouchActive &&
-      this.recordTouchSession === touchSession &&
       this.data.recordPopupVisible &&
-      !this.data.recording;
+      !this.data.recording &&
+      !this.data.recordReady &&
+      !this.data.recordProcessing;
 
     if (!canStart()) return;
+    this.setData({ recordStarting: true });
 
     wx.getSetting({
       success: (res) => {
-        if (!canStart()) return;
+        if (!canStart()) {
+          this.setData({ recordStarting: false });
+          return;
+        }
 
         if (!res.authSetting["scope.record"]) {
           wx.authorize({
             scope: "scope.record",
             success: () => {
+              this.setData({ recordStarting: false });
               if (canStart()) {
                 this.doStartRecord();
               }
             },
             fail: () => {
+              this.setData({ recordStarting: false });
               if (!canStart()) return;
 
               wx.showModal({
@@ -1181,19 +1337,30 @@ Page({
             },
           });
         } else if (canStart()) {
+          this.setData({ recordStarting: false });
           this.doStartRecord();
         }
+      },
+      fail: () => {
+        this.setData({ recordStarting: false });
+        wx.showToast({ title: "无法检查录音权限", icon: "none" });
       },
     });
   },
 
   // 真正开始录音
   doStartRecord() {
+    this.stopAudioPlayback();
     activeRecorderStopHandler = this.handleRecordStop;
     this.setData({
+      recordStarting: false,
       recording: true,
-      recordActionsAnimating: true,
+      recordStopping: false,
+      recordReady: false,
+      recordActionsAnimating: false,
       recordTime: 0,
+      pendingRecordPath: "",
+      pendingRecordDuration: 0,
       recordMode: "normal",
     });
 
@@ -1201,20 +1368,15 @@ Page({
       clearTimeout(this.data.recordActionsAnimationTimer);
     }
 
-    const animationTimer = setTimeout(() => {
-      this.setData({
-        recordActionsAnimating: false,
-        recordActionsAnimationTimer: null,
-      });
-    }, 700);
-    this.setData({ recordActionsAnimationTimer: animationTimer });
-
     (this as any)._recordStartTime = Date.now();
     const timer = setInterval(() => {
-      const elapsed = Math.floor(
-        (Date.now() - (this as any)._recordStartTime) / 1000,
+      const elapsed = Math.min(
+        MAX_AUDIO_DURATION,
+        Math.floor((Date.now() - (this as any)._recordStartTime) / 1000),
       );
-      this.setData({ recordTime: elapsed });
+      this.setData({
+        recordTime: elapsed,
+      });
     }, 500);
     this.setData({ recordTimer: timer });
 
@@ -1223,7 +1385,7 @@ Page({
       format: "mp3",
       sampleRate: 44100,
       numberOfChannels: 1,
-      encodeBitRate: 128000,
+      encodeBitRate: 96000,
     });
 
     wx.showToast({
@@ -1231,6 +1393,100 @@ Page({
       icon: "loading",
       duration: 1000,
     });
+  },
+
+  // 取消已完成但尚未使用的录音
+  onCancelRecordedAudio() {
+    if (this.data.recordProcessing) return;
+    this.setData(
+      {
+        recordReady: false,
+        recordActionsAnimating: false,
+        recordTime: 0,
+        pendingRecordPath: "",
+        pendingRecordDuration: 0,
+      },
+      () => this.syncUnsavedExitGuard(),
+    );
+  },
+
+  // 使用当前录音：此时才上传录音文件。
+  async onUseRecordedAudio() {
+    const { pendingRecordPath, pendingRecordDuration } = this.data;
+    if (!pendingRecordPath || this.data.recordProcessing) return;
+
+    this.setData({ recordProcessing: true });
+    wx.showLoading({ title: "上传中..." });
+    try {
+      const audioUrl = await this.uploadAudioFile(pendingRecordPath);
+      this.stopAudioPlayback();
+      this.setData({
+        audioUrl,
+        audioDuration: pendingRecordDuration,
+        recordReady: false,
+        recordTime: 0,
+        pendingRecordPath: "",
+        pendingRecordDuration: 0,
+      });
+      this.closeRecordPopup();
+      this.checkCanPublish();
+      wx.showToast({ title: "音频已添加", icon: "success" });
+    } catch (err: any) {
+      console.error(err);
+      if (err?.code !== "AUTH_REQUIRED") {
+        wx.showToast({
+          title: err.error || err.message || "上传失败",
+          icon: "none",
+        });
+      }
+    } finally {
+      wx.hideLoading();
+      this.setData({ recordProcessing: false });
+    }
+  },
+
+  // 转文字：上传暂存录音后发起转换
+  async onTranscribeRecordedAudio() {
+    const { pendingRecordPath, pendingRecordDuration } = this.data;
+    if (!pendingRecordPath || this.data.recordProcessing) return;
+
+    this.setData({ recordProcessing: true });
+    wx.showLoading({ title: "上传中..." });
+    try {
+      const audioUrl = await this.uploadAudioFile(pendingRecordPath);
+      this.setData({
+        pendingAudioUrl: audioUrl,
+        pendingAudioDuration: pendingRecordDuration,
+        asrText: "（转换中...）",
+        asrPopupVisible: true,
+        recordReady: false,
+        recordTime: 0,
+        pendingRecordPath: "",
+        pendingRecordDuration: 0,
+      });
+      this.closeRecordPopup();
+
+      wx.hideLoading();
+      const asrRes = await request("/transcriptions", {
+        method: "POST",
+        data: { audioUrl },
+      });
+      console.log("asrRes:", asrRes);
+      setTimeout(() => {
+        this.setData({ asrText: asrRes.text });
+      }, 800);
+    } catch (err: any) {
+      console.error(err);
+      if (err?.code !== "AUTH_REQUIRED") {
+        wx.showToast({
+          title: err.error || err.errMsg || err.message || "转换失败",
+          icon: "none",
+        });
+      }
+    } finally {
+      wx.hideLoading();
+      this.setData({ recordProcessing: false });
+    }
   },
 
   // 播放录音
@@ -1241,29 +1497,31 @@ Page({
       return;
     }
 
-    const backgroundAudioManager = wx.getBackgroundAudioManager();
-    if (backgroundAudioManager.src) {
-      backgroundAudioManager.stop();
+    if (this.data.audioPlaying) {
+      this.stopAudioPlayback();
+      return;
     }
 
-    backgroundAudioManager.title = "录音播放";
-    backgroundAudioManager.epname = "录音";
-    backgroundAudioManager.singer = "用户";
-    backgroundAudioManager.coverImgUrl = "";
+    sharedAudioManager.title = "录音播放";
+    sharedAudioManager.epname = "录音";
+    sharedAudioManager.singer = "用户";
+    sharedAudioManager.coverImgUrl = "";
 
-    backgroundAudioManager.onPlay(() => {
-      wx.showToast({ title: "正在播放...", icon: "loading", duration: 1000 });
-    });
+    if (sharedAudioManager.src === audioUrl) {
+      sharedAudioManager.play();
+    } else {
+      // BackgroundAudioManager 设置新 src 后会自动开始播放。
+      sharedAudioManager.src = audioUrl;
+    }
+  },
 
-    backgroundAudioManager.onError((err) => {
-      wx.showToast({
-        title: `播放错误: ${err.errCode}`,
-        icon: "none",
-        duration: 3000,
-      });
-    });
-
-    backgroundAudioManager.src = audioUrl;
+  stopAudioPlayback() {
+    if (sharedAudioManager.src || this.data.audioPlaying) {
+      sharedAudioManager.stop();
+    }
+    if (this.data.audioPlaying) {
+      this.setData({ audioPlaying: false });
+    }
   },
 
   // 转文字弹窗：编辑文字内容
@@ -1283,6 +1541,7 @@ Page({
 
   // 转文字弹窗：发原语音，保存录音文件
   onAsrUseAudio() {
+    this.stopAudioPlayback();
     this.setData(
       {
         audioUrl: this.data.pendingAudioUrl,
@@ -1321,6 +1580,7 @@ Page({
       content: "确定要删除录音吗？",
       success: (res) => {
         if (res.confirm) {
+          this.stopAudioPlayback();
           this.setData(
             {
               audioUrl: "",
@@ -1359,10 +1619,9 @@ Page({
     return data.url;
   },
 
-  async handleRecordStop(res: any) {
+  handleRecordStop(res: any) {
     console.log("录音结束：", res);
-    this.recordTouchActive = false;
-    this.recordTouchSession += 1;
+    wx.disableAlertBeforeUnload();
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
@@ -1370,8 +1629,7 @@ Page({
       clearTimeout(this.data.recordActionsAnimationTimer);
     }
     const { tempFilePath, duration } = res;
-    // RecorderManager 设置了 60 秒上限，但部分设备返回值会略大于 60000ms。
-    // 对系统自动停止的录音按配置上限计算，避免被向上取整误判成 61 秒。
+    // 系统自动停止时返回值可能略大于配置上限，统一限制到 60 秒。
     const durationSec = Math.min(
       MAX_AUDIO_DURATION,
       Math.ceil(duration / 1000),
@@ -1382,102 +1640,51 @@ Page({
     // 重置录音状态
     this.setData({
       recording: false,
-      recordActionsAnimating: false,
-      recordTime: 0,
+      recordStopping: false,
       recordTimer: null,
       recordActionsAnimationTimer: null,
-      touchStartTimer: null,
-      hoverTarget: "",
-      ...(recordMode === "normal" ? { recordPopupVisible: false } : {}),
     });
 
-    // 丢弃模式
     if (recordMode === "discard") {
       console.log("录音已取消");
+      this.setData(
+        {
+          recordReady: false,
+          recordActionsAnimating: false,
+          recordTime: 0,
+          pendingRecordPath: "",
+          pendingRecordDuration: 0,
+          recordMode: "normal",
+        },
+        () => this.syncUnsavedExitGuard(),
+      );
       return;
     }
 
-    // 普通录音
-    if (recordMode === "normal") {
-      try {
-        wx.showLoading({
-          title: "上传中...",
-        });
+    const animationTimer = setTimeout(() => {
+      this.setData({
+        recordActionsAnimating: false,
+        recordActionsAnimationTimer: null,
+      });
+    }, 700);
 
-        const audioUrl = await this.uploadAudioFile(tempFilePath);
+    this.setData(
+      {
+        recordReady: true,
+        recordActionsAnimating: true,
+        recordTime: durationSec,
+        pendingRecordPath: tempFilePath,
+        pendingRecordDuration: durationSec,
+        recordActionsAnimationTimer: animationTimer,
+        recordMode: "normal",
+      },
+      () => this.syncUnsavedExitGuard(),
+    );
 
-        this.setData({
-          audioUrl,
-          audioDuration: durationSec,
-        });
-        this.checkCanPublish();
-
-        wx.showToast({
-          title: `录音完成 ${durationSec}秒`,
-          icon: "success",
-        });
-      } catch (err: any) {
-        console.error(err);
-        if (err?.code === "AUTH_REQUIRED") {
-          return;
-        }
-
-        wx.showToast({
-          title: err.error || err.message || "上传失败",
-          icon: "none",
-        });
-      } finally {
-        wx.hideLoading();
-      }
-
-      return;
-    }
-
-    // ASR 模式
-    if (recordMode === "asr") {
-      try {
-        wx.showLoading({
-          title: "上传中...",
-        });
-
-        const audioUrl = await this.uploadAudioFile(tempFilePath);
-
-        wx.hideLoading();
-
-        this.setData({
-          pendingAudioUrl: audioUrl,
-          pendingAudioDuration: durationSec,
-          asrText: "（转换中...）",
-          asrPopupVisible: true,
-          recordPopupVisible: false,
-        });
-
-        const asrRes = await request("/transcriptions", {
-          method: "POST",
-          data: {
-            audioUrl,
-          },
-        });
-        console.log("asrRes:", asrRes);
-        setTimeout(() => {
-          this.setData({
-            asrText: asrRes.text,
-          });
-        }, 800);
-      } catch (err: any) {
-        wx.hideLoading();
-
-        console.error(err);
-        if (err?.code === "AUTH_REQUIRED") {
-          return;
-        }
-
-        wx.showToast({
-          title: err.error || err.errMsg || "上传失败",
-          icon: "none",
-        });
-      }
-    }
+    wx.showToast({
+      title: "录音完成，请选择下一步",
+      icon: "none",
+    });
   },
 
   // 查看模式：预览图片
