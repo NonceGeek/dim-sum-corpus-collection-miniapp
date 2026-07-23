@@ -3,7 +3,7 @@
 
   <!-- 顶部信息 -->
   <view class="user-card">
-    <view class="user-info">
+    <view class="user-info" wx:if="{{isLoggedIn}}">
       <block wx:if="{{avatar}}">
         <image class="avatar" src="{{avatar}}" mode="aspectFill" />
       </block>
@@ -22,6 +22,17 @@
           <text class="post-num">{{submissionCount}}</text>参赛作品
         </view>
       </view>
+    </view>
+
+    <view class="guest-card" wx:else>
+      <view class="avatar avatar-placeholder">
+        <t-icon name="user" size="64rpx" />
+      </view>
+      <view class="guest-meta">
+        <view class="nickname">游客</view>
+        <view class="guest-description">无需登录也可浏览公开内容</view>
+      </view>
+      <button class="guest-login-btn" bind:tap="onLogin">登录</button>
     </view>
 
     <!-- <view class="edit-btn">
@@ -58,7 +69,7 @@
     <view class="hint">Version: {{version}}</view>
 
     <!-- 退出登录 -->
-    <view class="logout-btn" bind:tap="onLogout">
+    <view class="logout-btn" wx:if="{{isLoggedIn}}" bind:tap="onLogout">
       退出登录
     </view>
 

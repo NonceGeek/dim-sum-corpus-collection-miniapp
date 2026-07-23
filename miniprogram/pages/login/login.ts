@@ -20,10 +20,12 @@ Page({
     subtitle: ENV.subtitle,
     version: miniProgram.version || `${ENV.VERSION}`,
     redirectUrl: "",
+    returnToPrevious: false,
   },
 
   onLoad(options: Record<string, string | undefined>) {
     this.syncTheme();
+    this.setData({ returnToPrevious: options.returnToPrevious === "1" });
     const redirect = decodeRedirect(options.redirect || "");
     if (
       redirect.startsWith("/pages/") &&
@@ -70,7 +72,9 @@ Page({
 
       const redirectUrl = this.data.redirectUrl;
       setTimeout(() => {
-        if (redirectUrl) {
+        if (this.data.returnToPrevious && getCurrentPages().length > 1) {
+          wx.navigateBack();
+        } else if (redirectUrl) {
           wx.redirectTo({ url: redirectUrl });
         } else {
           wx.reLaunch({ url: "/pages/index/index" });
@@ -85,6 +89,15 @@ Page({
       });
       this.setData({ loading: false });
     }
+  },
+
+  onCancelLogin() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack();
+      return;
+    }
+
+    wx.reLaunch({ url: "/pages/index/index" });
   },
 
   // 协议复选框变化

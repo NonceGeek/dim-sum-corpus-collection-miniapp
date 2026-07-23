@@ -1,6 +1,10 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
-import { guardProtectedPage } from "../../utils/auth";
+import {
+  isLoggedIn,
+  navigateToProtectedPage,
+  promptLogin,
+} from "../../utils/auth";
 const { miniProgram } = wx.getAccountInfoSync();
 
 // 主题模式选项
@@ -29,15 +33,24 @@ Page({
     avatar: "",
     submissionCount: 0,
     unreadNotificationCount: 0,
+    isLoggedIn: false,
     version: miniProgram.version || `${ENV.VERSION}`,
   },
-  async onLoad() {
-    if (
-      !guardProtectedPage(
-        "/pages/profile/profile",
-        "登录后才能使用个人中心，当前仍可继续浏览公开内容。",
-      )
-    ) {
+  onLoad() {
+    this.syncTheme();
+  },
+
+  async refreshProfileState() {
+    const loggedIn = isLoggedIn();
+    this.setData({ isLoggedIn: loggedIn });
+
+    if (!loggedIn) {
+      this.setData({
+        username: "",
+        avatar: "",
+        submissionCount: 0,
+        unreadNotificationCount: 0,
+      });
       return;
     }
 
@@ -77,21 +90,38 @@ Page({
   },
 
   onMessageClick() {
-    wx.navigateTo({ url: "/pages/message/message" });
+    if (this.data.isLoggedIn) {
+      wx.navigateTo({ url: "/pages/message/message" });
+      return;
+    }
+
+    promptLogin("/pages/message/message", {
+      content: "登录后才能查看消息，您也可以暂不登录并继续浏览。",
+    });
   },
 
   onWorksClick() {
-    wx.navigateTo({ url: "/pages/mine/mine" });
+    navigateToProtectedPage(
+      "/pages/mine/mine",
+      "登录后才能查看我的参赛作品，您也可以暂不登录并继续浏览。",
+    );
   },
-  onShow() {
+
+  onLogin() {
+    wx.navigateTo({
+      url: "/pages/login/login?returnToPrevious=1",
+    });
+  },
+
+  async onShow() {
     // 每次显示页面时同步主题状态
     this.syncTheme();
+    await this.refreshProfileState();
   },
 
   onPullDownRefresh() {
-    this.syncUserInfo();
     this.syncTheme();
-    this.loadProfileSummary().finally(() => {
+    this.refreshProfileState().finally(() => {
       wx.stopPullDownRefresh();
     });
   },

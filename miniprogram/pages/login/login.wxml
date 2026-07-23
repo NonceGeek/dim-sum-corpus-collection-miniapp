@@ -14,6 +14,9 @@
     <button class="login-btn" type="primary" bindtap="handleLogin" loading="{{loading}}">
       微信一键登录
     </button>
+    <button class="cancel-login-btn" bind:tap="onCancelLogin">
+      暂不登录，继续浏览
+    </button>
     <view class="login-hint">
       <checkbox-group bind:change="onAgreementChange">
         <checkbox value="agreed" checked="{{agreedToTerms}}" class="agreement-checkbox" style="transform: scale(0.7)" />

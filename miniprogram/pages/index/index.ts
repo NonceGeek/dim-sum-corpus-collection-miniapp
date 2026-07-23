@@ -195,10 +195,7 @@ Page({
       );
     } else if (value === "profile") {
       this.setData({ activeTab: "home" });
-      navigateToProtectedPage(
-        "/pages/profile/profile",
-        "登录后才能使用个人中心，当前仍可继续浏览公开内容。",
-      );
+      wx.navigateTo({ url: "/pages/profile/profile" });
     }
   },
   onClickToTrack(e) {
