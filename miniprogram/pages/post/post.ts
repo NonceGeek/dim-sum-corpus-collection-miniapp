@@ -152,11 +152,10 @@ Page({
       },
       async () => {
         try {
-          tag && (await this.loadTrack(tag, pageMode === "view"));
+          tag && (await this.loadTrack(tag));
           const postLoaded = id
             ? await this.loadPost(id, {
                 retryOnFailure: pageMode === "view",
-                publicAccess: pageMode === "view",
               })
             : false;
           const { mode } = this.data;
@@ -211,13 +210,10 @@ Page({
       this.recorderManager.stop();
     }
   },
-  async loadTrack(id: string, publicAccess = false) {
+  async loadTrack(id: string) {
     wx.showLoading({ title: "加载活动中..." });
     try {
-      const track = await request(
-        `/activities/${id}`,
-        publicAccess ? { auth: false } : undefined,
-      );
+      const track = await request(`/activities/${id}`);
       await new Promise<void>((resolve) => {
         this.setData(
           {
@@ -258,28 +254,19 @@ Page({
     options: {
       retryOnFailure?: boolean;
       showLoading?: boolean;
-      publicAccess?: boolean;
     } = {},
   ): Promise<boolean> {
-    const {
-      retryOnFailure = false,
-      showLoading = true,
-      publicAccess = false,
-    } = options;
+    const { retryOnFailure = false, showLoading = true } = options;
     if (showLoading) {
       wx.showLoading({ title: "加载中..." });
     }
     try {
-      const requestOptions = publicAccess ? { auth: false } : undefined;
-      const res = await request(`/submissions/${id}`, requestOptions);
+      const res = await request(`/submissions/${id}`);
       console.log("select:", this.data.selectedActivity);
       let selectedActivity = this.data.selectedActivity;
 
       if (!this.data.selectedActivity?.id && res.activity && res.activity.id) {
-        selectedActivity = await request(
-          `/activities/${res.activity.id}`,
-          requestOptions,
-        );
+        selectedActivity = await request(`/activities/${res.activity.id}`);
       }
       console.log("res:", res);
       console.log(
@@ -323,7 +310,6 @@ Page({
         return await this.loadPost(id, {
           retryOnFailure: false,
           showLoading: false,
-          publicAccess,
         });
       }
       if (err?.code !== "AUTH_REQUIRED") {

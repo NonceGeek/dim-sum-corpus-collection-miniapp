@@ -143,7 +143,7 @@ Page({
   async loadTopTracks() {
     try {
       wx.showLoading({ title: "加载中..." });
-      const { items } = await request("/activities", { auth: false });
+      const { items } = await request("/activities");
       const tracks = items.map(formatTrack);
 
       wx.hideLoading();
@@ -355,7 +355,6 @@ Page({
 
       const res = await request(
         `/activities?page=${allTracksPage}&pageSize=${pageSize}&includeExpired=true`,
-        { auth: false },
       );
 
       wx.hideLoading();

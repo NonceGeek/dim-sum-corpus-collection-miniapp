@@ -69,9 +69,7 @@ Page({
   async loadSwiperData() {
     try {
       wx.showLoading({ title: "加载中..." });
-      const res = await request("/activities?timeStatus=ongoing", {
-        auth: false,
-      });
+      const res = await request("/activities?timeStatus=ongoing");
       wx.hideLoading();
       const activities = (res.items || []).slice(0, 5);
       const swiperList = activities.map((activity: ISwiperList) => ({
@@ -104,7 +102,6 @@ Page({
       const { page, pageSize } = this.data;
       const res = await request(
         `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
-        { auth: false },
       );
       const { items } = res;
       const newList = items;
