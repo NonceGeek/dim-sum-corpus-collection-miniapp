@@ -166,12 +166,12 @@ Page({
   },
   onCardTap(e: any) {
     const id = e.currentTarget.dataset.id;
-    navigateToProtectedPage(`/pages/post/post?id=${id}&mode=view`);
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    navigateToProtectedPage(`/pages/post/post?id=${id}&mode=view`);
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
   onMyWorks() {

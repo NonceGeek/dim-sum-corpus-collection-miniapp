@@ -1,7 +1,7 @@
 import request from "../../utils/http";
 import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
-import { guardProtectedPage } from "../../utils/auth";
+import { guardProtectedPage, isLoggedIn } from "../../utils/auth";
 import uploadFileWithAuth from "../../utils/upload";
 
 const MAX_AUDIO_DURATION = 60;
@@ -120,23 +120,23 @@ Page({
 
   async onLoad(options) {
     const { tag, id, mode } = options;
+    const pageMode = mode || "edit";
     this.syncTheme();
 
     const query = [
       tag ? `tag=${encodeURIComponent(tag)}` : "",
       id ? `id=${encodeURIComponent(id)}` : "",
-      `mode=${encodeURIComponent(mode || "edit")}`,
+      `mode=${encodeURIComponent(pageMode)}`,
     ]
       .filter(Boolean)
       .join("&");
     const currentUrl = `/pages/post/post?${query}`;
 
     if (
+      pageMode !== "view" &&
       !guardProtectedPage(
         currentUrl,
-        mode === "view"
-          ? "登录后才能查看作品详情，当前仍可继续浏览公开内容。"
-          : "登录后才能投稿，当前仍可继续浏览公开内容。",
+        "登录后才能投稿，当前仍可继续浏览公开内容。",
       )
     ) {
       return;
@@ -146,20 +146,21 @@ Page({
 
     this.setData(
       {
-        mode: mode || "edit",
-        userId: userInfo.id,
-        exitGuardVisible: (mode || "edit") === "edit",
+        mode: pageMode,
+        userId: userInfo?.id || "",
+        exitGuardVisible: pageMode === "edit",
       },
       async () => {
         try {
-          tag && (await this.loadTrack(tag));
+          tag && (await this.loadTrack(tag, pageMode === "view"));
           const postLoaded = id
             ? await this.loadPost(id, {
-                retryOnFailure: mode === "view",
+                retryOnFailure: pageMode === "view",
+                publicAccess: pageMode === "view",
               })
             : false;
           const { mode } = this.data;
-          if (mode === "view" && postLoaded) {
+          if (mode === "view" && postLoaded && isLoggedIn()) {
             const view = await request(`/works/${id}/view`, { method: "POST" });
             this.setData({ view: view?.viewCount });
           }
@@ -210,10 +211,13 @@ Page({
       this.recorderManager.stop();
     }
   },
-  async loadTrack(id: string) {
+  async loadTrack(id: string, publicAccess = false) {
     wx.showLoading({ title: "加载活动中..." });
     try {
-      const track = await request(`/activities/${id}`);
+      const track = await request(
+        `/activities/${id}`,
+        publicAccess ? { auth: false } : undefined,
+      );
       await new Promise<void>((resolve) => {
         this.setData(
           {
@@ -251,19 +255,31 @@ Page({
 
   async loadPost(
     id: string,
-    options: { retryOnFailure?: boolean; showLoading?: boolean } = {},
+    options: {
+      retryOnFailure?: boolean;
+      showLoading?: boolean;
+      publicAccess?: boolean;
+    } = {},
   ): Promise<boolean> {
-    const { retryOnFailure = false, showLoading = true } = options;
+    const {
+      retryOnFailure = false,
+      showLoading = true,
+      publicAccess = false,
+    } = options;
     if (showLoading) {
       wx.showLoading({ title: "加载中..." });
     }
     try {
-      const res = await request(`/submissions/${id}`);
+      const requestOptions = publicAccess ? { auth: false } : undefined;
+      const res = await request(`/submissions/${id}`, requestOptions);
       console.log("select:", this.data.selectedActivity);
       let selectedActivity = this.data.selectedActivity;
 
       if (!this.data.selectedActivity?.id && res.activity && res.activity.id) {
-        selectedActivity = await request(`/activities/${res.activity.id}`);
+        selectedActivity = await request(
+          `/activities/${res.activity.id}`,
+          requestOptions,
+        );
       }
       console.log("res:", res);
       console.log(
@@ -307,6 +323,7 @@ Page({
         return await this.loadPost(id, {
           retryOnFailure: false,
           showLoading: false,
+          publicAccess,
         });
       }
       if (err?.code !== "AUTH_REQUIRED") {

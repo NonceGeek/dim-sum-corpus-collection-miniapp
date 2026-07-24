@@ -176,10 +176,7 @@ Page({
 
   onWaterfallTap(e: any) {
     const { id } = e.detail;
-    navigateToProtectedPage(
-      `/pages/post/post?id=${id}&mode=view`,
-      "登录后才能查看作品详情，当前仍可继续浏览首页内容。",
-    );
+    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
   onTabChange(e: any) {
