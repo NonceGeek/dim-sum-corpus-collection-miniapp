@@ -202,7 +202,7 @@
       <view class="footer">
         <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
           disabled="{{!canPublish}}" hover-class="none">
-          发布
+          投稿
         </t-button>
       </view>
     </view>
