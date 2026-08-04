@@ -5,8 +5,7 @@
     "t-image": "tdesign-miniprogram/image/image",
     "t-avatar": "tdesign-miniprogram/avatar/avatar",
     "t-button": "tdesign-miniprogram/button/button",
-    "t-tab-bar": "tdesign-miniprogram/tab-bar/tab-bar",
-    "t-tab-bar-item": "tdesign-miniprogram/tab-bar-item/tab-bar-item",
+    "app-tab-bar": "/components/app-tab-bar/app-tab-bar",
     "waterfall": "/components/waterfall/waterfall"
   },
   "enableShareAppMessage": true,

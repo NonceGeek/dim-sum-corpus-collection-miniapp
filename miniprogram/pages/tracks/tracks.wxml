@@ -4,8 +4,13 @@
   <view class="tracks-header">
 
     <!-- 背景 -->
-    <image class="header-bg" src="{{track.bannerUrl || '/public/image/yue.jpg'}}" mode="aspectFill" />
+    <image wx:if="{{!trackLoading}}" class="header-bg" src="{{track.bannerUrl || '/public/image/yue.jpg'}}"
+      mode="aspectFill" />
     <view class="header-overlay"></view>
+    <view class="track-header-skeleton" wx:if="{{trackLoading}}">
+      <view class="tracks-skeleton-block track-header-skeleton-title"></view>
+      <view class="tracks-skeleton-block track-header-skeleton-time"></view>
+    </view>
     <!-- 内容 -->
     <view class="ice-text-layer ice-animate" wx:if="{{trackTextReady}}">
 
@@ -23,7 +28,8 @@
 
   <!-- 倒影渐变带：承接 header，右侧放操作胶囊 -->
   <view class="header-reflection">
-    <view class="header-actions" wx:if="{{track.canShare || track.timeStatus === 'ongoing'}}">
+    <view class="tracks-skeleton-block track-action-skeleton" wx:if="{{trackLoading}}"></view>
+    <view class="header-actions" wx:elif="{{track.canShare || track.timeStatus === 'ongoing'}}">
       <button class="ha-btn" open-type="share" hover-class="none" wx:if="{{track.canShare}}">
         <t-icon class="ha-icon" name="share" size="30rpx" color="#ffffff" />
         <text class="ha-text">分享</text>
@@ -53,14 +59,17 @@
 
   <!-- 瀑布流卡片列表 -->
   <view class="card-list">
-    <waterfall items="{{cardList}}" bind:itemtap="onWaterfallTap" showFeatured/>
+    <waterfall
+      items="{{cardList}}"
+      loading="{{isInitialCardLoading}}"
+      append-loading="{{loading && !isInitialCardLoading}}"
+      bind:itemtap="onWaterfallTap"
+      showFeatured
+    />
   </view>
 
   <!-- 加载状态 -->
-  <view class="loading-tip" wx:if="{{loading}}">
-    <text>加载中...</text>
-  </view>
-  <view class="loading-tip" wx:elif="{{noMore}}">
+  <view class="loading-tip" wx:if="{{noMore}}">
     <text>没有更多了</text>
   </view>
 

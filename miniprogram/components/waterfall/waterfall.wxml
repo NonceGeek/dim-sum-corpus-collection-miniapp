@@ -1,10 +1,89 @@
-<view class="waterfall">
+<view class="waterfall" wx:if="{{loading}}" aria-label="作品加载中">
+  <view class="waterfall-column">
+    <view class="skeleton-card">
+      <view class="skeleton-block skeleton-cover skeleton-cover--medium"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-block skeleton-title skeleton-title--short"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
+    <view class="skeleton-card">
+      <view class="skeleton-block skeleton-cover skeleton-cover--short"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
+    <view class="skeleton-card">
+      <view class="skeleton-block skeleton-cover skeleton-cover--tall"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-block skeleton-title skeleton-title--short"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="waterfall-column">
+    <view class="skeleton-card">
+      <view class="skeleton-block skeleton-cover skeleton-cover--tall"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-block skeleton-title skeleton-title--short"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
+    <view class="skeleton-card">
+      <view class="skeleton-block skeleton-cover skeleton-cover--medium"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
+    <view class="skeleton-card">
+      <view class="skeleton-block skeleton-cover skeleton-cover--short"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-block skeleton-title skeleton-title--short"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view class="waterfall" wx:else>
   <view class="waterfall-column">
     <block wx:for="{{leftItems}}" wx:key="id">
       <view class="waterfall-item" bind:tap="onItemTap" data-index="{{item._wfIndex}}"
         data-id="{{item.id}}">
-        <view class="cover-wrap">
-          <view class="badge-label">
+        <view class="cover-wrap {{item._isAudioOnly ? 'cover-wrap--audio-only' : ''}}">
+          <view wx:if="{{item._badgeCount > 0}}"
+            class="badge-label {{item._isAudioOnly ? 'badge-label--audio-only' : ''}}">
             <view wx:if="{{showStatus && (
               item.reviewStatus === 'pending_review' ||
               item.reviewStatus === 'ai_reviewing' ||
@@ -36,11 +115,13 @@
               <view class="work-status-text">精选</view>
             </view>
           </view>
-          <image src="{{item.coverUrl}}" mode="widthFix"
+          <image wx:if="{{!item._isAudioOnly}}" src="{{item.coverUrl}}" mode="widthFix"
             class="card-image" />
         </view>
-        <view class="card-title">
-          {{item.title}}
+        <view class="card-title {{item._isAudioOnly ? 'card-title--audio-only' : ''}}">
+          <t-icon wx:if="{{item._isAudioOnly}}" name="microphone" size="32rpx"
+            color="var(--primary)" t-class="audio-title-icon" />
+          <text class="card-title-text">{{item.title}}</text>
         </view>
         <view class="card-footer">
           <view class="author">
@@ -57,14 +138,26 @@
         </view>
       </view>
     </block>
+    <view class="skeleton-card" wx:if="{{appendLoading}}">
+      <view class="skeleton-block skeleton-cover skeleton-cover--short"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="waterfall-column">
     <block wx:for="{{rightItems}}" wx:key="id">
       <view class="waterfall-item" bind:tap="onItemTap" data-index="{{item._wfIndex}}"
         data-id="{{item.id}}">
-        <view class="cover-wrap">
-          <view class="badge-label">
+        <view class="cover-wrap {{item._isAudioOnly ? 'cover-wrap--audio-only' : ''}}">
+          <view wx:if="{{item._badgeCount > 0}}"
+            class="badge-label {{item._isAudioOnly ? 'badge-label--audio-only' : ''}}">
             <view wx:if="{{showStatus && (
               item.reviewStatus === 'pending_review' ||
               item.reviewStatus === 'ai_reviewing' ||
@@ -96,11 +189,13 @@
               <view class="work-status-text">精选</view>
             </view>
           </view>
-          <image src="{{item.coverUrl}}" mode="widthFix"
+          <image wx:if="{{!item._isAudioOnly}}" src="{{item.coverUrl}}" mode="widthFix"
             class="card-image" />
         </view>
-        <view class="card-title">
-          {{item.title}}
+        <view class="card-title {{item._isAudioOnly ? 'card-title--audio-only' : ''}}">
+          <t-icon wx:if="{{item._isAudioOnly}}" name="microphone" size="32rpx"
+            color="var(--primary)" t-class="audio-title-icon" />
+          <text class="card-title-text">{{item.title}}</text>
         </view>
         <view class="card-footer">
           <view class="author">
@@ -117,5 +212,17 @@
         </view>
       </view>
     </block>
+    <view class="skeleton-card" wx:if="{{appendLoading}}">
+      <view class="skeleton-block skeleton-cover skeleton-cover--medium"></view>
+      <view class="skeleton-content">
+        <view class="skeleton-block skeleton-title"></view>
+        <view class="skeleton-block skeleton-title skeleton-title--short"></view>
+        <view class="skeleton-footer">
+          <view class="skeleton-block skeleton-avatar"></view>
+          <view class="skeleton-block skeleton-name"></view>
+          <view class="skeleton-block skeleton-count"></view>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

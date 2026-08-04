@@ -2,7 +2,8 @@
   "usingComponents": {
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-popup": "tdesign-miniprogram/popup/popup"
+    "t-popup": "tdesign-miniprogram/popup/popup",
+    "app-tab-bar": "/components/app-tab-bar/app-tab-bar"
   },
   "navigationBarTitleText": "精选内容",
   "enablePullDownRefresh": true

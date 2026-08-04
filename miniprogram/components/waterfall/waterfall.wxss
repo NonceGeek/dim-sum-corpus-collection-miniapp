@@ -11,6 +11,97 @@
   min-width: 0;
 }
 
+/* 首屏加载骨架 */
+.skeleton-card {
+  width: 100%;
+  margin-bottom: 12rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg, 12rpx);
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-cover {
+  width: 100%;
+}
+
+.skeleton-cover--short {
+  height: 260rpx;
+}
+
+.skeleton-cover--medium {
+  height: 340rpx;
+}
+
+.skeleton-cover--tall {
+  height: 420rpx;
+}
+
+.skeleton-content {
+  padding: 16rpx;
+}
+
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--bg-placeholder) 25%,
+    var(--bg-muted) 37%,
+    var(--bg-placeholder) 63%
+  );
+  background-size: 400% 100%;
+  animation: waterfall-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-title {
+  width: 88%;
+  height: 28rpx;
+  border-radius: 8rpx;
+}
+
+.skeleton-title--short {
+  width: 58%;
+  margin-top: 12rpx;
+}
+
+.skeleton-footer {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 24rpx;
+}
+
+.skeleton-avatar {
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+}
+
+.skeleton-name {
+  width: 92rpx;
+  height: 22rpx;
+  border-radius: 8rpx;
+}
+
+.skeleton-count {
+  width: 46rpx;
+  height: 22rpx;
+  margin-left: auto;
+  border-radius: 8rpx;
+}
+
+@keyframes waterfall-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
+}
+
 .waterfall-item {
   display: block;
   width: 100%;
@@ -34,6 +125,11 @@
   background: var(--bg-placeholder);
 }
 
+.cover-wrap--audio-only {
+  overflow: visible;
+  background: transparent;
+}
+
 .badge-label {
   position: absolute;
   top: 18rpx;
@@ -43,6 +139,13 @@
   flex-direction: column;
   gap: 10rpx;
   align-items: flex-start;
+}
+
+.badge-label--audio-only {
+  position: relative;
+  top: auto;
+  left: auto;
+  padding: 12rpx 12rpx 0;
 }
 
 .card-image {
@@ -169,4 +272,19 @@
   font-size: 32rpx;
   font-weight: bold;
   padding: 10rpx 16rpx 0 16rpx;
+}
+
+.card-title--audio-only {
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.audio-title-icon {
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.card-title-text {
+  min-width: 0;
 }

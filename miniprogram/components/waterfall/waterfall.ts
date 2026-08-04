@@ -10,6 +10,14 @@ Component({
       type: Array,
       value: [],
     },
+    loading: {
+      type: Boolean,
+      value: false,
+    },
+    appendLoading: {
+      type: Boolean,
+      value: false,
+    },
     showStatus: {
       type: Boolean,
       value: false,
@@ -56,6 +64,8 @@ Component({
         const decoratedItem = {
           ...item,
           _wfIndex: index,
+          _isAudioOnly: this.isAudioOnlyMedia(item),
+          _badgeCount: this.getBadgeCount(item),
           displayViewCount: this.formatViewCount(item?.viewCount),
         };
 
@@ -92,9 +102,16 @@ Component({
       return `${count}`;
     },
 
+    isAudioOnlyMedia(item: any) {
+      const media = Array.isArray(item?.media) ? item.media : [];
+      return media.length > 0 && media.every((file) => file?.type === "audio");
+    },
+
     getEstimatedItemHeight(item: any, cache?: any) {
-      const imageRatio =
-        cache?.[item?.coverUrl] || this.getImageRatio(item?.coverUrl);
+      const isAudioOnly = this.isAudioOnlyMedia(item);
+      const imageRatio = isAudioOnly
+        ? 0
+        : cache?.[item?.coverUrl] || this.getImageRatio(item?.coverUrl);
 
       const title = item?.title || "";
 
@@ -103,7 +120,9 @@ Component({
       const titleLines = Math.max(1, Math.ceil(titleLength / 14));
 
       const titleHeight = titleLines * BASE_TITLE_LINE_HEIGHT;
-      const badgeHeight = this.getBadgeCount(item) * 26;
+      const badgeCount = this.getBadgeCount(item);
+      const badgeHeight =
+        isAudioOnly && badgeCount > 0 ? badgeCount * 52 + 12 : 0;
 
       return (
         imageRatio * BASE_IMAGE_WIDTH +
@@ -118,17 +137,20 @@ Component({
       let count = 0;
       const reviewStatus = item?.reviewStatus;
       const awardStatus = item?.awardStatus;
+      const showStatus = this.data.showStatus;
 
       if (
-        reviewStatus === "pending_review" ||
-        reviewStatus === "ai_reviewing" ||
-        reviewStatus === "review_needed" ||
-        reviewStatus === "rejected"
+        showStatus &&
+        (reviewStatus === "pending_review" ||
+          reviewStatus === "ai_reviewing" ||
+          reviewStatus === "review_needed" ||
+          reviewStatus === "rejected")
       ) {
         count += 1;
       }
 
       if (
+        showStatus &&
         reviewStatus === "approved" &&
         (awardStatus === "awarded" ||
           awardStatus === "claimed" ||

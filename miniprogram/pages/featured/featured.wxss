@@ -1,50 +1,82 @@
 .container {
   min-height: 100vh;
   background: var(--bg-page);
-  padding-bottom: 120rpx;
+  padding-bottom: calc(200rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
   overflow-x: hidden;
 }
 
 /* Banner */
 .top-banner {
-  padding: 32rpx;
+  box-sizing: border-box;
+  width: calc(100% - 48rpx);
+  padding: 32rpx 24rpx;
   color: var(--text-primary);
 }
 
-.banner-title {
+.banner-danmaku-track {
   position: relative;
-  font-size: 72rpx;
-  font-weight: 700;
-  line-height: 1.2;
+  height: 46rpx;
+  margin-top: 12rpx;
+  overflow: hidden;
+}
+
+.banner-danmaku-list {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.banner-title-text,
+.banner-subtitle-text {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.banner-title-text {
+  font-size: 40rpx;
+  font-weight: 600;
+  animation: banner-danmaku 12s linear -1s infinite;
+}
+
+.banner-danmaku-text {
   background: var(--gradient-shimmer);
   background-size: 300% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: shimmer 5s linear infinite;
+  animation: banner-text-shimmer 5s linear infinite;
 }
 
-@keyframes shimmer {
-  0% {
+.banner-subtitle-text {
+  font-size: 40rpx;
+  font-weight: 500;
+  animation: banner-danmaku 12s linear -7s infinite;
+}
+
+@keyframes banner-danmaku {
+  from {
+    transform: translateX(calc(100vw - 96rpx));
+  }
+
+  to {
+    transform: translateX(calc(-100vw + 96rpx));
+  }
+}
+
+@keyframes banner-text-shimmer {
+  from {
     background-position: 200% center;
   }
-  100% {
+
+  to {
     background-position: -200% center;
   }
-}
-
-.banner-subtitle {
-  position: relative;
-  margin-top: 12rpx;
-  font-size: 56rpx;
-  font-weight: 700;
-  background: var(--gradient-shimmer);
-  background-size: 300% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 5s linear infinite;
-  animation-delay: -1s;
 }
 
 .banner-desc {
@@ -54,6 +86,7 @@
   height: 40rpx;
   overflow: hidden;
   position: relative;
+  text-align: center;
 }
 
 .banner-desc-text {
@@ -61,6 +94,7 @@
   width: 100%;
   font-size: 30rpx;
   color: var(--accent);
+  text-align: center;
   transition:
     opacity 0.5s ease,
     transform 0.5s ease;
@@ -78,7 +112,7 @@
 
 .card-swiper {
   margin: 0 24rpx;
-  height: 940rpx;
+  height: 990rpx;
   width: calc(100% - 48rpx);
   padding-bottom: 24rpx;
   box-sizing: border-box;
@@ -89,6 +123,8 @@
   height: calc(100% - 30rpx);
   box-sizing: border-box;
   position: relative;
+  display: flex;
+  flex-direction: column;
   margin: 0 20rpx;
   background: var(--bg-card);
   border-radius: 40rpx;
@@ -99,23 +135,44 @@
 
 .card-header {
   display: flex;
+  flex: 0 0 auto;
+  margin-bottom: 36rpx;
   justify-content: space-between;
   align-items: flex-start;
 }
 
+.card-header > view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
 .card-title {
-  font-size: 60rpx;
+  font-size: 40rpx;
   font-weight: 700;
+  line-height: 52rpx;
   color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-en {
+  height: 40rpx;
+  margin-top: 10rpx;
   color: var(--accent);
   font-size: 28rpx;
+  line-height: 40rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-desc {
-  margin-top: 20rpx;
+  margin-top: 10rpx;
   color: var(--text-secondary);
   line-height: 1.8;
   font-size: 30rpx;
@@ -126,8 +183,11 @@
   text-overflow: ellipsis;
 }
 
-.media-req-row {
+.media-req-slot {
   margin-top: 20rpx;
+}
+
+.media-req-row {
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -157,7 +217,10 @@
 
 /* 视频区域 */
 .video-scroll {
-  margin-top: 36rpx;
+  flex: 0 0 376rpx;
+  height: 376rpx;
+  margin-top: auto;
+  box-sizing: border-box;
 }
 
 .video-list {
@@ -207,8 +270,9 @@
 
 .empty-work-stage {
   position: relative;
+  flex: 0 0 376rpx;
   height: 376rpx;
-  margin-top: 36rpx;
+  margin-top: auto;
   overflow: hidden;
   border-radius: 28rpx;
   background: linear-gradient(
@@ -602,6 +666,127 @@
 
 .tracks-popup-card:active {
   opacity: 0.9;
+}
+
+.tracks-popup-skeleton {
+  pointer-events: none;
+}
+
+.tracks-popup-skeleton-main {
+  padding: 32rpx 28rpx 24rpx;
+  background: var(--bg-card);
+  border-bottom: 2rpx solid var(--border-color);
+  border-radius: 28rpx;
+}
+
+.tracks-popup-skeleton-header,
+.tracks-popup-skeleton-footer,
+.tracks-popup-skeleton-author {
+  display: flex;
+  align-items: center;
+}
+
+.tracks-popup-skeleton-header,
+.tracks-popup-skeleton-footer {
+  justify-content: space-between;
+}
+
+.tracks-skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--bg-placeholder) 25%,
+    var(--bg-muted) 37%,
+    var(--bg-placeholder) 63%
+  );
+  background-size: 400% 100%;
+  animation: tracks-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.tracks-skeleton-title {
+  width: 42%;
+  height: 36rpx;
+  border-radius: 10rpx;
+}
+
+.tracks-skeleton-more {
+  width: 22%;
+  height: 28rpx;
+  border-radius: 10rpx;
+}
+
+.tracks-skeleton-desc {
+  width: 76%;
+  height: 26rpx;
+  margin-top: 24rpx;
+  border-radius: 8rpx;
+}
+
+.tracks-skeleton-desc--short {
+  width: 54%;
+  margin-top: 18rpx;
+}
+
+.tracks-popup-skeleton-videos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22rpx;
+  margin-top: 34rpx;
+}
+
+.tracks-popup-skeleton-video {
+  min-width: 0;
+}
+
+.tracks-skeleton-cover {
+  width: 100%;
+  height: 260rpx;
+  border-radius: 14rpx;
+}
+
+.tracks-popup-skeleton-author {
+  gap: 8rpx;
+  margin-top: 16rpx;
+}
+
+.tracks-skeleton-avatar {
+  flex: 0 0 32rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+}
+
+.tracks-skeleton-author-name {
+  width: 70%;
+  height: 22rpx;
+  border-radius: 8rpx;
+}
+
+.tracks-popup-skeleton-footer {
+  gap: 20rpx;
+  padding: 28rpx;
+  background: var(--bg-muted);
+}
+
+.tracks-skeleton-rule {
+  width: 34%;
+  height: 28rpx;
+  border-radius: 999rpx;
+}
+
+.tracks-skeleton-status {
+  width: 180rpx;
+  height: 62rpx;
+  border-radius: 999rpx;
+}
+
+@keyframes tracks-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
 }
 
 .tracks-popup-card-main {

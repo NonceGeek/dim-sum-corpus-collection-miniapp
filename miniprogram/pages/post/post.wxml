@@ -20,7 +20,7 @@
 
     <view class="upload-content">
       <!-- 图片上传区域 -->
-      <view class="image-upload-section">
+      <view class="image-upload-section" wx:if="{{canChooseVisualMedia || imageList.length > 0}}">
         <view class="image-list">
           <block wx:for="{{imageList}}" wx:key="index">
             <view class="image-item">
@@ -30,14 +30,12 @@
               </view>
             </view>
           </block>
-          <view class="image-item add-btn" wx:if="{{imageList.length < 9}}" catch:tap="onChooseImage">
+          <view class="image-item add-btn"
+            wx:if="{{canChooseVisualMedia}}"
+            catch:tap="onChooseImage">
             <t-icon name="add" size="48"
               color="{{currentTheme === 'dark' ? 'var(--text-secondary)' : 'var(--text-muted)'}}" />
           </view>
-        </view>
-        <view class="image-upload-tip">
-          <t-icon name="info-circle" size="16" color="var(--primary)" />
-          <text>温馨提示：请至少上传一张图片</text>
         </view>
       </view>
 
@@ -48,7 +46,7 @@
       <!-- 内容输入 -->
       <view class="input-section content-section">
         <view class="audio-section">
-          <view class="mic-btn" bind:tap="onToggleRecordPopup">
+          <view class="mic-btn" wx:if="{{allowAudioUpload}}" bind:tap="onToggleRecordPopup">
             <t-icon name="microphone" size="30" color="var(--primary)" />
           </view>
           <!-- 录音播放组件 -->

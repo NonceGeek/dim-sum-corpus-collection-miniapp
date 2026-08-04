@@ -1,5 +1,5 @@
 <view class="page theme-{{currentTheme}}">
-  <block wx:if="{{flag || loading || visibleWorks.length > 0}}">
+  <block wx:if="{{flag || isInitialWorksLoading || visibleWorks.length > 0}}">
     <view class="hero">
       <view class="bubble bubble-1">你都几敢讲喔</view>
       <view class="bubble bubble-2">全场最有声气嘅人</view>
@@ -62,12 +62,17 @@
     </view>
 
     <view class="works-section {{filterExpanded ? 'dimmed' : ''}}">
-      <waterfall items="{{visibleWorks}}" showStatus showPlayBadge bind:itemtap="onWaterfallTap" showFeatured/>
+      <waterfall
+        items="{{visibleWorks}}"
+        loading="{{isInitialWorksLoading}}"
+        append-loading="{{loading && !isInitialWorksLoading}}"
+        showStatus
+        showPlayBadge
+        showFeatured
+        bind:itemtap="onWaterfallTap"
+      />
     </view>
-    <view class="loading-tip" wx:if="{{loading}}">
-      <text>加载中...</text>
-    </view>
-    <view class="loading-tip" wx:elif="{{noMore}}">
+    <view class="loading-tip" wx:if="{{noMore}}">
       <text>没有更多了</text>
     </view>
   </block>

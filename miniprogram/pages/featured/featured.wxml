@@ -3,12 +3,15 @@
   <block wx:if="{{topTracks.length > 0}}">
     <!-- 顶部Banner -->
     <view class="top-banner">
-      <view class="banner-title">
-        {{bannerTitle}}
-      </view>
-
-      <view class="banner-subtitle">
-        {{bannerSubtitle}}
+      <view class="banner-danmaku-track">
+        <view class="banner-danmaku-list">
+          <text class="banner-title-text">
+            <text class="banner-danmaku-text">{{bannerTitle}}</text>
+          </text>
+          <text class="banner-subtitle-text">
+            <text class="banner-danmaku-text">{{bannerSubtitle}}</text>
+          </text>
+        </view>
       </view>
 
       <view class="banner-desc">
@@ -26,21 +29,23 @@
           <view class="main-card">
             <view class="card-header">
               <view>
-                <view class="card-title">{{track.displayTitle}}</view>
+                <view class="card-title">{{track.displayTitleFull}}</view>
                 <view class="card-en">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
                 <view class="card-desc">{{track.displayDescription}}</view>
-                <view class="media-req-row" wx:if="{{track.hasMediaReq}}">
-                  <view class="media-requirement-item" wx:if="{{track.requiresImage}}">
-                    <t-icon name="image" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
-                    <text>图片</text>
-                  </view>
-                  <view class="media-requirement-item" wx:if="{{track.requiresVideo}}">
-                    <t-icon name="video" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
-                    <text>视频</text>
-                  </view>
-                  <view class="media-requirement-item" wx:if="{{track.requiresAudio}}">
-                    <t-icon name="microphone" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
-                    <text>音频</text>
+                <view class="media-req-slot" wx:if="{{track.hasMediaReq}}">
+                  <view class="media-req-row">
+                    <view class="media-requirement-item" wx:if="{{track.requiresImage}}">
+                      <t-icon name="image" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                      <text>图片</text>
+                    </view>
+                    <view class="media-requirement-item" wx:if="{{track.requiresVideo}}">
+                      <t-icon name="video" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                      <text>视频</text>
+                    </view>
+                    <view class="media-requirement-item" wx:if="{{track.requiresAudio}}">
+                      <t-icon name="microphone" size="30rpx" color="#8b949e" t-class="media-requirement-icon" />
+                      <text>音频</text>
+                    </view>
                   </view>
                 </view>
               </view>
@@ -106,7 +111,7 @@
     <!-- 底部tab -->
     <view class="tab-container">
       <view class="tab-list">
-        <view wx:for="{{visibleTabs}}" wx:key="_originalIndex" wx:for-item="item"
+        <view wx:for="{{visibleTabs}}" wx:key="_position" wx:for-item="item"
           class="tab-item {{item._position === 'current' ? 'active' : ''}}" bindtap="onTabTap"
           data-position="{{item._position}}">
           <view class="tab-title">
@@ -146,14 +151,14 @@
           <view wx:for="{{allTracks}}" wx:key="id" wx:for-item="track" class="tracks-popup-card">
             <view class="tracks-popup-card-main">
               <view class="tracks-popup-card-header">
-                <view class="tracks-popup-card-title">{{track.displayTitle}}</view>
+                <view class="tracks-popup-card-title">{{track.displayTitleFull}}</view>
                 <view class="tracks-popup-more" bind:tap="onMorePosts" data-id="{{track.id}}">
                   <text>更多作品</text>
                   <t-icon name="chevron-right" size="32rpx" color="var(--text-muted)" />
                 </view>
               </view>
               <view class="tracks-popup-card-desc">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
-              <view class="tracks-popup-card-desc">{{track.displayDescription}}</view>
+              <view class="tracks-popup-card-desc">{{track.displayDescriptionFull}}</view>
 
               <view class="tracks-popup-video-list">
                 <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
@@ -189,8 +194,42 @@
               </view>
             </view>
           </view>
+
+          <block wx:if="{{allTracksLoading}}">
+            <view
+              wx:for="{{allTracksSkeletons}}"
+              wx:key="*this"
+              class="tracks-popup-card tracks-popup-skeleton"
+            >
+              <view class="tracks-popup-skeleton-main">
+                <view class="tracks-popup-skeleton-header">
+                  <view class="tracks-skeleton-block tracks-skeleton-title"></view>
+                  <view class="tracks-skeleton-block tracks-skeleton-more"></view>
+                </view>
+                <view class="tracks-skeleton-block tracks-skeleton-desc"></view>
+                <view class="tracks-skeleton-block tracks-skeleton-desc tracks-skeleton-desc--short"></view>
+
+                <view class="tracks-popup-skeleton-videos">
+                  <view class="tracks-popup-skeleton-video" wx:for="{{[0, 1, 2]}}" wx:key="*this">
+                    <view class="tracks-skeleton-block tracks-skeleton-cover"></view>
+                    <view class="tracks-popup-skeleton-author">
+                      <view class="tracks-skeleton-block tracks-skeleton-avatar"></view>
+                      <view class="tracks-skeleton-block tracks-skeleton-author-name"></view>
+                    </view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="tracks-popup-skeleton-footer">
+                <view class="tracks-skeleton-block tracks-skeleton-rule"></view>
+                <view class="tracks-skeleton-block tracks-skeleton-status"></view>
+              </view>
+            </view>
+          </block>
         </view>
       </scroll-view>
     </view>
   </t-popup>
+
+  <app-tab-bar value="featured" />
 </view>

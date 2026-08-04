@@ -27,8 +27,11 @@ Page({
     pageSize: 10,
 
     loading: false,
+    isInitialLoading: true,
     noMore: false,
     showButton: false,
+    initialSkeletons: [0, 1, 2, 3],
+    appendSkeletons: [0, 1],
   },
 
   async onLoad() {
@@ -39,17 +42,18 @@ Page({
   async loadMessages() {
     if (this.data.loading || this.data.noMore) return;
 
+    const isInitialLoad =
+      this.data.page === 1 && this.data.messages.length === 0;
+
     this.setData({
       loading: true,
+      ...(isInitialLoad ? { isInitialLoading: true } : {}),
     });
-    wx.showLoading({
-      title: "加载中...",
-    });
+
     try {
       const { page, pageSize, messages: oldMessages } = this.data;
 
       const res = await request(`/messages?page=${page}&pageSize=${pageSize}`);
-      wx.hideLoading();
       const {
         items,
         pagination: { total },
@@ -70,7 +74,6 @@ Page({
         showButton: findUnread,
       });
     } catch (err) {
-      wx.hideLoading();
       console.error("loadMessages error", err);
       wx.showModal({
         title: "提示",
@@ -78,9 +81,9 @@ Page({
         showCancel: false,
       });
     } finally {
-      wx.hideLoading();
       this.setData({
         loading: false,
+        ...(isInitialLoad ? { isInitialLoading: false } : {}),
       });
     }
   },

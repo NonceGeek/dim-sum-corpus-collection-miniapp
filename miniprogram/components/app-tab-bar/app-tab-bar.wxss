@@ -1,0 +1,11 @@
+:host {
+  --td-tab-bar-bg-color: var(--bg-card);
+  --td-tab-bar-border-color: var(--border-light);
+}
+
+.app-tab-bar {
+  background-color: var(--bg-card) !important;
+  border-top: 1px solid var(--border-light) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}

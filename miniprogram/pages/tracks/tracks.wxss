@@ -59,6 +59,57 @@
   width: 100%;
   height: 360rpx;
   overflow: hidden;
+  background: var(--bg-placeholder);
+}
+
+.track-header-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tracks-skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--bg-placeholder) 25%,
+    var(--bg-muted) 37%,
+    var(--bg-placeholder) 63%
+  );
+  background-size: 400% 100%;
+  animation: tracks-page-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.track-header-skeleton-title {
+  width: 52%;
+  height: 58rpx;
+  border-radius: 14rpx;
+}
+
+.track-header-skeleton-time {
+  width: 68%;
+  height: 28rpx;
+  margin-top: 28rpx;
+  border-radius: 10rpx;
+}
+
+.track-action-skeleton {
+  width: 230rpx;
+  height: 64rpx;
+  border-radius: 999rpx;
+}
+
+@keyframes tracks-page-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
 }
 
 /* ======================================
@@ -145,8 +196,9 @@
   transform: translateY(24rpx) scale(1.08);
 
   text-shadow:
-    0 0 6rpx rgba(255, 255, 255, 0.35),
-    0 0 18rpx rgba(90, 140, 255, 0.22);
+    0 0 4rpx var(--secondary),
+    0 0 12rpx var(--secondary),
+    0 0 26rpx var(--secondary);
 
   animation:
     iceTitleReveal 1.8s ease-out forwards,
@@ -157,14 +209,16 @@
   0%,
   100% {
     text-shadow:
-      0 0 6rpx rgba(255, 255, 255, 0.25),
-      0 0 16rpx rgba(90, 140, 255, 0.16);
+      0 0 4rpx var(--secondary),
+      0 0 12rpx var(--secondary),
+      0 0 24rpx var(--secondary);
   }
 
   50% {
     text-shadow:
-      0 0 10rpx rgba(255, 255, 255, 0.38),
-      0 0 24rpx rgba(124, 92, 255, 0.24);
+      0 0 6rpx var(--secondary),
+      0 0 18rpx var(--secondary),
+      0 0 36rpx var(--secondary);
   }
 }
 
@@ -179,7 +233,10 @@
 
   transform: translateY(16rpx);
 
-  text-shadow: 0 0 8rpx rgba(255, 255, 255, 0.16);
+  text-shadow:
+    0 0 3rpx var(--secondary),
+    0 0 10rpx var(--secondary),
+    0 0 22rpx var(--secondary);
 
   animation: iceSubtitleReveal 1.6s ease-out 0.3s forwards;
 }
@@ -192,8 +249,8 @@
 
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.02),
-    rgba(30, 35, 50, 0.12)
+    rgba(255, 255, 255, 0.04),
+    rgba(30, 35, 50, 0.1)
   );
 }
 
@@ -346,11 +403,7 @@
   position: relative;
   width: 100%;
   height: 96rpx;
-  background: linear-gradient(
-    to bottom,
-    var(--bg-muted),
-    var(--bg-page)
-  );
+  background: linear-gradient(to bottom, var(--bg-muted), var(--bg-page));
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -401,7 +454,7 @@
 .ha-divider {
   width: 1rpx;
   height: 28rpx;
-  background: var(--bg-muted)
+  background: var(--bg-muted);
 }
 
 /* 底部悬浮按钮 */

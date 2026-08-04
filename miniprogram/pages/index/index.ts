@@ -1,6 +1,5 @@
 import { STATIC_FILE } from "../../app";
 import ENV from "../../config/setting";
-import { navigateToProtectedPage } from "../../utils/auth";
 import request from "../../utils/http";
 
 const SHARE_TITLE = `${ENV.title}｜${ENV.subtitle}`;
@@ -31,8 +30,8 @@ Page({
     page: 1,
     pageSize: 20,
     loading: false,
+    isInitialCardLoading: true,
     noMore: false,
-    activeTab: "home",
   },
   loadMoreObserver: null as any,
 
@@ -57,7 +56,6 @@ Page({
 
   onShow() {
     this.syncTheme();
-    this.setData({ activeTab: "home" });
   },
 
   syncTheme() {
@@ -96,7 +94,13 @@ Page({
   async loadCardList() {
     if (this.data.loading || this.data.noMore) return;
 
-    this.setData({ loading: true });
+    const isInitialLoad =
+      this.data.page === 1 && this.data.cardList.length === 0;
+
+    this.setData({
+      loading: true,
+      ...(isInitialLoad ? { isInitialCardLoading: true } : {}),
+    });
 
     try {
       const { page, pageSize } = this.data;
@@ -118,7 +122,10 @@ Page({
         duration: 2000,
       });
     } finally {
-      this.setData({ loading: false });
+      this.setData({
+        loading: false,
+        ...(isInitialLoad ? { isInitialCardLoading: false } : {}),
+      });
     }
   },
 
@@ -176,22 +183,6 @@ Page({
     wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
   },
 
-  onTabChange(e: any) {
-    const value = e.detail.value;
-    this.setData({ activeTab: value });
-    if (value === "featured") {
-      wx.navigateTo({ url: "/pages/featured/featured" });
-    } else if (value === "upload") {
-      this.setData({ activeTab: "home" });
-      navigateToProtectedPage(
-        "/pages/post/post?mode=edit",
-        "登录后才能投稿，当前仍可继续浏览公开内容。",
-      );
-    } else if (value === "profile") {
-      this.setData({ activeTab: "home" });
-      wx.navigateTo({ url: "/pages/profile/profile" });
-    }
-  },
   onClickToTrack(e) {
     const index = e.detail.index;
     console.log("index:", index);

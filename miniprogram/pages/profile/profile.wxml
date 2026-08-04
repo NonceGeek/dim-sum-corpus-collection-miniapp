@@ -77,4 +77,5 @@
   <t-action-sheet class="theme-action-sheet theme-{{currentTheme}}" visible="{{showThemeSheet}}" items="{{themeOptions}}" bind:selected="onThemeSelect"
     bind:cancel="onThemeSheetClose" bind:close="onThemeSheetClose" />
 
+  <app-tab-bar value="profile" />
 </view>

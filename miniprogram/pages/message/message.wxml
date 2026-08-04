@@ -1,6 +1,20 @@
 <view class="page theme-{{currentTheme}}">
+  <!-- 首次加载骨架 -->
+  <view wx:if="{{isInitialLoading}}" class="message-list">
+    <view wx:for="{{initialSkeletons}}" wx:key="*this" class="message-card message-skeleton-card">
+      <view class="message-skeleton-header">
+        <view class="message-skeleton-block message-skeleton-icon"></view>
+        <view class="message-skeleton-block message-skeleton-title"></view>
+        <view class="message-skeleton-block message-skeleton-dot"></view>
+      </view>
+      <view class="message-skeleton-block message-skeleton-content"></view>
+      <view class="message-skeleton-block message-skeleton-content message-skeleton-content--short"></view>
+      <view class="message-skeleton-block message-skeleton-time"></view>
+    </view>
+  </view>
+
   <!-- 无消息时 -->
-  <view wx:if="{{messages.length === 0}}" class="empty-status">
+  <view wx:elif="{{messages.length === 0}}" class="empty-status">
     <t-empty icon="chat" description="暂无消息" />
   </view>
 
@@ -18,16 +32,24 @@
       <view class="card-content">{{item.content}}</view>
       <view class="card-time">{{item.date}}</view>
     </view>
-    <view class="list-footer">
 
-      <view wx:if="{{loading}}" class="footer-text">
-        加载中...
+    <block wx:if="{{loading}}">
+      <view wx:for="{{appendSkeletons}}" wx:key="*this" class="message-card message-skeleton-card">
+        <view class="message-skeleton-header">
+          <view class="message-skeleton-block message-skeleton-icon"></view>
+          <view class="message-skeleton-block message-skeleton-title"></view>
+          <view class="message-skeleton-block message-skeleton-dot"></view>
+        </view>
+        <view class="message-skeleton-block message-skeleton-content"></view>
+        <view class="message-skeleton-block message-skeleton-content message-skeleton-content--short"></view>
+        <view class="message-skeleton-block message-skeleton-time"></view>
       </view>
+    </block>
 
-      <view wx:elif="{{noMore}}" class="footer-text">
+    <view class="list-footer">
+      <view wx:if="{{noMore}}" class="footer-text">
         没有更多消息了
       </view>
-
     </view>
 
     <view wx:if="{{showButton}}" class="post-actions">

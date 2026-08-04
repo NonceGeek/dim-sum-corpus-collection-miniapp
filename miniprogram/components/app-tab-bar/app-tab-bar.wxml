@@ -1,0 +1,13 @@
+<t-tab-bar
+  value="{{value}}"
+  bordered="{{false}}"
+  theme="tag"
+  split="{{false}}"
+  t-class="app-tab-bar"
+  bind:change="onChange"
+>
+  <t-tab-bar-item value="home" icon="home">首页</t-tab-bar-item>
+  <t-tab-bar-item value="featured" icon="star">精选活动</t-tab-bar-item>
+  <t-tab-bar-item value="upload" icon="upload">我要投稿</t-tab-bar-item>
+  <t-tab-bar-item value="profile" icon="user">个人中心</t-tab-bar-item>
+</t-tab-bar>

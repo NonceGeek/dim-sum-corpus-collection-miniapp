@@ -6,7 +6,8 @@
     "t-image": "tdesign-miniprogram/image/image",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "t-cell": "tdesign-miniprogram/cell/cell",
-    "t-badge": "tdesign-miniprogram/badge/badge"
+    "t-badge": "tdesign-miniprogram/badge/badge",
+    "app-tab-bar": "/components/app-tab-bar/app-tab-bar"
   },
   "navigationBarTitleText": "个人中心",
   "enablePullDownRefresh": true

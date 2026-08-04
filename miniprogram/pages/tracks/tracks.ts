@@ -23,12 +23,14 @@ Page({
   data: {
     trackId: "",
     track: {} as any,
+    trackLoading: true,
     trackTextReady: false,
     currentTrackType: "all",
     cardList: [] as any[],
     page: 1,
     total: 0,
     loading: false,
+    isInitialCardLoading: true,
     noMore: false,
     ruleDialogVisible: false,
     ruleDialogDescription: "",
@@ -60,16 +62,26 @@ Page({
     this.loadTrack();
   },
   async loadTrack() {
+    this.setData({
+      trackLoading: true,
+      trackTextReady: false,
+    });
+
     try {
-      wx.showLoading({ title: "加载中..." });
-      this.setData({ trackTextReady: false });
       const track = await request(`/activities/${this.data.trackId}`);
-      wx.hideLoading();
       track.startsAt = formatDate(track.startsAt, "YYYY-MM-DD");
       track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD");
-      this.setData({ track, trackTextReady: true });
+      this.setData({
+        track,
+        trackLoading: false,
+        trackTextReady: true,
+      });
       await this.loadCardList();
     } catch (err) {
+      this.setData({
+        trackLoading: false,
+        isInitialCardLoading: false,
+      });
       console.log("获取活动或作品列表数据失败", err);
       wx.showModal({
         title: "获取活动或作品列表数据失败",
@@ -125,15 +137,18 @@ Page({
       return;
     }
 
+    const isInitialLoad =
+      this.data.page === 1 && this.data.cardList.length === 0;
+
     this.setData({
       loading: true,
+      ...(isInitialLoad ? { isInitialCardLoading: true } : {}),
     });
-    wx.showLoading({ title: "加载中..." });
+
     try {
       const { currentTrackType, page, cardList: oldList } = this.data;
 
       let url = `/activities/${this.data.trackId}/works?page=${page}&pageSize=10`;
-      wx.hideLoading();
 
       if (currentTrackType !== "all") {
         const typeLabel = TYPE_JSON[currentTrackType as keyof typeof TYPE_JSON];
@@ -161,6 +176,7 @@ Page({
     } finally {
       this.setData({
         loading: false,
+        ...(isInitialLoad ? { isInitialCardLoading: false } : {}),
       });
     }
   },

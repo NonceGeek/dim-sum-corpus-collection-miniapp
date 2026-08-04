@@ -9,11 +9,15 @@
 
     <!-- 卡片列表 -->
     <view class="card-list">
-      <waterfall items="{{cardList}}" bind:itemtap="onWaterfallTap" />
+      <waterfall
+        items="{{cardList}}"
+        loading="{{isInitialCardLoading}}"
+        bind:itemtap="onWaterfallTap"
+      />
     </view>
 
     <!-- 加载更多 -->
-    <view class="loading-tip" wx:if="{{loading}}">
+    <view class="loading-tip" wx:if="{{loading && !isInitialCardLoading}}">
       <text>加载中...</text>
     </view>
     <view class="loading-tip" wx:elif="{{noMore}}">
@@ -23,10 +27,5 @@
   </view>
 
   <!-- Tab Bar -->
-  <t-tab-bar value="{{activeTab}}" bordered="{{false}}" theme="tag" bind:change="onTabChange" split="{{false}}">
-    <t-tab-bar-item value="home" icon="home">首页</t-tab-bar-item>
-    <t-tab-bar-item value="featured" icon="star">精选活动</t-tab-bar-item>
-    <t-tab-bar-item value="upload" icon="upload">我要投稿</t-tab-bar-item>
-    <t-tab-bar-item value="profile" icon="user">个人中心</t-tab-bar-item>
-  </t-tab-bar>
+  <app-tab-bar value="home" />
 </view>

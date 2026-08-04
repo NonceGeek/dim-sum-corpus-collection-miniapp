@@ -36,6 +36,35 @@ const TYPES = [
   { label: "歇后语", value: "歇后语" },
 ];
 
+const getMediaPolicy = (activity: any) => {
+  const hasActivity = Boolean(activity?.id);
+  const requiredTypes = activity?.mediaRequirements?.requiredTypes || [];
+  const hasImage = requiredTypes.includes("image");
+  const hasVideo = requiredTypes.includes("video");
+  const hasAudio = requiredTypes.includes("audio");
+  const isVideoOnly =
+    hasActivity && requiredTypes.length === 1 && hasVideo;
+  const maxImageCount = !hasActivity || hasImage
+    ? MAX_IMAGE
+    : isVideoOnly
+      ? MIN_IMAGE
+      : 0;
+  const maxVideoCount = !hasActivity || hasVideo ? 1 : 0;
+
+  return {
+    hasActivity,
+    requiredTypes,
+    allowImageUpload: maxImageCount > 0,
+    allowVideoUpload: maxVideoCount > 0,
+    allowAudioUpload: !hasActivity || hasAudio,
+    maxImageCount,
+    maxVideoCount,
+    requireImageUpload: hasActivity && (hasImage || isVideoOnly),
+    requireVideoUpload: hasActivity && hasVideo,
+    requireAudioUpload: hasActivity && hasAudio,
+  };
+};
+
 Page({
   data: {
     mode: "",
@@ -58,6 +87,10 @@ Page({
     title: "",
     content: "",
     imageList: [],
+    allowImageUpload: true,
+    allowVideoUpload: true,
+    allowAudioUpload: true,
+    canChooseVisualMedia: true,
     selectedTopics: [] as string[],
     selectedTopicMap: {} as Record<string, boolean>,
     canPublish: false,
@@ -110,7 +143,6 @@ Page({
     // 用透明 page-container 接管左滑、安卓返回键和 navigateBack。
     exitGuardVisible: false,
   },
-  recorderManager: sharedRecorderManager,
   audioStateHandler: null as any,
   audioErrorHandler: null as any,
   allowRecordPopupClose: false,
@@ -201,19 +233,16 @@ Page({
     if (activeRecorderStopHandler === this.handleRecordStop) {
       activeRecorderStopHandler = null;
     }
-    if (
-      this.recorderManager &&
-      this.data.recording &&
-      !this.data.recordStopping
-    ) {
+    if (this.data.recording && !this.data.recordStopping) {
       this.setData({ recordMode: "discard" });
-      this.recorderManager.stop();
+      sharedRecorderManager.stop();
     }
   },
   async loadTrack(id: string) {
     wx.showLoading({ title: "加载活动中..." });
     try {
       const track = await request(`/activities/${id}`);
+      const mediaPolicy = getMediaPolicy(track);
       await new Promise<void>((resolve) => {
         this.setData(
           {
@@ -230,6 +259,9 @@ Page({
                 ? track.submissionTypes[0]
                 : this.data.selectedType,
             selectedActivity: track,
+            allowImageUpload: mediaPolicy.allowImageUpload,
+            allowVideoUpload: mediaPolicy.allowVideoUpload,
+            allowAudioUpload: mediaPolicy.allowAudioUpload,
           },
           resolve,
         );
@@ -268,6 +300,7 @@ Page({
       if (!this.data.selectedActivity?.id && res.activity && res.activity.id) {
         selectedActivity = await request(`/activities/${res.activity.id}`);
       }
+      const mediaPolicy = getMediaPolicy(selectedActivity);
       console.log("res:", res);
       console.log(
         "audio:",
@@ -300,6 +333,9 @@ Page({
         audioUrl: audioMedia?.url || "",
         audioDuration,
         selectedActivity,
+        allowImageUpload: mediaPolicy.allowImageUpload,
+        allowVideoUpload: mediaPolicy.allowVideoUpload,
+        allowAudioUpload: mediaPolicy.allowAudioUpload,
         selectedType: res.submissionType,
       });
       this.checkCanPublish();
@@ -345,7 +381,7 @@ Page({
     wx.disableAlertBeforeUnload();
     this.setData({ recordMode: "discard", recordStopping: true });
     if (!alreadyStopping) {
-      this.recorderManager.stop();
+      sharedRecorderManager.stop();
     }
   },
 
@@ -471,20 +507,21 @@ Page({
 
   // 选择图片
   async onChooseImage() {
-    const mediaRequirements =
-      this.data.selectedActivity?.mediaRequirements || {};
-    const requiredTypes = mediaRequirements.requiredTypes || [];
-    const hasImage = requiredTypes.includes("image");
-    const hasVideo = requiredTypes.includes("video");
-    const hasMediaRequirement = requiredTypes.length > 0;
-    const maxImageCount =
-      hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
-    const maxVideoCount = hasMediaRequirement && !hasVideo ? 0 : 1;
+    const mediaPolicy = getMediaPolicy(this.data.selectedActivity);
+    const { maxImageCount, maxVideoCount } = mediaPolicy;
     const ruleDescription = [
-      hasImage ? "图片：1-8张" : "图片：1张",
-      hasVideo
-        ? "视频：1个，且不能超过30秒"
-        : "视频：不允许上传",
+      mediaPolicy.allowImageUpload
+        ? mediaPolicy.requireImageUpload
+          ? mediaPolicy.maxImageCount === MIN_IMAGE
+            ? "图片：1张（必传）"
+            : "图片：1-8张（必传）"
+          : "图片：最多8张（选填）"
+        : "图片：不支持上传",
+      mediaPolicy.allowVideoUpload
+        ? mediaPolicy.requireVideoUpload
+          ? "视频：1个，且不能超过30秒（必传）"
+          : "视频：最多1个，且不能超过30秒（选填）"
+        : "视频：不支持上传",
     ].join("\n");
     const currentImageCount = this.data.imageList.filter(
       (file) => file.type === "image",
@@ -497,7 +534,7 @@ Page({
     const maxCount = remainingImageCount + remainingVideoCount;
 
     if (maxCount === 0) {
-      if (hasMediaRequirement) {
+      if (mediaPolicy.hasActivity) {
         wx.showModal({
           title: "已达到该活动媒体上限",
           content: ruleDescription,
@@ -685,8 +722,13 @@ Page({
 
   // 不参与任何活动
   onNoActivity() {
+    const selectedActivity = { id: "", title: "不参与任何活动" };
+    const mediaPolicy = getMediaPolicy(selectedActivity);
     this.setData({
-      selectedActivity: { id: "", title: "不参与任何活动" },
+      selectedActivity,
+      allowImageUpload: mediaPolicy.allowImageUpload,
+      allowVideoUpload: mediaPolicy.allowVideoUpload,
+      allowAudioUpload: mediaPolicy.allowAudioUpload,
       activityPopupVisible: false,
       typeOptions: TYPES,
     });
@@ -838,51 +880,46 @@ Page({
       audioDuration,
     } = this.data;
 
-    const requiredTypes =
-      selectedActivity?.mediaRequirements?.requiredTypes || [];
-    const hasImage = requiredTypes.includes("image");
-    const hasVideo = requiredTypes.includes("video");
-    const hasAudio = requiredTypes.includes("audio");
-    const hasMediaRequirement = requiredTypes.length > 0;
-    const maxImageCount =
-      hasMediaRequirement && !hasImage ? MIN_IMAGE : MAX_IMAGE;
+    const mediaPolicy = getMediaPolicy(selectedActivity);
     const violations: string[] = [];
     const tags = [...(selectedActivity?.tags || []), ...selectedTopics]
       .map((tag) => this.normalizeTopic(tag))
       .filter(Boolean);
 
-    const hasBasicContent =
-      title.trim() || content.trim() || imageList.length > 0 || audioUrl;
-
     const imageCount = imageList.filter((i) => i.type === "image").length;
     const videoCount = imageList.filter((i) => i.type === "video").length;
+    const hasAnyMedia = imageCount > 0 || videoCount > 0 || Boolean(audioUrl);
 
-    if (hasMediaRequirement) {
-      if (imageCount < MIN_IMAGE || imageCount > maxImageCount) {
-        violations.push(
-          imageCount < MIN_IMAGE
-            ? "缺少图片，至少需要1张"
-            : maxImageCount === MIN_IMAGE
-              ? `图片只能上传1张，当前有${imageCount}张`
-              : `图片最多上传${MAX_IMAGE}张，当前有${imageCount}张`,
-        );
-      }
+    if (mediaPolicy.hasActivity && mediaPolicy.requiredTypes.length === 0) {
+      violations.push("该活动未配置投稿媒体类型");
+    }
 
-      if (hasVideo && videoCount !== 1) {
-        violations.push(
-          videoCount < 1
-            ? "缺少视频，需要上传1个视频"
-            : `视频只能上传1个，当前有${videoCount}个`,
-        );
-      } else if (!hasVideo && videoCount > 0) {
-        violations.push("该活动不允许上传视频");
-      }
+    if (!mediaPolicy.allowImageUpload && imageCount > 0) {
+      violations.push("该活动不支持上传图片");
+    } else if (mediaPolicy.requireImageUpload && imageCount < MIN_IMAGE) {
+      violations.push("缺少图片，至少需要1张");
+    } else if (imageCount > mediaPolicy.maxImageCount) {
+      violations.push(
+        `图片最多上传${mediaPolicy.maxImageCount}张，当前有${imageCount}张`,
+      );
+    }
 
-      if (hasAudio && !audioUrl) {
-        violations.push("缺少录音，需要上传1个录音");
-      } else if (!hasAudio && audioUrl) {
-        violations.push("该活动不允许上传录音");
-      }
+    if (!mediaPolicy.allowVideoUpload && videoCount > 0) {
+      violations.push("该活动不支持上传视频");
+    } else if (mediaPolicy.requireVideoUpload && videoCount < 1) {
+      violations.push("缺少视频，需要上传1个视频");
+    } else if (videoCount > 1) {
+      violations.push(`视频只能上传1个，当前有${videoCount}个`);
+    }
+
+    if (!mediaPolicy.allowAudioUpload && audioUrl) {
+      violations.push("该活动不支持上传录音");
+    } else if (mediaPolicy.requireAudioUpload && !audioUrl) {
+      violations.push("缺少录音，需要上传1个录音");
+    }
+
+    if (!mediaPolicy.hasActivity && !hasAnyMedia) {
+      violations.push("不参与活动时，至少需要上传一种媒体");
     }
 
     const overDurationVideo = imageList.find(
@@ -902,16 +939,19 @@ Page({
     return {
       canPublish:
         Boolean(selectedType) &&
-        Boolean(hasBasicContent) &&
+        Boolean(title.trim()) &&
+        Boolean(content.trim()) &&
         tags.length > 0 &&
         violations.length === 0,
       message: !selectedType
         ? "请选择类型"
-        : !hasBasicContent
-          ? "请填写内容或上传媒体"
-          : tags.length === 0
-            ? "请添加标签"
-            : violations[0] || "",
+        : !title.trim()
+          ? "请填写标题"
+          : !content.trim()
+            ? "请填写正文"
+            : tags.length === 0
+              ? "请添加标签"
+              : violations[0] || "",
       violations,
     };
   },
@@ -924,7 +964,17 @@ Page({
       violations = [],
     } = this.getPublishValidation();
     console.log("message:", message);
-    this.setData({ canPublish });
+    const mediaPolicy = getMediaPolicy(this.data.selectedActivity);
+    const imageCount = this.data.imageList.filter(
+      (item) => item.type === "image",
+    ).length;
+    const videoCount = this.data.imageList.filter(
+      (item) => item.type === "video",
+    ).length;
+    const canChooseVisualMedia =
+      imageCount < mediaPolicy.maxImageCount ||
+      videoCount < mediaPolicy.maxVideoCount;
+    this.setData({ canPublish, canChooseVisualMedia });
     this.syncUnsavedExitGuard();
 
     if (!showMediaRuleError) {
@@ -1016,7 +1066,7 @@ Page({
           const alreadyStopping = this.data.recordStopping;
           this.setData({ recordMode: "discard", recordStopping: true });
           if (!alreadyStopping) {
-            this.recorderManager.stop();
+            sharedRecorderManager.stop();
           }
         }
         this.leavePostPage();
@@ -1178,21 +1228,15 @@ Page({
   // 切换录音弹窗
   onToggleRecordPopup() {
     this.stopAudioPlayback();
-    const mediaRequirements =
-      this.data.selectedActivity?.mediaRequirements || {};
-    const requiredTypes = mediaRequirements.requiredTypes || [];
-    const hasAudio = requiredTypes.includes("audio");
-    const hasMediaRequirement = requiredTypes.length > 0;
-
-    if (hasMediaRequirement && !hasAudio) {
+    const mediaPolicy = getMediaPolicy(this.data.selectedActivity);
+    if (!mediaPolicy.allowAudioUpload) {
       wx.showModal({
-        title: "该活动不允许上传录音",
-        content: "当前活动不包含录音投稿要求",
+        title: "该活动不支持上传录音",
+        content: "请按照活动已勾选的媒体类型进行投稿",
         showCancel: false,
       });
       return;
     }
-
     this.allowRecordPopupClose = false;
     this.setData({ recordPopupVisible: true });
   },
@@ -1238,7 +1282,7 @@ Page({
             });
             this.closeRecordPopup();
             if (!alreadyStopping) {
-              this.recorderManager.stop();
+              sharedRecorderManager.stop();
             }
           },
         });
@@ -1272,7 +1316,7 @@ Page({
 
     if (this.data.recording) {
       this.setData({ recordStopping: true, recordMode: "normal" });
-      this.recorderManager.stop();
+      sharedRecorderManager.stop();
       return;
     }
 
@@ -1383,7 +1427,7 @@ Page({
     }, 500);
     this.setData({ recordTimer: timer });
 
-    this.recorderManager.start({
+    sharedRecorderManager.start({
       duration: MAX_AUDIO_DURATION * 1000,
       format: "mp3",
       sampleRate: 44100,

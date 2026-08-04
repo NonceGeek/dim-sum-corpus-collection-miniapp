@@ -90,8 +90,10 @@ const formatTrack = (item: any) => {
 
   return {
     ...item,
+    displayTitleFull: truncateText(item.title, 35),
     displayTitle: truncateText(item.title, 8),
-    displayDescription: truncateText(item.description, 15),
+    displayDescription: truncateText(item.description, 100),
+    displayDescriptionFull: truncateText(item.description, 100),
     status: item.endsAt > new Date().toISOString() ? "active" : "unactive",
     startsAt: formatDate(item.startsAt, "YYYY-MM-DD"),
     endsAt: formatDate(item.endsAt, "YYYY-MM-DD"),
@@ -120,6 +122,7 @@ Page({
     allTracksTotal: 0,
     allTracksLoading: false,
     allTracksNoMore: false,
+    allTracksSkeletons: [0, 1],
   },
 
   timer: null as any,
@@ -349,15 +352,12 @@ Page({
     });
 
     try {
-      wx.showLoading({ title: "加载中..." });
       const { allTracksPage, allTracks } = this.data;
       const pageSize = 10;
 
       const res = await request(
         `/activities?page=${allTracksPage}&pageSize=${pageSize}&includeExpired=true`,
       );
-
-      wx.hideLoading();
 
       const items = (res.items || []).map(formatTrack);
 

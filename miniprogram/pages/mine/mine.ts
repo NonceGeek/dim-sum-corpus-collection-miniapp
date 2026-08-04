@@ -51,6 +51,7 @@ Page({
     total: 0,
 
     loading: false,
+    isInitialWorksLoading: true,
     noMore: false,
     flag: false,
   },
@@ -64,6 +65,7 @@ Page({
         "登录后才能查看我的参赛作品，当前仍可继续浏览公开内容。",
       )
     ) {
+      this.setData({ isInitialWorksLoading: false });
       return;
     }
 
@@ -75,9 +77,12 @@ Page({
       return;
     }
 
-    wx.showLoading({ title: "加载中..." });
+    const isInitialLoad =
+      this.data.page === 1 && this.data.visibleWorks.length === 0;
+
     this.setData({
       loading: true,
+      ...(isInitialLoad ? { isInitialWorksLoading: true } : {}),
     });
 
     try {
@@ -101,7 +106,6 @@ Page({
         url += "&withoutActivity=true";
       }
       const res = await request(url);
-      wx.hideLoading();
       const { items = [], pagination } = res;
 
       const works = items;
@@ -114,7 +118,6 @@ Page({
         ...(!flag ? { flag: (pagination.total || works.length) > 0 } : {}),
       });
     } catch (err: any) {
-      wx.hideLoading();
       console.log("获取我的投稿数据出错：", err);
 
       if (err?.code === "AUTH_REQUIRED") {
@@ -127,18 +130,16 @@ Page({
         showCancel: false,
       });
     } finally {
-      wx.hideLoading();
       this.setData({
         loading: false,
+        ...(isInitialLoad ? { isInitialWorksLoading: false } : {}),
       });
     }
   },
 
   async loadOwnTracks() {
-    wx.showLoading({ title: "加载中..." });
     try {
       const res = await request("/profile/activities");
-      wx.hideLoading();
       const { items } = res;
       const mapItems = items.map((item) => ({
         id: item.id,
@@ -153,7 +154,6 @@ Page({
         ] as any,
       });
     } catch (err: any) {
-      wx.hideLoading();
       console.log("获取我的参赛活动数据出错：", err);
 
       if (err?.code === "AUTH_REQUIRED") {
