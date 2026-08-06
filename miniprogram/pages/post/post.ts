@@ -34,6 +34,7 @@ const TYPES = [
   { label: "标语", value: "标语" },
   { label: "地名解说", value: "地名解说" },
   { label: "歇后语", value: "歇后语" },
+  { label: "自然对话", value: "自然对话" },
 ];
 
 const getMediaPolicy = (activity: any) => {
@@ -42,13 +43,9 @@ const getMediaPolicy = (activity: any) => {
   const hasImage = requiredTypes.includes("image");
   const hasVideo = requiredTypes.includes("video");
   const hasAudio = requiredTypes.includes("audio");
-  const isVideoOnly =
-    hasActivity && requiredTypes.length === 1 && hasVideo;
-  const maxImageCount = !hasActivity || hasImage
-    ? MAX_IMAGE
-    : isVideoOnly
-      ? MIN_IMAGE
-      : 0;
+  const isVideoOnly = hasActivity && requiredTypes.length === 1 && hasVideo;
+  const maxImageCount =
+    !hasActivity || hasImage ? MAX_IMAGE : isVideoOnly ? MIN_IMAGE : 0;
   const maxVideoCount = !hasActivity || hasVideo ? 1 : 0;
 
   return {
@@ -101,7 +98,6 @@ Page({
     topicSearchKeyword: "",
     filteredTopicList: [] as string[],
     availableTopics: [
-      "自然对话",
       "日常用语",
       "方言特色",
       "网络流行语",
@@ -590,8 +586,7 @@ Page({
 
           const overDurationVideo = tempFiles.find(
             (file) =>
-              file.type === "video" &&
-              file.durationSec > MAX_VIDEO_DURATION,
+              file.type === "video" && file.durationSec > MAX_VIDEO_DURATION,
           );
 
           if (overDurationVideo) {
