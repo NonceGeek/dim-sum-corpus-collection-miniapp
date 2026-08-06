@@ -15,11 +15,13 @@
     <view class="ice-text-layer ice-animate" wx:if="{{trackTextReady}}">
 
       <view class="activity-name ice-title">
-        {{track.title}}
+        <view class="ice-highlighter"></view>
+        <text class="ice-copy">{{track.title}}</text>
       </view>
 
       <view class="activity-time ice-subtitle">
-        {{track.startsAt}} - {{track.endsAt}}，期待您的参与
+        <view class="ice-highlighter"></view>
+        <text class="ice-copy">{{track.startsAt}} - {{track.endsAt}}，期待您的参与</text>
       </view>
 
     </view>

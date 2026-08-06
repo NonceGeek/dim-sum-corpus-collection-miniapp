@@ -183,6 +183,33 @@
   z-index: 2;
 }
 
+.ice-title,
+.ice-subtitle {
+  position: relative;
+  z-index: 0;
+  padding-right: 12rpx;
+  padding-left: 12rpx;
+}
+
+.ice-highlighter {
+  position: absolute;
+  top: 8rpx;
+  right: 2rpx;
+  bottom: 4rpx;
+  left: 2rpx;
+  z-index: 0;
+  border-radius: 5rpx 12rpx 6rpx 10rpx;
+  background: var(--secondary);
+  opacity: 0.38;
+  transform: rotate(-1.2deg) skewX(-7deg);
+  pointer-events: none;
+}
+
+.ice-copy {
+  position: relative;
+  z-index: 1;
+}
+
 .ice-title {
   font-size: 60rpx;
   font-weight: 700;
@@ -195,31 +222,9 @@
 
   transform: translateY(24rpx) scale(1.08);
 
-  text-shadow:
-    0 0 4rpx var(--secondary),
-    0 0 12rpx var(--secondary),
-    0 0 26rpx var(--secondary);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 
-  animation:
-    iceTitleReveal 1.8s ease-out forwards,
-    iceGlow 4s ease-in-out infinite 1.8s;
-}
-
-@keyframes iceGlow {
-  0%,
-  100% {
-    text-shadow:
-      0 0 4rpx var(--secondary),
-      0 0 12rpx var(--secondary),
-      0 0 24rpx var(--secondary);
-  }
-
-  50% {
-    text-shadow:
-      0 0 6rpx var(--secondary),
-      0 0 18rpx var(--secondary),
-      0 0 36rpx var(--secondary);
-  }
+  animation: iceTitleReveal 1.8s ease-out forwards;
 }
 
 .ice-subtitle {
@@ -233,12 +238,16 @@
 
   transform: translateY(16rpx);
 
-  text-shadow:
-    0 0 3rpx var(--secondary),
-    0 0 10rpx var(--secondary),
-    0 0 22rpx var(--secondary);
+  text-shadow: 0 1rpx 6rpx rgba(0, 0, 0, 0.24);
 
   animation: iceSubtitleReveal 1.6s ease-out 0.3s forwards;
+}
+
+.ice-subtitle .ice-highlighter {
+  top: 2rpx;
+  bottom: 1rpx;
+  opacity: 0.28;
+  transform: rotate(0.8deg) skewX(-5deg);
 }
 
 .header-overlay {

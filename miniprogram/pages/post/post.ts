@@ -101,6 +101,7 @@ Page({
     topicSearchKeyword: "",
     filteredTopicList: [] as string[],
     availableTopics: [
+      "自然对话",
       "日常用语",
       "方言特色",
       "网络流行语",
