@@ -14,7 +14,7 @@
     <!-- 内容 -->
     <view class="ice-text-layer ice-animate" wx:if="{{trackTextReady}}">
 
-      <view class="activity-name ice-title">
+      <view class="activity-name ice-title" style="font-size: {{trackTitleFontSize}}rpx;">
         <view class="ice-highlighter"></view>
         <text class="ice-copy">{{track.title}}</text>
       </view>

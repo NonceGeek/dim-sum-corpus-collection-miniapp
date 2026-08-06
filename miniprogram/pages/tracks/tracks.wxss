@@ -211,8 +211,13 @@
 }
 
 .ice-title {
+  width: fit-content;
+  max-width: calc(100% - 48rpx);
+  box-sizing: border-box;
+
   font-size: 60rpx;
   font-weight: 700;
+  line-height: 1.18;
 
   color: var(--text-on-light);
 
@@ -225,6 +230,13 @@
   text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 
   animation: iceTitleReveal 1.8s ease-out forwards;
+}
+
+.ice-title .ice-copy {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .ice-subtitle {

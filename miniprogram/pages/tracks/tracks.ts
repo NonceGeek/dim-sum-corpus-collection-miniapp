@@ -19,12 +19,26 @@ const formatRules = (rules: unknown) => {
   return typeof rules === "string" ? rules : "";
 };
 
+const getTitleFontSize = (title: string) => {
+  const characters = Array.from(title.trim());
+  const visualLength = characters.reduce((length, character) => {
+    return length + (/^[\x00-\xff]$/.test(character) ? 0.55 : 1);
+  }, 0);
+
+  if (visualLength === 0) return 60;
+
+  // 标题区约有 660rpx 可用宽度，同时为字符间距预留空间。
+  const availableWidth = 660 - Math.max(0, characters.length - 1) * 4;
+  return Math.max(42, Math.min(60, Math.floor(availableWidth / visualLength)));
+};
+
 Page({
   data: {
     trackId: "",
     track: {} as any,
     trackLoading: true,
     trackTextReady: false,
+    trackTitleFontSize: 60,
     currentTrackType: "all",
     cardList: [] as any[],
     page: 1,
@@ -73,6 +87,7 @@ Page({
       track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD");
       this.setData({
         track,
+        trackTitleFontSize: getTitleFontSize(track.title || ""),
         trackLoading: false,
         trackTextReady: true,
       });
