@@ -60,6 +60,10 @@ Component({
       type: String,
       value: "85vh",
     },
+    prepareCompletedJourney: {
+      type: Boolean,
+      value: false,
+    },
   },
 
   observers: {
@@ -106,6 +110,48 @@ Component({
   },
 
   methods: {
+    async requestQuestionnaireEntry(activityId: string) {
+      const isSameActivity = (this as any)._entryActivityId === activityId;
+      const clientEventId =
+        (isSameActivity && (this as any)._entryClientEventId) ||
+        (await createClientEventId());
+      (this as any)._entryActivityId = activityId;
+      (this as any)._entryClientEventId = clientEventId;
+
+      const result = await request("/questionnaire/entry", {
+        method: "POST",
+        data: {
+          ...(activityId ? { activityId } : {}),
+          clientEventId,
+        },
+      });
+      if (result?.error) throw result;
+
+      (this as any)._entryClientEventId = "";
+      return result;
+    },
+
+    async requestEnterSubmission(journeyId: string) {
+      const isSameJourney = (this as any)._enterJourneyId === journeyId;
+      const clientEventId =
+        (isSameJourney && (this as any)._enterClientEventId) ||
+        (await createClientEventId());
+      (this as any)._enterJourneyId = journeyId;
+      (this as any)._enterClientEventId = clientEventId;
+
+      const result = await request("/questionnaire/enter-submission", {
+        method: "POST",
+        data: { journeyId, clientEventId },
+      });
+      if (result?.error) throw result;
+      if (!result?.allowed) {
+        throw new Error("当前参赛旅程暂不允许进入投稿页");
+      }
+
+      (this as any)._enterClientEventId = "";
+      return result;
+    },
+
     async startEntry(activityId: string) {
       const globalQuestionnaireStatus =
         getApp<any>().globalData?.questionnaireStatus;
@@ -147,6 +193,9 @@ Component({
       }
 
       if (hasCompletedQuestionnaireProfile()) {
+        if (this.data.prepareCompletedJourney) {
+          this.prepareCompletedQuestionnaireJourney(activityId);
+        }
         this.triggerEvent("complete", {
           activityId,
         });
@@ -159,23 +208,7 @@ Component({
         mask: true,
       });
       try {
-        const isSameActivity = (this as any)._entryActivityId === activityId;
-        const clientEventId =
-          (isSameActivity && (this as any)._entryClientEventId) ||
-          (await createClientEventId());
-        (this as any)._entryActivityId = activityId;
-        (this as any)._entryClientEventId = clientEventId;
-
-        const result = await request("/questionnaire/entry", {
-          method: "POST",
-          data: {
-            ...(activityId ? { activityId } : {}),
-            clientEventId,
-          },
-        });
-        if (result?.error) {
-          throw result;
-        }
+        const result = await this.requestQuestionnaireEntry(activityId);
 
         const flowType = result?.flowType as FlowType | "reused" | undefined;
         const registrationType = result?.registrationType as
@@ -188,7 +221,6 @@ Component({
           throw new Error("参赛旅程数据不完整");
         }
 
-        (this as any)._entryClientEventId = "";
         (this as any)._activeActivityId = activityId;
         this.setData({
           journeyId: result.journeyId,
@@ -561,25 +593,7 @@ Component({
 
       (this as any)._enterLoading = true;
       try {
-        const isSameJourney = (this as any)._enterJourneyId === journeyId;
-        const clientEventId =
-          (isSameJourney && (this as any)._enterClientEventId) ||
-          (await createClientEventId());
-        (this as any)._enterJourneyId = journeyId;
-        (this as any)._enterClientEventId = clientEventId;
-
-        const result = await request("/questionnaire/enter-submission", {
-          method: "POST",
-          data: { journeyId, clientEventId },
-        });
-        if (result?.error) {
-          throw result;
-        }
-        if (!result?.allowed) {
-          throw new Error("当前参赛旅程暂不允许进入投稿页");
-        }
-
-        (this as any)._enterClientEventId = "";
+        const result = await this.requestEnterSubmission(journeyId);
         (this as any)._enteredJourneyId = journeyId;
         this.triggerEvent("complete", {
           activityId: result.activityId || this.data.activityId,
@@ -589,6 +603,27 @@ Component({
       } finally {
         (this as any)._enterLoading = false;
       }
+    },
+
+    prepareCompletedQuestionnaireJourney(activityId: string) {
+      if ((this as any)._backgroundJourneyPreparing) return;
+      (this as any)._backgroundJourneyPreparing = true;
+
+      void this.requestQuestionnaireEntry(activityId)
+        .then((entryResult: any) => {
+          const journeyId =
+            entryResult?.questionnaireJourneyId || entryResult?.journeyId;
+          if (!journeyId) {
+            throw new Error("后台准备参赛旅程失败：缺少 journeyId");
+          }
+          return this.requestEnterSubmission(journeyId);
+        })
+        .catch((err: unknown) => {
+          console.warn("后台准备参赛旅程失败，不阻塞投稿", err);
+        })
+        .finally(() => {
+          (this as any)._backgroundJourneyPreparing = false;
+        });
     },
 
     async onEnterPost() {

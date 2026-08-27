@@ -369,6 +369,7 @@
   activity-id="{{joinConsentActivityId}}"
   current-theme="{{currentTheme}}"
   form-height="calc(85vh - 128rpx)"
+  prepare-completed-journey="{{true}}"
   bind:close="onJoinConsentClose"
   bind:complete="onJoinConsentComplete"
 />

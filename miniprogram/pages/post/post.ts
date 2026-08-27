@@ -213,8 +213,7 @@ Page({
           if (
             mode === "edit" &&
             (!id || postLoaded) &&
-            !this.data.questionnaireJourneyId &&
-            !hasCompletedQuestionnaireProfile()
+            !this.data.questionnaireJourneyId
           ) {
             const activityId =
               (this.data.post as any)?.activity?.id ||
