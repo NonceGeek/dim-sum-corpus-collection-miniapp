@@ -28,3 +28,4 @@
     <view class="login-hint">Version: {{version}}</view>
   </view>
 </view>
+<common-dialog id="login-prompt" />

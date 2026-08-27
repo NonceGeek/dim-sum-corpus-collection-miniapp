@@ -6,6 +6,18 @@ interface LoginPromptOptions {
 const DEFAULT_LOGIN_PROMPT = "登录后才能使用该功能，当前仍可继续浏览公开内容。";
 let isLoginPromptVisible = false;
 
+interface CommonDialogComponent {
+  open(options: {
+    title: string;
+    content: string;
+    confirmText: string;
+    cancelText: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+    onComplete: () => void;
+  }): void;
+}
+
 export function isLoggedIn(): boolean {
   const app = getApp<{ globalData?: { accessToken?: string } }>();
   return Boolean(
@@ -55,27 +67,37 @@ export function promptLogin(
   }
   isLoginPromptVisible = true;
 
-  wx.showModal({
+  const pages = getCurrentPages();
+  const currentPage = pages[pages.length - 1] as unknown as
+    | { selectComponent?: (selector: string) => CommonDialogComponent | null }
+    | undefined;
+  const loginPrompt = currentPage?.selectComponent?.("#login-prompt");
+
+  if (!loginPrompt) {
+    isLoginPromptVisible = false;
+    console.error("当前页面未挂载登录提示 common-dialog 实例");
+    return;
+  }
+
+  loginPrompt.open({
     title: "需要登录",
     content: options.content || DEFAULT_LOGIN_PROMPT,
     confirmText: "去登录",
     cancelText: "暂不登录",
-    success: (res) => {
-      if (res.confirm) {
-        const loginUrl = getLoginUrl(redirectUrl);
-        if (options.replaceCurrentPage) {
-          wx.redirectTo({ url: loginUrl });
-        } else {
-          wx.navigateTo({ url: loginUrl });
-        }
-        return;
+    onConfirm: () => {
+      const loginUrl = getLoginUrl(redirectUrl);
+      if (options.replaceCurrentPage) {
+        wx.redirectTo({ url: loginUrl });
+      } else {
+        wx.navigateTo({ url: loginUrl });
       }
-
+    },
+    onCancel: () => {
       if (options.replaceCurrentPage) {
         returnToPublicPage();
       }
     },
-    complete: () => {
+    onComplete: () => {
       isLoginPromptVisible = false;
     },
   });

@@ -1,0 +1,463 @@
+/**
+ * 文件：miniprogram/components/join-consent-popup/join-consent-popup.wxss
+ * 说明：活动参与须知弹窗组件：授权协议确认，年龄段、地区、兴趣类型与手机号验证码登记。
+ * 类型：样式定义
+ */
+.theme-light {
+  --primary: #4a7cf3;
+  --secondary: #7c5cff;
+  --gradient-primary: linear-gradient(135deg, #4a7cf3 0%, #7c5cff 100%);
+  --bg-page: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --bg-muted: #d9d9d9;
+  --text-primary: #1a1f36;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --td-popup-bg-color: var(--bg-page);
+}
+
+.theme-dark {
+  --primary: #5d8cf5;
+  --secondary: #9178ff;
+  --gradient-primary: linear-gradient(135deg, #5d8cf5 0%, #9178ff 100%);
+  --bg-page: #0d1117;
+  --bg-card: #161b22;
+  --bg-input: #21262d;
+  --bg-muted: #21262d;
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --border-color: #30363d;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --td-popup-bg-color: var(--bg-page);
+}
+
+.jcp-popup-host {
+  background-color: var(--bg-page) !important;
+}
+
+.jcp-popup-host,
+.jcp-popup-host .t-popup,
+.jcp-popup-host .t-popup__content,
+.jcp-sheet {
+  border-top-left-radius: 40rpx !important;
+  border-top-right-radius: 40rpx !important;
+  overflow: hidden;
+}
+
+.jcp-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 85vh;
+  box-sizing: border-box;
+  padding: 20rpx 40rpx calc(env(safe-area-inset-bottom));
+  background: var(--bg-page);
+}
+
+.jcp-sheet-form {
+  height: 85vh;
+}
+
+.jcp-handle {
+  align-self: center;
+  width: 72rpx;
+  height: 8rpx;
+  margin-bottom: 28rpx;
+  border-radius: var(--radius-full);
+  background: var(--bg-muted);
+}
+
+/* 顶部标题 */
+.jcp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.jcp-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.jcp-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  box-sizing: border-box;
+  border-radius: var(--radius-full);
+  border: 2rpx solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+
+.jcp-subtitle {
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* 进度条 */
+.jcp-progress {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 32rpx;
+}
+
+.jcp-progress-bar {
+  flex: 1;
+  height: 8rpx;
+  border-radius: var(--radius-full);
+  background: var(--bg-muted);
+}
+
+.jcp-progress-bar.active {
+  background: var(--gradient-primary);
+}
+
+/* 卡片通用 */
+.jcp-card {
+  display: flex;
+  flex-direction: column;
+  margin-top: 28rpx;
+  padding: 30rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.jcp-card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.jcp-card-desc {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* 隐私说明卡 */
+.jcp-privacy-card {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20rpx;
+  background: var(--bg-card);
+}
+
+.jcp-privacy-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: var(--radius-lg);
+  background: rgba(74, 124, 243, 0.1);
+}
+
+.jcp-privacy-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.jcp-privacy-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 10rpx;
+}
+
+.jcp-privacy-desc {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.jcp-link {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.jcp-notice {
+  margin-top: 24rpx;
+  padding: 24rpx 28rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+/* 表单区域 */
+.jcp-form-scroll {
+  flex: 1;
+  min-height: 0;
+  margin-top: 4rpx;
+}
+
+.jcp-field-label {
+  display: flex;
+  align-items: baseline;
+  margin-top: 28rpx;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  gap: 5rpx;
+}
+
+.jcp-required {
+  margin-right: 4rpx;
+  color: var(--danger-strong);
+}
+
+.jcp-field-hint {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* 单选/多选胶囊 */
+.jcp-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.jcp-chip {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 14rpx 26rpx;
+  border-radius: var(--radius-full);
+  background: var(--bg-input);
+  border: 2rpx solid transparent;
+  color: var(--text-secondary);
+  font-size: 26rpx;
+}
+
+.jcp-chip.active {
+  background: var(--bg-card);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.jcp-chip-check {
+  font-size: 22rpx;
+}
+
+/* 地区单选列表 */
+.jcp-radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.jcp-radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 2rpx solid transparent;
+}
+
+.jcp-radio-row.active {
+  background: var(--bg-card);
+  border-color: var(--primary);
+}
+
+.jcp-radio-row-label {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.jcp-radio-dot {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: var(--radius-full);
+  border: 2rpx solid var(--border-color);
+  box-sizing: border-box;
+}
+
+.jcp-radio-dot.active {
+  border: 8rpx solid var(--primary);
+}
+
+/* 手机号输入 */
+.jcp-phone-row {
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  height: 88rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+}
+
+.jcp-phone-prefix {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.jcp-phone-divider {
+  flex-shrink: 0;
+  width: 1rpx;
+  height: 32rpx;
+  margin: 0 16rpx;
+  background: var(--border-color);
+}
+
+.jcp-phone-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.jcp-verification-input {
+  width: 100%;
+  height: 88rpx;
+  box-sizing: border-box;
+  padding: 0 20rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 28rpx;
+}
+
+.jcp-code-btn {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.jcp-code-btn.disabled {
+  color: var(--text-muted);
+}
+
+/* 底部操作按钮 */
+.jcp-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 20rpx;
+  box-sizing: border-box;
+  padding: 32rpx 0 8rpx;
+}
+
+.jcp-actions-vertical {
+  flex-direction: column;
+}
+
+.jcp-actions-vertical .jcp-btn {
+  flex: none;
+  width: 100%;
+  height: 104rpx;
+}
+
+.jcp-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  border-radius: var(--radius-full);
+  box-sizing: border-box;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.jcp-btn-ghost {
+  border: 2rpx solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.jcp-btn-primary {
+  background: var(--gradient-primary);
+  color: var(--text-white);
+  box-shadow: var(--shadow-primary);
+}
+
+.jcp-btn:active {
+  opacity: 0.85;
+}
+
+/* 成功页 */
+.jcp-success-card {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8rpx;
+  padding: 32rpx;
+  border: 2rpx solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.jcp-success-icon {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96rpx;
+  height: 96rpx;
+  margin-top: 16rpx;
+  border-radius: var(--radius-xl);
+  background: rgba(16, 185, 129, 0.14);
+}
+
+.jcp-success-title {
+  margin-top: 24rpx;
+  text-align: left;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.jcp-success-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28rpx;
+  padding: 22rpx 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+}
+
+.jcp-success-banner-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.jcp-success-tag {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 6rpx 16rpx;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+  font-size: 22rpx;
+  font-weight: 600;
+}

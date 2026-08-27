@@ -11,6 +11,7 @@ let loginPromise: Promise<string> | null = null;
 App<IAppOption>({
   globalData: {
     userInfo: null,
+    questionnaireStatus: {},
     accessToken: "",
     refreshToken: "",
     themeMode: "auto",
@@ -46,6 +47,9 @@ App<IAppOption>({
       if (accessToken) this.globalData.accessToken = accessToken;
       if (refreshToken) this.globalData.refreshToken = refreshToken;
       if (userInfo) this.globalData.userInfo = userInfo;
+      if (userInfo?.questionnaireStatus) {
+        this.globalData.questionnaireStatus = userInfo.questionnaireStatus;
+      }
 
       if (accessToken || userInfo) {
         console.log("✅ 从 storage 恢复全局数据:", {
@@ -181,6 +185,7 @@ App<IAppOption>({
   logout() {
     // 清除用户信息和token
     this.globalData.userInfo = null;
+    this.globalData.questionnaireStatus = {};
     this.globalData.accessToken = "";
     this.globalData.refreshToken = "";
 
@@ -304,6 +309,7 @@ App<IAppOption>({
     this.globalData.accessToken = accessToken;
     this.globalData.refreshToken = refreshToken;
     this.globalData.userInfo = user;
+    this.globalData.questionnaireStatus = user?.questionnaireStatus || {};
 
     // 异步存储
     await Promise.all([

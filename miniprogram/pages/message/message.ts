@@ -1,4 +1,16 @@
 import request from "../../utils/http";
+import {
+  fetchQuery,
+  getCurrentUserQueryKey,
+  invalidateQuery,
+} from "../../utils/query-cache";
+import { showCommonDialog } from "../../utils/common-dialog";
+
+const getMessagesQueryKey = () => [
+  "message",
+  "list",
+  getCurrentUserQueryKey(),
+];
 
 const getIconColor = (type) => {
   const obj = {
@@ -39,7 +51,7 @@ Page({
     await this.loadMessages();
   },
 
-  async loadMessages() {
+  async loadMessages(options: { force?: boolean } = {}) {
     if (this.data.loading || this.data.noMore) return;
 
     const isInitialLoad =
@@ -53,32 +65,38 @@ Page({
     try {
       const { page, pageSize, messages: oldMessages } = this.data;
 
-      const res = await request(`/messages?page=${page}&pageSize=${pageSize}`);
-      const {
-        items,
-        pagination: { total },
-      } = res;
-      const list = (items || []).map((item) => {
-        const { icon, color } = getIconColor(item.type);
-        item.icon = icon;
-        item.color = color;
-        return item;
+      const snapshot = await fetchQuery({
+        queryKey: getMessagesQueryKey(),
+        force: options.force || page > 1,
+        queryFn: async () => {
+          const res = await request(
+            `/messages?page=${page}&pageSize=${pageSize}`,
+          );
+          const list = (res.items || []).map((item) => {
+            const { icon, color } = getIconColor(item.type);
+            return { ...item, icon, color };
+          });
+          const messages = page === 1 ? list : [...oldMessages, ...list];
+          return {
+            messages,
+            page,
+            noMore: list.length < pageSize,
+            showButton: messages.some((item) => !item.isRead),
+          };
+        },
       });
 
-      const noMore = list.length < 10;
-      const findUnread = list.some((item) => !item.isRead);
-
       this.setData({
-        messages: page === 1 ? list : [...oldMessages, ...list],
-        noMore,
-        showButton: findUnread,
+        messages: snapshot.messages,
+        page: snapshot.page,
+        noMore: snapshot.noMore,
+        showButton: snapshot.showButton,
       });
     } catch (err) {
       console.error("loadMessages error", err);
-      wx.showModal({
+      showCommonDialog(this, {
         title: "提示",
         content: err.errMsg || "请求出错",
-        showCancel: false,
       });
     } finally {
       this.setData({
@@ -120,19 +138,18 @@ Page({
           }
         }
         this.setData({ messages });
+        invalidateQuery(getMessagesQueryKey());
       } else {
-        wx.showModal({
+        showCommonDialog(this, {
           title: "错误提示",
-          content: err.error || err.errMsg + "，清稍后再试",
-          showCancel: false,
+          content: "消息状态更新失败，请稍后再试",
         });
       }
     } catch (err) {
       console.log("消息已读接口报错：", err);
-      wx.showModal({
+      showCommonDialog(this, {
         title: "错误提示",
         content: err.error || err.errMsg + "，清稍后再试",
-        showCancel: false,
       });
     }
   },
@@ -154,7 +171,7 @@ Page({
       messages: [],
     });
 
-    this.loadMessages().finally(() => {
+    this.loadMessages({ force: true }).finally(() => {
       wx.stopPullDownRefresh();
     });
   },
@@ -169,19 +186,18 @@ Page({
           return { ...item, isRead: true };
         });
         this.setData({ messages });
+        invalidateQuery(getMessagesQueryKey());
       } else {
-        wx.showModal({
+        showCommonDialog(this, {
           title: "错误提示",
           content: "标记失败，请稍后重试！",
-          showCancel: false,
         });
       }
     } catch (err) {
       console.log("将所有消息标记为已读出错：", err);
-      wx.showModal({
+      showCommonDialog(this, {
         title: "错误提示",
         content: err.error || err.errMsg + "，请稍后重试",
-        showCancel: false,
       });
     }
   },

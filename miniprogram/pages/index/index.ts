@@ -1,6 +1,7 @@
 import { STATIC_FILE } from "../../app";
 import ENV from "../../config/setting";
 import request from "../../utils/http";
+import { fetchQuery } from "../../utils/query-cache";
 
 const SHARE_TITLE = `${ENV.title}｜${ENV.subtitle}`;
 const SHARE_PATH = "/pages/index/index";
@@ -64,23 +65,30 @@ Page({
     this.setData({ currentTheme });
   },
 
-  async loadSwiperData() {
+  async loadSwiperData(options: { force?: boolean } = {}) {
     try {
-      wx.showLoading({ title: "加载中..." });
-      const res = await request("/activities?timeStatus=ongoing");
-      wx.hideLoading();
-      const activities = (res.items || []).slice(0, 5);
-      const swiperList = activities.map((activity: ISwiperList) => ({
-        id: activity.id,
-        title: activity.title,
-        imageUrl: activity.bannerUrl || STATIC_FILE,
-        linkType: "activity",
-        linkId: activity.id,
-        value: activity.bannerUrl || STATIC_FILE,
-      }));
-      this.setData({
-        swiperList,
+      const swiperList = await fetchQuery({
+        queryKey: ["index", "swiper"],
+        force: options.force,
+        queryFn: async () => {
+          wx.showLoading({ title: "加载中..." });
+          try {
+            const res = await request("/activities?timeStatus=ongoing");
+            const activities = (res.items || []).slice(0, 5);
+            return activities.map((activity: ISwiperList) => ({
+              id: activity.id,
+              title: activity.title,
+              imageUrl: activity.bannerUrl || STATIC_FILE,
+              linkType: "activity",
+              linkId: activity.id,
+              value: activity.bannerUrl || STATIC_FILE,
+            }));
+          } finally {
+            wx.hideLoading();
+          }
+        },
       });
+      this.setData({ swiperList });
     } catch (err: any) {
       console.error("加载轮播图失败", err);
       wx.showToast({
@@ -91,7 +99,7 @@ Page({
     }
   },
 
-  async loadCardList() {
+  async loadCardList(options: { force?: boolean } = {}) {
     if (this.data.loading || this.data.noMore) return;
 
     const isInitialLoad =
@@ -104,15 +112,25 @@ Page({
 
     try {
       const { page, pageSize } = this.data;
-      const res = await request(
-        `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
-      );
-      const { items } = res;
-      const newList = items;
-      const isFirstPage = this.data.page === 1;
+      const snapshot = await fetchQuery({
+        queryKey: ["index", "submissions"],
+        force: options.force || page > 1,
+        queryFn: async () => {
+          const res = await request(
+            `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
+          );
+          const items = res.items || [];
+          return {
+            cardList: page === 1 ? items : [...this.data.cardList, ...items],
+            page,
+            noMore: items.length < pageSize,
+          };
+        },
+      });
       this.setData({
-        cardList: isFirstPage ? newList : [...this.data.cardList, ...newList],
-        noMore: items ? newList.length < pageSize : false,
+        cardList: snapshot.cardList,
+        page: snapshot.page,
+        noMore: snapshot.noMore,
       });
     } catch (err: any) {
       console.error("加载卡片列表失败", err);
@@ -158,7 +176,10 @@ Page({
 
   onPullDownRefresh() {
     this.setData({ page: 1, noMore: false });
-    Promise.all([this.loadSwiperData(), this.loadCardList()]).finally(() => {
+    Promise.all([
+      this.loadSwiperData({ force: true }),
+      this.loadCardList({ force: true }),
+    ]).finally(() => {
       wx.stopPullDownRefresh();
     });
   },

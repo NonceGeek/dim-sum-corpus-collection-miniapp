@@ -9,7 +9,8 @@
     "t-picker-item": "tdesign-miniprogram/picker-item/picker-item",
     "t-popup": "tdesign-miniprogram/popup/popup",
     "t-search": "tdesign-miniprogram/search/search",
-    "t-navbar": "tdesign-miniprogram/navbar/navbar"
+    "t-navbar": "tdesign-miniprogram/navbar/navbar",
+    "join-consent-popup": "/components/join-consent-popup/join-consent-popup"
   },
   "navigationBarTitleText": "我要投稿",
   "navigationStyle": "custom"

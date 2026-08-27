@@ -8,11 +8,16 @@
       mode="aspectFill" />
     <view class="header-overlay"></view>
     <view class="track-header-skeleton" wx:if="{{trackLoading}}">
+      <view class="tracks-skeleton-block track-header-skeleton-tag"></view>
       <view class="tracks-skeleton-block track-header-skeleton-title"></view>
       <view class="tracks-skeleton-block track-header-skeleton-time"></view>
     </view>
     <!-- 内容 -->
     <view class="ice-text-layer ice-animate" wx:if="{{trackTextReady}}">
+
+      <view class="activity-tag" wx:if="{{track.activityTag}}">
+        <text>{{track.activityTag}}</text>
+      </view>
 
       <view class="activity-name ice-title" style="font-size: {{trackTitleFontSize}}rpx;">
         <view class="ice-highlighter"></view>
@@ -63,8 +68,8 @@
   <view class="card-list">
     <waterfall
       items="{{cardList}}"
-      loading="{{isInitialCardLoading}}"
-      append-loading="{{loading && !isInitialCardLoading}}"
+      loading="{{loading && cardList.length === 0}}"
+      append-loading="{{loading && cardList.length > 0}}"
       bind:itemtap="onWaterfallTap"
       showFeatured
     />
@@ -89,7 +94,9 @@
     visible="{{ruleDialogVisible}}"
     title="活动详情"
     confirm-btn="{{ruleDialogConfirmBtn}}"
+    t-class="rule-dialog"
     t-class-confirm="rule-dialog-confirm"
+    custom-style="border-radius: 32rpx; overflow: hidden; background-color: transparent; --td-dialog-border-radius: 32rpx; --td-popup-border-radius: 32rpx; --td-popup-bg-color: transparent;"
     bind:confirm="onRuleDialogClose"
     bind:close="onRuleDialogClose"
   >
@@ -104,4 +111,14 @@
       </view>
     </view>
   </t-dialog>
+
+  <join-consent-popup
+    visible="{{joinConsentPopupVisible}}"
+    activity-id="{{trackId}}"
+    current-theme="{{currentTheme}}"
+    bind:close="onJoinConsentClose"
+    bind:complete="onJoinConsentComplete"
+  />
 </view>
+<common-dialog id="login-prompt" />
+<common-dialog id="common-dialog" />

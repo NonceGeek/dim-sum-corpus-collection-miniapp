@@ -40,7 +40,6 @@ page {
   /* 主色调 */
   --primary: #4a7cf3;
   --primary-light: #6b93f5;
-  --primary-soft: rgba(74, 124, 243, 0.12);
   --secondary: #7c5cff;
   --secondary-bold: #7c3aed;
   --secondary-bolder: #4f46e5;
@@ -175,7 +174,6 @@ page {
     /* 主色调 - 稍微提亮 */
     --primary: #5d8cf5;
     --primary-light: #7ba3f7;
-    --primary-soft: rgba(93, 140, 245, 0.16);
     --secondary: #9178ff;
     --secondary-bold: #a78bff;
     --secondary-bolder: #c4b5fd;

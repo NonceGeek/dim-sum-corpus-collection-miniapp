@@ -29,3 +29,4 @@
   <!-- Tab Bar -->
   <app-tab-bar value="home" />
 </view>
+<common-dialog id="login-prompt" />

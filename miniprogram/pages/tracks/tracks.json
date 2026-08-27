@@ -5,7 +5,8 @@
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-dialog": "tdesign-miniprogram/dialog/dialog",
-    "waterfall": "/components/waterfall/waterfall"
+    "waterfall": "/components/waterfall/waterfall",
+    "join-consent-popup": "/components/join-consent-popup/join-consent-popup"
   },
   "navigationBarTitleText": "活动详情",
   "enablePullDownRefresh": true,

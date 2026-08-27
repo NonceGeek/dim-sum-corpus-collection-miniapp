@@ -9,6 +9,7 @@
       z-index="0"
       custom-style="width: 100vw; height: 100vh; overflow: scroll; -webkit-overflow-scrolling: touch; background: var(--bg-page);"
       bind:beforeleave="onExitGuardBeforeLeave"
+      bind:afterleave="onExitGuardAfterLeave"
     >
     <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">
       <view slot="left" class="custom-navbar-back" bind:tap="onNavbarBack">
@@ -46,7 +47,7 @@
       <!-- 内容输入 -->
       <view class="input-section content-section">
         <view class="audio-section">
-          <view class="mic-btn" wx:if="{{allowAudioUpload}}" bind:tap="onToggleRecordPopup">
+          <view class="mic-btn" wx:if="{{allowAudioUpload}}" bind:tap="onOpenRecordPopup">
             <t-icon name="microphone" size="30" color="var(--primary)" />
           </view>
           <!-- 录音播放组件 -->
@@ -61,7 +62,7 @@
             </view>
           </view>
         </view>
-        <t-textarea placeholder="添加正文" value="{{content}}" bind:change="onContentInput" class="content-textarea"
+        <t-textarea placeholder="请输入内容简介" value="{{content}}" bind:change="onContentInput" class="content-textarea"
           maxlength="{{200}}" autocursor="{{true}}" autosize="{{true}}" borderless="{{true}}"
           placeholder-style="color: var(--text-muted)" />
         <view class="textarea-footer">
@@ -206,7 +207,7 @@
     </view>
 
     <!-- 录音弹窗 -->
-    <t-popup visible="{{recordPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onRecordPopupClose"
+    <t-popup visible="{{recordPopupVisible}}" placement="bottom" t-class="post-popup-host record-popup-host theme-{{currentTheme}}" bind:visible-change="onRecordPopupClose"
       close-on-overlay-click="{{!recordProcessing}}">
       <view class="record-popup theme-{{currentTheme}}">
         <view class="record-hint">
@@ -214,17 +215,49 @@
         </view>
         <view class="record-btn-area {{recordActionsAnimating ? 'actions-entering' : ''}}">
           <view
+            wx:if="{{recording && !recordStopping}}"
+            class="record-voice-preview"
+          >
+            <view class="record-voice-bubble">
+              <view class="record-waveform" aria-hidden="true">
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+                <view class="record-waveform-bar"></view>
+              </view>
+              <view class="record-voice-bubble-tail"></view>
+            </view>
+            <text class="record-send-hint">点击 发语音</text>
+          </view>
+          <view
             class="record-side-btn record-cancel {{recordReady && !recordProcessing ? 'visible' : ''}}"
             bind:tap="onCancelRecordedAudio">
             <t-icon name="close-circle" size="28" color="var(--text-muted)" />
             <text class="record-side-text">取消</text>
           </view>
-          <view class="record-btn {{recording ? 'recording' : ''}} {{recordReady ? 'ready' : ''}} {{recordStarting || recordProcessing || recordStopping ? 'disabled' : ''}}"
+          <view class="record-btn {{recording ? 'recording' : ''}} {{recordReady ? 'ready' : ''}} {{!recording && !recordReady ? 'idle' : ''}} {{recordStarting || recordProcessing || recordStopping ? 'disabled' : ''}}"
             bind:tap="onRecordButtonTap">
-            <text class="record-btn-text">
-              {{recordStarting ? '准备中' : (recordProcessing ? '处理中' : (recordStopping ? '结束中' : (recordReady ? '使用原音' : (recording ? '结束录音' : '开始录音'))))}}
-            </text>
-            <text class="record-timer" wx:if="{{recording || recordStopping || recordReady}}">{{recordTime}}'' / 60''</text>
+            <block wx:if="{{recording && !recordStopping}}">
+              <view class="record-btn-text record-btn-text-recording">正在录入</view>
+              <view class="record-timer">{{recordTime}}'' / 60''</view>
+            </block>
+            <block wx:else>
+              <view class="record-btn-text">
+                {{recordStarting ? '准备中' : (recordProcessing ? '处理中' : (recordStopping ? '结束中' : (recordReady ? '使用原音' : '开始录音')))}}
+              </view>
+              <view class="record-timer" wx:if="{{recordStopping || recordReady}}">{{recordTime}}'' / 60''</view>
+            </block>
           </view>
           <view
             class="record-side-btn record-asr {{recordReady && !recordProcessing ? 'visible' : ''}}"
@@ -244,13 +277,14 @@
           placeholder-style="color: var(--text-muted)" autosize="{{false}}" borderless="{{true}}"
           bind:change="onAsrTextInput" />
         <view class="asr-actions">
-          <t-button class="asr-btn" theme="default" shape="round" size="medium" bind:tap="onAsrCancel">取消</t-button>
-          <t-button class="asr-btn" theme="default" shape="round" size="medium" bind:tap="onAsrUseAudio">发原语音</t-button>
-          <t-button class="asr-btn asr-btn-confirm" theme="primary" shape="round" size="medium" bind:tap="onAsrConfirm">
+          <t-button class="asr-btn asr-btn-secondary" theme="default" shape="round" size="medium" hover-class="none" bind:tap="onAsrCancel">取消</t-button>
+          <t-button class="asr-btn asr-btn-secondary" theme="default" shape="round" size="medium" hover-class="none" bind:tap="onAsrUseAudio">发原语音</t-button>
+          <t-button class="asr-btn asr-btn-confirm" theme="primary" shape="round" size="medium" hover-class="none" bind:tap="onAsrConfirm">
             确认</t-button>
         </view>
       </view>
     </t-popup>
+
     </page-container>
   </block>
   <block wx:else>
@@ -327,30 +361,16 @@
       </view>
     </view>
 
-    <!-- 操作弹窗 -->
-    <!-- <t-popup visible="{{postActionsVisible}}" placement="bottom" bind:visible-change="onPostActionsClose">
-      <view class="post-actions-popup">
-
-        <view class="post-actions-row">
-
-          <view class="post-action-card" bind:tap="onEditPost">
-            <view class="post-action-icon">
-              <t-icon name="edit" size="26" color="var(--text-primary)" />
-            </view>
-            <text class="post-action-label">编辑</text>
-          </view>
-
-          <view class="post-action-card danger" bind:tap="onDeletePost">
-            <view class="post-action-icon danger-icon">
-              <t-icon name="delete" size="26" color="#f62459" />
-            </view>
-            <text class="post-action-label danger-text">删除</text>
-          </view>
-
-        </view>
-
-      </view>
-    </t-popup> -->
   </block>
 
 </view>
+<join-consent-popup
+  visible="{{joinConsentPopupVisible}}"
+  activity-id="{{joinConsentActivityId}}"
+  current-theme="{{currentTheme}}"
+  form-height="calc(85vh - 128rpx)"
+  bind:close="onJoinConsentClose"
+  bind:complete="onJoinConsentComplete"
+/>
+<common-dialog id="common-dialog" />
+<common-dialog id="login-prompt" />

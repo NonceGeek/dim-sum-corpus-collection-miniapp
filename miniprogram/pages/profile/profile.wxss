@@ -209,46 +209,6 @@
   gap: 20rpx;
 }
 
-.theme-option {
-  flex: 1;
-
-  padding: 20rpx;
-
-  border-radius: 24rpx;
-
-  text-align: center;
-
-  border: 2rpx solid transparent;
-
-  transition: all 0.25s ease;
-}
-
-.theme-option.active {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-}
-
-.theme-preview {
-  width: 100%;
-  height: 120rpx;
-
-  border-radius: 18rpx;
-
-  margin-bottom: 16rpx;
-}
-
-.light-preview {
-  background: linear-gradient(180deg, #ffffff, #ececec);
-}
-
-.dark-preview {
-  background: linear-gradient(180deg, #222, #000);
-}
-
-.system-preview {
-  background: linear-gradient(90deg, #ffffff 50%, #111 50%);
-}
-
 .theme-action-sheet {
   --td-action-sheet-border-color: transparent;
   background-color: var(--bg-card) !important;

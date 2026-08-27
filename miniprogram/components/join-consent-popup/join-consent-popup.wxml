@@ -1,0 +1,195 @@
+<t-popup
+  visible="{{popupVisible}}"
+  placement="bottom"
+  t-class="jcp-popup-host theme-{{currentTheme}}"
+  bind:visible-change="onOverlayVisibleChange"
+>
+  <view
+    class="jcp-sheet jcp-sheet-{{step}} theme-{{currentTheme}}"
+    style="{{step === 'form' ? 'height: ' + formHeight + ';' : ''}}"
+  >
+    <view class="jcp-handle"></view>
+
+    <!-- 参赛前信息确认 -->
+    <block wx:if="{{step === 'confirm'}}">
+      <view class="jcp-header">
+        <text class="jcp-title">参赛前信息确认</text>
+        <view class="jcp-close" bind:tap="onDismiss">
+          <t-icon name="close" size="32rpx" />
+        </view>
+      </view>
+      <text class="jcp-subtitle">为完成报名，并便于获奖通知与奖品发放，需要补充少量必要信息，预计 15 秒完成。</text>
+
+      <view class="jcp-progress">
+        <view class="jcp-progress-bar active"></view>
+        <view class="jcp-progress-bar"></view>
+        <view class="jcp-progress-bar"></view>
+      </view>
+
+      <view class="jcp-card jcp-privacy-card">
+        <view class="jcp-privacy-icon">
+          <t-icon name="secured" size="40rpx" color="var(--primary)" />
+        </view>
+        <view class="jcp-privacy-body">
+          <text class="jcp-privacy-title">仅用于本次参赛流程</text>
+          <text class="jcp-privacy-desc">
+            信息仅用于参赛登记、活动内容匹配、获奖通知与奖品发放，不用于无关营销。<text class="jcp-link" bind:tap="onViewPrivacyPolicy">查看《隐私保护指引》</text>
+          </text>
+        </view>
+      </view>
+
+      <view class="jcp-notice">
+        浏览活动内容不会触发资料收集，只有点击"我要投稿"后才进入此流程。
+      </view>
+
+      <view class="jcp-actions">
+        <view class="jcp-btn jcp-btn-ghost" bind:tap="onDecline">暂不参赛</view>
+        <view class="jcp-btn jcp-btn-primary" bind:tap="onContinueToForm">继续参赛</view>
+      </view>
+    </block>
+
+    <!-- 补充参赛信息 -->
+    <block wx:if="{{step === 'form'}}">
+      <view class="jcp-header">
+        <text class="jcp-title">{{flowType === 'phone_only' ? '验证手机号' : '补充参赛信息'}}</text>
+        <view class="jcp-close" bind:tap="onDismiss">
+          <t-icon name="close" size="32rpx" />
+        </view>
+      </view>
+      <text class="jcp-subtitle">{{flowType === 'phone_only' ? '基础资料已存在，本次只需验证手机号即可继续参赛。' : '先填写基础问卷，再确认联系方式。已填写的信息后续参赛可直接复用。'}}</text>
+
+      <view class="jcp-progress">
+        <view class="jcp-progress-bar active"></view>
+        <view class="jcp-progress-bar active"></view>
+        <view class="jcp-progress-bar"></view>
+      </view>
+
+      <scroll-view class="jcp-form-scroll" scroll-y>
+        <view class="jcp-card" wx:if="{{flowType === 'full_questionnaire'}}">
+          <text class="jcp-card-title">基础问卷</text>
+          <text class="jcp-card-desc">字段保持轻量，仅用于活动匹配。</text>
+
+          <view class="jcp-field-label">
+            <text class="jcp-required">*</text>
+            <text>{{ageQuestion.title}}</text>
+          </view>
+          <view class="jcp-chip-group">
+            <view
+              wx:for="{{ageOptions}}"
+              wx:key="value"
+              class="jcp-chip {{selectedAge === item.value ? 'active' : ''}}"
+              data-value="{{item.value}}"
+              bind:tap="onSelectAge"
+            >
+              <text wx:if="{{selectedAge === item.value}}" class="jcp-chip-check">✓</text>
+              <text>{{item.label}}</text>
+            </view>
+          </view>
+
+          <view class="jcp-field-label">
+            <text class="jcp-required">*</text>
+            <text>{{regionQuestion.title}}</text>
+          </view>
+          <view class="jcp-radio-list">
+            <view
+              wx:for="{{regionOptions}}"
+              wx:key="value"
+              class="jcp-radio-row {{selectedRegion === item.value ? 'active' : ''}}"
+              data-value="{{item.value}}"
+              bind:tap="onSelectRegion"
+            >
+              <text class="jcp-radio-row-label">{{item.label}}</text>
+              <view class="jcp-radio-dot {{selectedRegion === item.value ? 'active' : ''}}"></view>
+            </view>
+          </view>
+          <text class="jcp-field-hint">{{regionQuestion.description}}</text>
+
+          <view class="jcp-field-label">
+            <text>{{interestQuestion.title}}（可多选）</text>
+          </view>
+          <view class="jcp-chip-group">
+            <view
+              wx:for="{{interestOptions}}"
+              wx:key="value"
+              class="jcp-chip {{selectedInterestMap[item.value] ? 'active' : ''}}"
+              data-value="{{item.value}}"
+              bind:tap="onSelectInterest"
+            >
+              <text wx:if="{{selectedInterestMap[item.value]}}" class="jcp-chip-check">✓</text>
+              <text>{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="jcp-card" wx:if="{{needsPhone}}">
+          <text class="jcp-card-title">联系信息</text>
+          <text class="jcp-card-desc">手机号仅用于获奖通知、奖品发放及必要参赛事务联系；验证码用于确认手机号的有效性，不会用于无关营销。</text>
+
+          <view class="jcp-field-label">
+            <text class="jcp-required">*</text>
+            <text>手机号</text>
+          </view>
+          <view class="jcp-phone-row">
+            <text class="jcp-phone-prefix">+86</text>
+            <view class="jcp-phone-divider"></view>
+            <input
+              class="jcp-phone-input"
+              type="number"
+              placeholder="请输入手机号"
+              maxlength="11"
+              value="{{phone}}"
+              bind:input="onPhoneInput"
+            />
+            <view class="jcp-phone-divider"></view>
+            <view
+              class="jcp-code-btn {{countdown > 0 ? 'disabled' : ''}}"
+              bind:tap="onGetVerificationCode"
+            >
+              {{countdown > 0 ? countdown + 's后重试' : '获取验证码'}}
+            </view>
+          </view>
+          <text class="jcp-field-hint">如后续涉及实物寄送，收货地址将在确认获奖后单独收集。</text>
+
+          <view class="jcp-field-label">
+            <text class="jcp-required">*</text>
+            <text>验证码</text>
+          </view>
+          <input
+            class="jcp-verification-input"
+            type="number"
+            placeholder="请输入6位验证码"
+            maxlength="6"
+            value="{{verificationCode}}"
+            bind:input="onVerificationCodeInput"
+          />
+        </view>
+
+      </scroll-view>
+
+      <view class="jcp-actions jcp-actions-vertical">
+        <view class="jcp-btn jcp-btn-ghost" bind:tap="onBackToConfirm" wx:if="{{flowType === 'full_questionnaire'}}">返回上一步</view>
+        <view class="jcp-btn jcp-btn-primary" bind:tap="onSubmit">{{flowType === 'phone_only' ? '验证并继续参赛' : '提交并继续参赛'}}</view>
+      </view>
+    </block>
+
+    <!-- 提交成功 -->
+    <block wx:if="{{step === 'success'}}">
+      <view class="jcp-success-card">
+        <view class="jcp-success-icon">
+          <t-icon name="check" size="44rpx" color="var(--success)" />
+        </view>
+        <text class="jcp-success-title">感谢！请前往参与活动！</text>
+
+        <view class="jcp-success-banner">
+          <text class="jcp-success-banner-text">信息已提交，{{autoEnterCountdown}} 秒后自动进入投稿页面</text>
+          <text class="jcp-success-tag">已完成</text>
+        </view>
+
+        <view class="jcp-actions jcp-actions-vertical">
+          <view class="jcp-btn jcp-btn-primary" bind:tap="onEnterPost">进入投稿页面</view>
+        </view>
+      </view>
+    </block>
+  </view>
+</t-popup>
+<common-dialog id="common-dialog" />

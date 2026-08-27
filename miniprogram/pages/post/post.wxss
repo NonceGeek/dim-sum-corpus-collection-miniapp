@@ -204,7 +204,7 @@
   font-size: 32rpx;
   min-height: 300rpx;
   border-radius: var(--radius-lg);
-  padding-left: 12rpx !important;
+  padding-left: 8rpx !important;
   padding-top: 12rpx !important;
   background-color: var(--bg-card);
 }
@@ -502,9 +502,17 @@
 }
 
 /* 录音弹窗 */
+.record-popup-host,
+.record-popup-host .t-popup,
+.record-popup-host .t-popup__content,
+.record-popup {
+  border-top-left-radius: 40rpx !important;
+  border-top-right-radius: 40rpx !important;
+  overflow: hidden;
+}
+
 .record-popup {
   background-color: var(--bg-card);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: 48rpx 32rpx 64rpx;
   display: flex;
   flex-direction: column;
@@ -524,8 +532,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 400rpx;
+  box-sizing: border-box;
   /* 上方留出侧边按钮飞出所需的空间 */
-  padding-top: 160rpx;
+  padding-top: 216rpx;
 }
 
 /* 左右侧按钮公共样式：默认隐藏在录音按钮正后方 */
@@ -644,11 +655,14 @@
 }
 
 .record-btn {
-  width: 184rpx;
-  height: 184rpx;
-  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+  width: 240rpx;
+  height: 104rpx;
+  border-radius: 999rpx;
   background-color: var(--bg-input);
   border: 4rpx solid var(--primary);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -674,12 +688,119 @@
 }
 
 .record-btn-text {
-  font-size: 24rpx;
+  font-size: 32rpx;
+  line-height: 1;
   color: var(--text-secondary);
+}
+
+.record-btn.idle .record-btn-text {
+  width: 100%;
+  text-align: center;
 }
 
 .record-btn.recording .record-btn-text {
   color: var(--text-white);
+}
+
+.record-voice-preview {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.record-voice-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 286rpx;
+  height: 112rpx;
+  background: var(--primary);
+  border-radius: 30rpx;
+  box-shadow: var(--shadow-primary);
+}
+
+.record-voice-bubble-tail {
+  position: absolute;
+  left: 50%;
+  bottom: -12rpx;
+  width: 24rpx;
+  height: 24rpx;
+  background: var(--primary);
+  border-radius: 0 0 5rpx 0;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.record-send-hint {
+  margin-top: 32rpx;
+  color: var(--text-secondary);
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.record-waveform {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5rpx;
+  width: 210rpx;
+  height: 50rpx;
+}
+
+.record-waveform-bar {
+  width: 5rpx;
+  height: 42rpx;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999rpx;
+  transform: scaleY(0.24);
+  transform-origin: center;
+  opacity: 0.76;
+  animation: record-wave-pulse 0.9s ease-in-out infinite;
+}
+
+.record-waveform-bar:nth-child(2n) {
+  animation-delay: -0.72s;
+}
+
+.record-waveform-bar:nth-child(3n) {
+  animation-delay: -0.54s;
+}
+
+.record-waveform-bar:nth-child(4n) {
+  animation-delay: -0.36s;
+}
+
+.record-waveform-bar:nth-child(5n) {
+  animation-delay: -0.18s;
+}
+
+@keyframes record-wave-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.2);
+    opacity: 0.58;
+  }
+
+  50% {
+    transform: scaleY(1);
+    opacity: 0.92;
+  }
+}
+
+.record-btn-text-recording {
+  font-size: 22rpx;
+  line-height: 1;
 }
 
 .record-timer {
@@ -691,6 +812,27 @@
 
 .record-btn.recording .record-timer {
   color: var(--text-white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .record-waveform-bar {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  .record-waveform-bar:nth-child(1),
+  .record-waveform-bar:nth-child(5) {
+    transform: scaleY(0.45);
+  }
+
+  .record-waveform-bar:nth-child(2),
+  .record-waveform-bar:nth-child(4) {
+    transform: scaleY(0.72);
+  }
+
+  .record-waveform-bar:nth-child(3) {
+    transform: scaleY(1);
+  }
 }
 
 /* 侧边按钮悬停高亮 */
@@ -748,6 +890,23 @@
 
 .asr-btn {
   flex: 1;
+}
+
+.asr-btn-secondary {
+  height: 88rpx !important;
+  min-height: 88rpx !important;
+  padding: 0 24rpx !important;
+  overflow: hidden;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-full) !important;
+  background-color: var(--bg-input) !important;
+  color: var(--text-secondary) !important;
+  font-size: 32rpx !important;
+  font-weight: 500 !important;
+}
+
+.asr-btn-secondary::before {
+  display: none !important;
 }
 
 .asr-btn-confirm {
@@ -873,76 +1032,6 @@
 .view-footer-text {
   font-size: 28rpx;
   font-weight: 600;
-}
-
-/* popup */
-.post-actions-popup {
-  padding: 24rpx;
-  border-radius: 36rpx 36rpx 0 0;
-  background: var(--bg-card);
-  box-sizing: border-box;
-}
-
-/* 横向区域 */
-.post-actions-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 24rpx;
-}
-
-/* 单个按钮 */
-.post-action-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18rpx;
-  width: 160rpx;
-}
-
-/* icon 外层 */
-.post-action-icon {
-  width: 108rpx;
-  height: 108rpx;
-  border-radius: 32rpx;
-  background: rgba(0, 0, 0, 0.05);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 删除按钮 icon */
-.danger-icon {
-  background: rgba(246, 36, 89, 0.1);
-}
-
-/* 文字 */
-.post-action-label {
-  font-size: 26rpx;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-/* 删除文字 */
-.danger-text {
-  color: var(--danger-strong);
-}
-
-/* 取消按钮 */
-.post-action-cancel {
-  height: 92rpx;
-  border-radius: 999rpx;
-  background: var(--bg-input);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 .hot-wrap {

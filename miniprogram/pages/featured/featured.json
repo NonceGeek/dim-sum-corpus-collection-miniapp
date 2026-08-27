@@ -3,7 +3,8 @@
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
     "t-popup": "tdesign-miniprogram/popup/popup",
-    "app-tab-bar": "/components/app-tab-bar/app-tab-bar"
+    "app-tab-bar": "/components/app-tab-bar/app-tab-bar",
+    "join-consent-popup": "/components/join-consent-popup/join-consent-popup"
   },
   "navigationBarTitleText": "精选内容",
   "enablePullDownRefresh": true

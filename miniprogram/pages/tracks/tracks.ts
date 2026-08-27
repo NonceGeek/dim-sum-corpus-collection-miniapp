@@ -1,15 +1,15 @@
+import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
-import { navigateToProtectedPage } from "../../utils/auth";
+import {
+  isLoggedIn,
+  navigateToProtectedPage,
+  promptLogin,
+} from "../../utils/auth";
 import request from "../../utils/http";
+import { fetchQuery } from "../../utils/query-cache";
+import { showCommonDialog } from "../../utils/common-dialog";
 
-const TYPE_JSON = {
-  phrase: "用语",
-  poem: "诗歌",
-  story: "故事",
-  slogan: "标语",
-  geographic: "地名解说",
-  rest: "歇后语",
-};
+const TYPE_JSON = ENV.TYPE_JSON;
 
 const formatRules = (rules: unknown) => {
   if (Array.isArray(rules)) {
@@ -25,11 +25,11 @@ const getTitleFontSize = (title: string) => {
     return length + (/^[\x00-\xff]$/.test(character) ? 0.55 : 1);
   }, 0);
 
-  if (visualLength === 0) return 60;
+  if (visualLength === 0) return 46;
 
-  // 标题区约有 660rpx 可用宽度，同时为字符间距预留空间。
-  const availableWidth = 660 - Math.max(0, characters.length - 1) * 4;
-  return Math.max(42, Math.min(60, Math.floor(availableWidth / visualLength)));
+  // 毛玻璃标题卡片约有 600rpx 可用宽度，同时为字符间距预留空间。
+  const availableWidth = 600 - Math.max(0, characters.length - 1) * 4;
+  return Math.max(36, Math.min(46, Math.floor(availableWidth / visualLength)));
 };
 
 Page({
@@ -38,15 +38,16 @@ Page({
     track: {} as any,
     trackLoading: true,
     trackTextReady: false,
-    trackTitleFontSize: 60,
+    trackTitleFontSize: 46,
     currentTrackType: "all",
     cardList: [] as any[],
     page: 1,
     total: 0,
     loading: false,
-    isInitialCardLoading: true,
     noMore: false,
     ruleDialogVisible: false,
+    joinConsentPopupVisible: false,
+    shouldResumeJoin: false,
     ruleDialogDescription: "",
     ruleDialogRules: "",
     ruleDialogConfirmBtn: {
@@ -58,20 +59,15 @@ Page({
       hoverClass: "none",
     },
     select: "phrase",
-    type: [
-      { label: "全部", value: "all" },
-      { label: "用语", value: "phrase" },
-      { label: "诗歌", value: "poem" },
-      { label: "故事", value: "story" },
-      { label: "标语", value: "slogan" },
-      { label: "地名解说", value: "geographic" },
-      { label: "歇后语", value: "rest" },
-    ],
+    type: [{ label: "全部", value: "all" }, ...ENV.TYPE],
   },
 
   onLoad(options) {
     const id = options.id;
-    this.setData({ trackId: id });
+    this.setData({
+      trackId: id,
+      shouldResumeJoin: options.join === "1",
+    });
     this.syncTheme();
     this.loadTrack();
   },
@@ -85,6 +81,7 @@ Page({
       const track = await request(`/activities/${this.data.trackId}`);
       track.startsAt = formatDate(track.startsAt, "YYYY-MM-DD");
       track.endsAt = formatDate(track.endsAt, "YYYY-MM-DD");
+      track.activityTag = track.activityTag || "";
       this.setData({
         track,
         trackTitleFontSize: getTitleFontSize(track.title || ""),
@@ -95,19 +92,23 @@ Page({
     } catch (err) {
       this.setData({
         trackLoading: false,
-        isInitialCardLoading: false,
       });
       console.log("获取活动或作品列表数据失败", err);
-      wx.showModal({
+      showCommonDialog(this, {
         title: "获取活动或作品列表数据失败",
         content: err.error || err.errMsg + "，请稍后重试",
-        showCancel: false,
       });
     }
   },
 
   onShow() {
     this.syncTheme();
+    if (this.data.shouldResumeJoin && isLoggedIn()) {
+      this.setData({
+        shouldResumeJoin: false,
+        joinConsentPopupVisible: true,
+      });
+    }
   },
 
   onReachBottom() {
@@ -123,7 +124,7 @@ Page({
       noMore: false,
       cardList: [],
     });
-    this.loadCardList().finally(() => {
+    this.loadCardList({ force: true }).finally(() => {
       wx.stopPullDownRefresh();
     });
   },
@@ -147,17 +148,13 @@ Page({
     this.loadCardList();
   },
 
-  async loadCardList() {
+  async loadCardList(options: { force?: boolean } = {}) {
     if (this.data.loading || this.data.noMore) {
       return;
     }
 
-    const isInitialLoad =
-      this.data.page === 1 && this.data.cardList.length === 0;
-
     this.setData({
       loading: true,
-      ...(isInitialLoad ? { isInitialCardLoading: true } : {}),
     });
 
     try {
@@ -170,28 +167,36 @@ Page({
         url += `&submissionType=${typeLabel}`;
       }
 
-      const { items = [], pagination } = await request(url);
-
-      const noMore = items.length < 10;
+      const snapshot = await fetchQuery({
+        queryKey: ["tracks", "works", this.data.trackId, currentTrackType],
+        force: options.force || page > 1,
+        queryFn: async () => {
+          const { items = [], pagination } = await request(url);
+          return {
+            cardList: page === 1 ? items : [...oldList, ...items],
+            page,
+            total: pagination.total,
+            noMore: items.length < 10,
+          };
+        },
+      });
 
       this.setData({
-        cardList: page === 1 ? items : [...oldList, ...items],
-
-        noMore,
-        total: pagination.total,
+        cardList: snapshot.cardList,
+        page: snapshot.page,
+        noMore: snapshot.noMore,
+        total: snapshot.total,
       });
     } catch (err: any) {
       console.error("加载卡片列表失败", err);
 
-      wx.showModal({
+      showCommonDialog(this, {
         title: "加载失败",
         content: err.error || err.errMsg + "，请稍后重试",
-        showCancel: false,
       });
     } finally {
       this.setData({
         loading: false,
-        ...(isInitialLoad ? { isInitialCardLoading: false } : {}),
       });
     }
   },
@@ -248,9 +253,36 @@ Page({
   },
 
   onPost() {
-    navigateToProtectedPage(
-      "/pages/post/post?mode=edit&tag=" + this.data.track.id,
-      "登录后才能投稿，当前仍可继续浏览活动内容。",
+    if (!isLoggedIn()) {
+      promptLogin(`/pages/tracks/tracks?id=${this.data.trackId}&join=1`, {
+        content: "登录后才能投稿，当前仍可继续浏览活动内容。",
+      });
+      return;
+    }
+
+    this.setData({ joinConsentPopupVisible: true });
+  },
+
+  onJoinConsentClose() {
+    this.setData({ joinConsentPopupVisible: false });
+  },
+
+  onJoinConsentComplete(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ joinConsentPopupVisible: false });
+    this.navigateToPost(
+      e.detail.activityId,
+      e.detail.questionnaireJourneyId || "",
     );
+  },
+
+  navigateToPost(activityId: string, questionnaireJourneyId: string) {
+    wx.navigateTo({
+      url:
+        "/pages/post/post?mode=edit&tag=" +
+        (activityId || this.data.track.id || this.data.trackId) +
+        (questionnaireJourneyId
+          ? `&questionnaireJourneyId=${encodeURIComponent(questionnaireJourneyId)}`
+          : ""),
+    });
   },
 });

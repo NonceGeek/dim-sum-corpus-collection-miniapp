@@ -1,6 +1,12 @@
 import { formatDate } from "../../utils/date";
-import { navigateToProtectedPage } from "../../utils/auth";
+import {
+  isLoggedIn,
+  navigateToProtectedPage,
+  promptLogin,
+} from "../../utils/auth";
 import request from "../../utils/http";
+import { fetchQuery } from "../../utils/query-cache";
+import { showCommonDialog } from "../../utils/common-dialog";
 
 interface ITrack {
   id: string;
@@ -123,11 +129,18 @@ Page({
     allTracksLoading: false,
     allTracksNoMore: false,
     allTracksSkeletons: [0, 1],
+    joinConsentPopupVisible: false,
+    joinConsentActivityId: "",
+    shouldResumeJoin: false,
   },
 
   timer: null as any,
 
-  async onLoad() {
+  async onLoad(options: any = {}) {
+    this.setData({
+      joinConsentActivityId: options.joinActivityId || "",
+      shouldResumeJoin: Boolean(options.joinActivityId),
+    });
     this.syncTheme();
     this.updateBannerTitle();
     this.startDescCycle();
@@ -143,13 +156,21 @@ Page({
     });
   },
 
-  async loadTopTracks() {
+  async loadTopTracks(options: { force?: boolean } = {}) {
     try {
-      wx.showLoading({ title: "加载中..." });
-      const { items } = await request("/activities");
-      const tracks = items.map(formatTrack);
-
-      wx.hideLoading();
+      const tracks = await fetchQuery({
+        queryKey: ["featured", "top-tracks"],
+        force: options.force,
+        queryFn: async () => {
+          wx.showLoading({ title: "加载中..." });
+          try {
+            const { items = [] } = await request("/activities");
+            return items.map(formatTrack);
+          } finally {
+            wx.hideLoading();
+          }
+        },
+      });
       this.setData(
         {
           topTracks: tracks,
@@ -157,7 +178,6 @@ Page({
         () => this.updateVisibleTabs(),
       );
     } catch (err) {
-      wx.hideLoading();
       console.log("加载活动报错:", err);
       wx.showToast({
         title: err.error,
@@ -174,12 +194,25 @@ Page({
   },
 
   async onPullDownRefresh() {
-    await this.loadTopTracks();
-    wx.stopPullDownRefresh();
+    try {
+      await this.loadTopTracks({ force: true });
+    } finally {
+      wx.stopPullDownRefresh();
+    }
   },
 
   onShow() {
     this.syncTheme();
+    if (
+      this.data.shouldResumeJoin &&
+      this.data.joinConsentActivityId &&
+      isLoggedIn()
+    ) {
+      this.setData({
+        shouldResumeJoin: false,
+        joinConsentPopupVisible: true,
+      });
+    }
   },
 
   onContentSwiperChange(e: any) {
@@ -331,10 +364,34 @@ Page({
 
   onPost(e: any) {
     const itemId = e.currentTarget.dataset.id;
-    navigateToProtectedPage(
-      `/pages/post/post?tag=${itemId}&mode=edit`,
-      "登录后才能投稿，当前仍可继续浏览精选内容。",
-    );
+    if (!isLoggedIn()) {
+      promptLogin(
+        `/pages/featured/featured?joinActivityId=${encodeURIComponent(itemId)}`,
+        { content: "登录后才能投稿，当前仍可继续浏览精选内容。" },
+      );
+      return;
+    }
+
+    this.setData({
+      joinConsentActivityId: itemId,
+      joinConsentPopupVisible: true,
+    });
+  },
+
+  onJoinConsentClose() {
+    this.setData({ joinConsentPopupVisible: false });
+  },
+
+  onJoinConsentComplete(e: WechatMiniprogram.CustomEvent) {
+    const { activityId, questionnaireJourneyId } = e.detail;
+    this.setData({ joinConsentPopupVisible: false });
+    wx.navigateTo({
+      url:
+        `/pages/post/post?tag=${encodeURIComponent(activityId)}&mode=edit` +
+        (questionnaireJourneyId
+          ? `&questionnaireJourneyId=${encodeURIComponent(questionnaireJourneyId)}`
+          : ""),
+    });
   },
   onShowDetails(e) {
     const itemId = e.currentTarget.dataset.id;
@@ -436,10 +493,9 @@ Page({
     const trackId = e.currentTarget.dataset.id;
     const timeStatus = e.currentTarget.dataset.timestatus;
     if (timeStatus === "not_started") {
-      wx.showModal({
+      showCommonDialog(this, {
         title: "投稿还未开始",
         content: "等阵先啦～",
-        showCancel: false,
       });
       return;
     } else {

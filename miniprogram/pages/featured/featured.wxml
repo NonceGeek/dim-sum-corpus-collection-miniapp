@@ -92,11 +92,12 @@
                 敬请期待
               </t-button>
               <t-button theme="default" shape="round" size="large" bind:tap="onMorePosts" data-id="{{track.id}}"
-                wx:if="{{track.works.length > 0}}">
+                wx:if="{{track.works.length > 0}}" hover-class="none">
                 更多参赛作品
               </t-button>
               <t-button theme="primary" shape="round" size="large" class="post-btn {{!track.canSubmit?'unactive':''}}"
-                bind:tap="onPost" data-id="{{track.id}}" wx:if="{{track.canSubmit}}" disabled="{{!track.canSubmit}}">
+                bind:tap="onPost" data-id="{{track.id}}" wx:if="{{track.canSubmit}}" disabled="{{!track.canSubmit}}"
+                hover-class="none">
                 投稿此活动
               </t-button>
             </view>
@@ -233,3 +234,12 @@
 
   <app-tab-bar value="featured" />
 </view>
+<join-consent-popup
+  visible="{{joinConsentPopupVisible}}"
+  activity-id="{{joinConsentActivityId}}"
+  current-theme="{{currentTheme}}"
+  bind:close="onJoinConsentClose"
+  bind:complete="onJoinConsentComplete"
+/>
+<common-dialog id="login-prompt" />
+<common-dialog id="common-dialog" />

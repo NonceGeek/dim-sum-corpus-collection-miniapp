@@ -10,6 +10,9 @@
     "pages/message/message",
     "pages/webview/webview"
   ],
+  "usingComponents": {
+    "common-dialog": "/components/common-dialog/common-dialog"
+  },
   "window": {
     "navigationBarTitleText": "文化征集",
     "navigationBarBackgroundColor": "@navBgColor",

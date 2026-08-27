@@ -79,3 +79,5 @@
 
   <app-tab-bar value="profile" />
 </view>
+<common-dialog id="login-prompt" />
+<common-dialog id="common-dialog" />

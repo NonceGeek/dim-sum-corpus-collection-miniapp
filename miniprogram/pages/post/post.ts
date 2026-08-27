@@ -27,15 +27,7 @@ sharedAudioManager.onError((err) => {
   activeAudioErrorHandler?.(err);
 });
 
-const TYPES = [
-  { label: "用语", value: "用语" },
-  { label: "诗歌", value: "诗歌" },
-  { label: "故事", value: "故事" },
-  { label: "标语", value: "标语" },
-  { label: "地名解说", value: "地名解说" },
-  { label: "歇后语", value: "歇后语" },
-  { label: "自然对话", value: "自然对话" },
-];
+const TYPES = ENV.TYPE;
 
 const getMediaPolicy = (activity: any) => {
   const hasActivity = Boolean(activity?.id);
@@ -62,12 +54,18 @@ const getMediaPolicy = (activity: any) => {
   };
 };
 
+const hasCompletedQuestionnaireProfile = () => {
+  const status = getApp<any>().globalData?.questionnaireStatus;
+  return status?.completed === true && status?.phoneVerified === true;
+};
+
 Page({
   data: {
     mode: "",
+    entryActivityId: "",
+    questionnaireJourneyId: "",
     currentTheme: "light",
     post: {} as any,
-    // postActionsVisible: false,
     selectedType: "",
     selectedActivity: {
       id: "",
@@ -125,7 +123,6 @@ Page({
     recordTime: 0,
     recordTimer: null as any,
     recordActionsAnimationTimer: null as any,
-    justFinishedRecording: false,
     audioUrl: "",
     audioDuration: 0,
     audioPlaying: false,
@@ -139,6 +136,8 @@ Page({
     pendingAudioDuration: 0,
     // 用透明 page-container 接管左滑、安卓返回键和 navigateBack。
     exitGuardVisible: false,
+    joinConsentPopupVisible: false,
+    joinConsentActivityId: "",
   },
   audioStateHandler: null as any,
   audioErrorHandler: null as any,
@@ -146,15 +145,20 @@ Page({
   recordCancelledOnHide: false,
   exitConfirmVisible: false,
   pageExitConfirmed: false,
+  pendingPageExit: false,
 
   async onLoad(options) {
-    const { tag, id, mode } = options;
+    const { tag, id, mode, questionnaireJourneyId } = options;
+    console.log('onLoad options:', options);
     const pageMode = mode || "edit";
     this.syncTheme();
 
     const query = [
       tag ? `tag=${encodeURIComponent(tag)}` : "",
       id ? `id=${encodeURIComponent(id)}` : "",
+      questionnaireJourneyId
+        ? `questionnaireJourneyId=${encodeURIComponent(questionnaireJourneyId)}`
+        : "",
       `mode=${encodeURIComponent(pageMode)}`,
     ]
       .filter(Boolean)
@@ -176,6 +180,8 @@ Page({
     this.setData(
       {
         mode: pageMode,
+        entryActivityId: tag || "",
+        questionnaireJourneyId: questionnaireJourneyId || "",
         userId: userInfo?.id || "",
         exitGuardVisible: pageMode === "edit",
       },
@@ -191,6 +197,34 @@ Page({
           if (mode === "view" && postLoaded && isLoggedIn()) {
             const view = await request(`/works/${id}/view`, { method: "POST" });
             this.setData({ view: view?.viewCount });
+          }
+          const globalQuestionnaireStatus =
+            getApp<any>().globalData?.questionnaireStatus;
+          const cachedQuestionnaireStatus =
+            wx.getStorageSync("userInfo")?.questionnaireStatus;
+          console.log("[questionnaire-debug][post:onLoad]", {
+            mode,
+            questionnaireJourneyId: this.data.questionnaireJourneyId,
+            globalQuestionnaireStatus,
+            cachedQuestionnaireStatus,
+            hasCompletedQuestionnaireProfile:
+              hasCompletedQuestionnaireProfile(),
+          });
+          if (
+            mode === "edit" &&
+            (!id || postLoaded) &&
+            !this.data.questionnaireJourneyId &&
+            !hasCompletedQuestionnaireProfile()
+          ) {
+            const activityId =
+              (this.data.post as any)?.activity?.id ||
+              this.data.selectedActivity?.id ||
+              this.data.entryActivityId ||
+              "";
+            this.setData({
+              joinConsentActivityId: activityId,
+              joinConsentPopupVisible: true,
+            });
           }
         } catch (err: any) {
           console.error("onLoad async error:", err);
@@ -239,7 +273,6 @@ Page({
     wx.showLoading({ title: "加载活动中..." });
     try {
       const track = await request(`/activities/${id}`);
-      const mediaPolicy = getMediaPolicy(track);
       await new Promise<void>((resolve) => {
         this.setData(
           {
@@ -256,9 +289,7 @@ Page({
                 ? track.submissionTypes[0]
                 : this.data.selectedType,
             selectedActivity: track,
-            allowImageUpload: mediaPolicy.allowImageUpload,
-            allowVideoUpload: mediaPolicy.allowVideoUpload,
-            allowAudioUpload: mediaPolicy.allowAudioUpload,
+            ...this.getMediaPolicyState(track),
           },
           resolve,
         );
@@ -267,10 +298,9 @@ Page({
       return true;
     } catch (err: any) {
       console.log("获取活动数据失败", err);
-      wx.showModal({
+      this.showPostDialog({
         title: "获取活动数据失败",
         content: err.error + "，请稍后重试",
-        showCancel: false,
       });
       return false;
     } finally {
@@ -297,7 +327,6 @@ Page({
       if (!this.data.selectedActivity?.id && res.activity && res.activity.id) {
         selectedActivity = await request(`/activities/${res.activity.id}`);
       }
-      const mediaPolicy = getMediaPolicy(selectedActivity);
       console.log("res:", res);
       console.log(
         "audio:",
@@ -330,9 +359,7 @@ Page({
         audioUrl: audioMedia?.url || "",
         audioDuration,
         selectedActivity,
-        allowImageUpload: mediaPolicy.allowImageUpload,
-        allowVideoUpload: mediaPolicy.allowVideoUpload,
-        allowAudioUpload: mediaPolicy.allowAudioUpload,
+        ...this.getMediaPolicyState(selectedActivity),
         selectedType: res.submissionType,
       });
       this.checkCanPublish();
@@ -346,10 +373,9 @@ Page({
         });
       }
       if (err?.code !== "AUTH_REQUIRED") {
-        wx.showModal({
+        this.showPostDialog({
           title: "获取投稿数据失败",
           content: `${err?.error || err?.message || "请求失败"}，请稍后再试`,
-          showCancel: false,
         });
       }
       return false;
@@ -388,14 +414,42 @@ Page({
     this.setData({ currentTheme });
   },
 
+  getMediaPolicyState(activity: any) {
+    const mediaPolicy = getMediaPolicy(activity);
+    return {
+      allowImageUpload: mediaPolicy.allowImageUpload,
+      allowVideoUpload: mediaPolicy.allowVideoUpload,
+      allowAudioUpload: mediaPolicy.allowAudioUpload,
+    };
+  },
+
+  getPendingRecordingResetState() {
+    return {
+      recordReady: false,
+      recordActionsAnimating: false,
+      recordTime: 0,
+      pendingRecordPath: "",
+      pendingRecordDuration: 0,
+    };
+  },
+
+  showPostDialog(options: {
+    title: string;
+    content: string;
+    showCancel?: boolean;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    onComplete?: () => void;
+  }) {
+    const dialog = this.selectComponent("#common-dialog") as any;
+    dialog?.open(options);
+  },
+
   // 显示类型选择器
   onShowTypePicker() {
     this.setData({ pickerVisible: true });
-  },
-
-  // Picker 关闭
-  onPickerVisibleChange(e: any) {
-    this.setData({ pickerVisible: e.detail.visible });
   },
 
   // 类型选择确认
@@ -532,10 +586,9 @@ Page({
 
     if (maxCount === 0) {
       if (mediaPolicy.hasActivity) {
-        wx.showModal({
+        this.showPostDialog({
           title: "已达到该活动媒体上限",
           content: ruleDescription,
-          showCancel: false,
         });
       } else {
         wx.showToast({ title: "已达到媒体数量上限", icon: "none" });
@@ -576,10 +629,9 @@ Page({
             currentImageCount + selectedImageCount > maxImageCount ||
             currentVideoCount + selectedVideoCount > maxVideoCount
           ) {
-            wx.showModal({
+            this.showPostDialog({
               title: "提示",
               content: ruleDescription,
-              showCancel: false,
             });
             return;
           }
@@ -590,10 +642,9 @@ Page({
           );
 
           if (overDurationVideo) {
-            wx.showModal({
+            this.showPostDialog({
               title: "提示",
               content: `视频不能超过${MAX_VIDEO_DURATION}秒`,
-              showCancel: false,
             });
             return;
           }
@@ -621,12 +672,11 @@ Page({
           if (err?.code === "AUTH_REQUIRED") {
             return;
           }
-          wx.showModal({
+          this.showPostDialog({
             title: "上传失败",
             content:
               (err?.message || err?.errMsg || err?.error || "操作失败") +
               "，请稍后重试",
-            showCancel: false,
           });
         } finally {
           wx.hideLoading();
@@ -635,10 +685,9 @@ Page({
       fail: (err) => {
         if (err.errMsg?.includes("cancel")) return;
         console.error("选择图片或视频失败：", err);
-        wx.showModal({
+        this.showPostDialog({
           title: "无法选择图片或视频",
           content: err.errMsg || "请检查相册和相机权限后重试",
-          showCancel: false,
         });
       },
     });
@@ -719,12 +768,9 @@ Page({
   // 不参与任何活动
   onNoActivity() {
     const selectedActivity = { id: "", title: "不参与任何活动" };
-    const mediaPolicy = getMediaPolicy(selectedActivity);
     this.setData({
       selectedActivity,
-      allowImageUpload: mediaPolicy.allowImageUpload,
-      allowVideoUpload: mediaPolicy.allowVideoUpload,
-      allowAudioUpload: mediaPolicy.allowAudioUpload,
+      ...this.getMediaPolicyState(selectedActivity),
       activityPopupVisible: false,
       typeOptions: TYPES,
     });
@@ -875,7 +921,6 @@ Page({
       audioUrl,
       audioDuration,
     } = this.data;
-
     const mediaPolicy = getMediaPolicy(selectedActivity);
     const violations: string[] = [];
     const tags = [...(selectedActivity?.tags || []), ...selectedTopics]
@@ -978,19 +1023,17 @@ Page({
     }
 
     if (violations.length > 0) {
-      wx.showModal({
+      this.showPostDialog({
         title: "当前媒体不符合活动规则",
         content:
           violations.map((item) => `• ${item}`).join("\n") +
           "\n\n请调整后再发布。",
-        showCancel: false,
       });
     }
   },
   // 取消发布
   onCancel() {
-    // page-container 会统一接管左上角、左滑和安卓返回键。
-    wx.navigateBack();
+    this.onExitGuardBeforeLeave();
   },
 
   hasUnsavedPostContent() {
@@ -1032,32 +1075,28 @@ Page({
       return;
     }
 
-    this.setData({ exitGuardVisible: false });
-
     if (this.exitConfirmVisible) {
+      this.setData({ exitGuardVisible: false });
       return;
     }
 
     const isRecording = this.data.recording || this.data.recordStopping;
     if (!isRecording && !this.hasUnsavedPostContent()) {
-      this.leavePostPage();
+      this.leavePostPageAfterPublish();
       return;
     }
 
+    this.setData({ exitGuardVisible: false });
     this.exitConfirmVisible = true;
-    wx.showModal({
+    this.showPostDialog({
       title: isRecording ? "录音正在进行" : "提示",
       content: isRecording
         ? "退出将取消本次录音，是否确认退出？"
         : "确定要放弃编辑吗？",
+      showCancel: true,
       confirmText: "确认退出",
-      confirmColor: isRecording ? "#d54941" : "#576b95",
-      success: (res) => {
-        if (!res.confirm) {
-          this.setData({ exitGuardVisible: true });
-          return;
-        }
-
+      cancelText: "继续编辑",
+      onConfirm: () => {
         if (isRecording) {
           const alreadyStopping = this.data.recordStopping;
           this.setData({ recordMode: "discard", recordStopping: true });
@@ -1065,22 +1104,58 @@ Page({
             sharedRecorderManager.stop();
           }
         }
-        this.leavePostPage();
+        this.leavePostPageAfterPublish();
       },
-      fail: () => {
+      onCancel: () => {
         this.setData({ exitGuardVisible: true });
       },
-      complete: () => {
+      onComplete: () => {
         this.exitConfirmVisible = false;
       },
     });
   },
 
-  leavePostPage() {
+  leavePostPageAfterPublish() {
+    if (this.pageExitConfirmed) return;
     this.pageExitConfirmed = true;
+    this.pendingPageExit = true;
     wx.disableAlertBeforeUnload();
-    this.setData({ exitGuardVisible: false }, () => {
-      setTimeout(() => wx.navigateBack(), 80);
+    if (this.data.exitGuardVisible) {
+      this.setData({ exitGuardVisible: false });
+      return;
+    }
+    this.finishPostPageExit();
+  },
+
+  onExitGuardAfterLeave() {
+    if (this.pendingPageExit) {
+      this.finishPostPageExit();
+    }
+  },
+
+  finishPostPageExit() {
+    if (!this.pendingPageExit) return;
+    this.pendingPageExit = false;
+
+    const activityId = this.data.entryActivityId;
+    const url = activityId
+      ? `/pages/tracks/tracks?id=${encodeURIComponent(activityId)}`
+      : "/pages/index/index";
+
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack({
+        fail: () =>
+          wx.redirectTo({
+            url,
+            fail: () => wx.reLaunch({ url }),
+          }),
+      });
+      return;
+    }
+
+    wx.redirectTo({
+      url,
+      fail: () => wx.reLaunch({ url }),
     });
   },
 
@@ -1095,10 +1170,9 @@ Page({
     console.log("validation:", validation);
     if (!validation.canPublish) {
       if (validation.message) {
-        wx.showModal({
+        this.showPostDialog({
           title: "提示",
           content: validation.message,
-          showCancel: false,
         });
       }
       return;
@@ -1115,6 +1189,7 @@ Page({
       audioUrl,
       audioDuration,
     } = this.data;
+    const questionnaireJourneyId = this.data.questionnaireJourneyId;
 
     let imageSortOrder = 0;
     const mediaList = [
@@ -1138,7 +1213,12 @@ Page({
 
     const publishData = {
       ...(selectedActivity && selectedActivity.id
-        ? { activityId: selectedActivity.id }
+        ? {
+            activityId: selectedActivity.id,
+          }
+        : {}),
+      ...(questionnaireJourneyId
+        ? { questionnaireJourneyId }
         : {}),
       submissionType: selectedType,
       title: title,
@@ -1175,10 +1255,9 @@ Page({
 
       if (precheck.verdict !== "pass") {
         wx.hideLoading();
-        wx.showModal({
+        this.showPostDialog({
           title: "提示",
           content: precheck.error || "内容审核未通过",
-          showCancel: false,
         });
         return;
       }
@@ -1195,10 +1274,9 @@ Page({
       wx.hideLoading();
 
       if (submission.error) {
-        wx.showModal({
+        this.showPostDialog({
           title: "错误提示",
           content: submission.error,
-          showCancel: false,
         });
       } else {
         wx.showToast({
@@ -1207,32 +1285,22 @@ Page({
           duration: 1500,
         });
         setTimeout(() => {
-          this.leavePostPage();
+          this.leavePostPageAfterPublish();
         }, 1500);
       }
     } catch (err: any) {
       wx.hideLoading();
       console.error("发布失败：", err);
-      wx.showModal({
+      this.showPostDialog({
         title: "发布失败",
         content: err?.error || err?.message || "请稍后重试",
-        showCancel: false,
       });
     }
   },
 
-  // 切换录音弹窗
-  onToggleRecordPopup() {
+  // 打开录音弹窗
+  onOpenRecordPopup() {
     this.stopAudioPlayback();
-    const mediaPolicy = getMediaPolicy(this.data.selectedActivity);
-    if (!mediaPolicy.allowAudioUpload) {
-      wx.showModal({
-        title: "该活动不支持上传录音",
-        content: "请按照活动已勾选的媒体类型进行投稿",
-        showCancel: false,
-      });
-      return;
-    }
     this.allowRecordPopupClose = false;
     this.setData({ recordPopupVisible: true });
   },
@@ -1259,17 +1327,13 @@ Page({
 
       if (this.data.recording || this.data.recordStopping) {
         const alreadyStopping = this.data.recordStopping;
-        wx.showModal({
+        this.showPostDialog({
           title: "录音正在进行",
           content: "退出将取消本次录音，是否确认退出？",
+          showCancel: true,
           confirmText: "取消录音",
-          confirmColor: "#d54941",
-          success: (res) => {
-            if (!res.confirm) {
-              this.setData({ recordPopupVisible: true });
-              return;
-            }
-
+          cancelText: "继续录音",
+          onConfirm: () => {
             wx.disableAlertBeforeUnload();
             this.setData({
               recordMode: "discard",
@@ -1281,6 +1345,9 @@ Page({
               sharedRecorderManager.stop();
             }
           },
+          onCancel: () => {
+            this.setData({ recordPopupVisible: true });
+          },
         });
         this.setData({ recordPopupVisible: true });
         return;
@@ -1288,11 +1355,7 @@ Page({
 
       this.setData(
         {
-          recordReady: false,
-          recordActionsAnimating: false,
-          recordTime: 0,
-          pendingRecordPath: "",
-          pendingRecordDuration: 0,
+          ...this.getPendingRecordingResetState(),
         },
         () => this.syncUnsavedExitGuard(),
       );
@@ -1357,24 +1420,23 @@ Page({
               this.setData({ recordStarting: false });
               if (!canStart()) return;
 
-              wx.showModal({
+              this.showPostDialog({
                 title: "需要录音权限",
                 content: "开启录音权限后才能使用语音功能",
+                showCancel: true,
                 confirmText: "去开启",
-                success: (modalRes) => {
-                  if (modalRes.confirm) {
-                    wx.openSetting({
-                      success: (settingRes) => {
-                        // 用户重新开启
-                        if (
-                          settingRes.authSetting["scope.record"] &&
-                          canStart()
-                        ) {
-                          this.doStartRecord();
-                        }
-                      },
-                    });
-                  }
+                cancelText: "取消",
+                onConfirm: () => {
+                  wx.openSetting({
+                    success: (settingRes) => {
+                      // 用户重新开启
+                      if (
+                        settingRes.authSetting["scope.record"] && canStart()
+                      ) {
+                        this.doStartRecord();
+                      }
+                    },
+                  });
                 },
               });
             },
@@ -1396,14 +1458,10 @@ Page({
     this.stopAudioPlayback();
     activeRecorderStopHandler = this.handleRecordStop;
     this.setData({
+      ...this.getPendingRecordingResetState(),
       recordStarting: false,
       recording: true,
       recordStopping: false,
-      recordReady: false,
-      recordActionsAnimating: false,
-      recordTime: 0,
-      pendingRecordPath: "",
-      pendingRecordDuration: 0,
       recordMode: "normal",
     });
 
@@ -1443,18 +1501,28 @@ Page({
     if (this.data.recordProcessing) return;
     this.setData(
       {
-        recordReady: false,
-        recordActionsAnimating: false,
-        recordTime: 0,
-        pendingRecordPath: "",
-        pendingRecordDuration: 0,
+        ...this.getPendingRecordingResetState(),
       },
       () => this.syncUnsavedExitGuard(),
     );
   },
 
-  // 使用当前录音：此时才上传录音文件。
-  async onUseRecordedAudio() {
+  // “使用原音”先询问是否需要转文字。
+  onUseRecordedAudio() {
+    if (!this.data.pendingRecordPath || this.data.recordProcessing) return;
+    this.showPostDialog({
+      title: "是否需要语音转文字？",
+      content: "选择“是”可查看并编辑转换结果，选择“否”将仅保留录音。",
+      showCancel: true,
+      confirmText: "是",
+      cancelText: "否",
+      onConfirm: () => this.onTranscribeRecordedAudio(),
+      onCancel: () => this.saveRecordedAudioOnly(),
+    });
+  },
+
+  // 仅使用原音：此时才上传录音文件。
+  async saveRecordedAudioOnly() {
     const { pendingRecordPath, pendingRecordDuration } = this.data;
     if (!pendingRecordPath || this.data.recordProcessing) return;
 
@@ -1572,6 +1640,22 @@ Page({
     this.setData({ asrText: e.detail.value });
   },
 
+  commitPendingAudio(content?: string) {
+    this.stopAudioPlayback();
+    this.setData(
+      {
+        audioUrl: this.data.pendingAudioUrl,
+        audioDuration: this.data.pendingAudioDuration,
+        ...(content === undefined ? {} : { content }),
+        asrPopupVisible: false,
+        asrText: "",
+        pendingAudioUrl: "",
+        pendingAudioDuration: 0,
+      },
+      () => this.checkCanPublish(),
+    );
+  },
+
   // 转文字弹窗：取消，丢弃录音和文字
   onAsrCancel() {
     this.setData({
@@ -1584,21 +1668,10 @@ Page({
 
   // 转文字弹窗：发原语音，保存录音文件
   onAsrUseAudio() {
-    this.stopAudioPlayback();
-    this.setData(
-      {
-        audioUrl: this.data.pendingAudioUrl,
-        audioDuration: this.data.pendingAudioDuration,
-        asrPopupVisible: false,
-        asrText: "",
-        pendingAudioUrl: "",
-        pendingAudioDuration: 0,
-      },
-      () => this.checkCanPublish(),
-    );
+    this.commitPendingAudio();
   },
 
-  // 转文字弹窗：确认，把文字追加到正文
+  // 转文字弹窗：确认，同时保存录音并把文字追加到正文。
   onAsrConfirm() {
     const text = this.data.asrText.trim();
     if (!text) {
@@ -1606,32 +1679,26 @@ Page({
       return;
     }
     const content = this.data.content ? this.data.content + "\n" + text : text;
-    this.setData({
-      content,
-      asrPopupVisible: false,
-      asrText: "",
-      pendingAudioUrl: "",
-      pendingAudioDuration: 0,
-    });
-    this.checkCanPublish();
+    this.commitPendingAudio(content);
   },
 
   // 删除录音
   onDeleteAudio() {
-    wx.showModal({
+    this.showPostDialog({
       title: "确认删除",
       content: "确定要删除录音吗？",
-      success: (res) => {
-        if (res.confirm) {
-          this.stopAudioPlayback();
-          this.setData(
-            {
-              audioUrl: "",
-              audioDuration: 0,
-            },
-            () => this.checkCanPublish(),
-          );
-        }
+      showCancel: true,
+      confirmText: "删除",
+      cancelText: "取消",
+      onConfirm: () => {
+        this.stopAudioPlayback();
+        this.setData(
+          {
+            audioUrl: "",
+            audioDuration: 0,
+          },
+          () => this.checkCanPublish(),
+        );
       },
     });
   },
@@ -1692,11 +1759,7 @@ Page({
       console.log("录音已取消");
       this.setData(
         {
-          recordReady: false,
-          recordActionsAnimating: false,
-          recordTime: 0,
-          pendingRecordPath: "",
-          pendingRecordDuration: 0,
+          ...this.getPendingRecordingResetState(),
           recordMode: "normal",
         },
         () => this.syncUnsavedExitGuard(),
@@ -1744,41 +1807,59 @@ Page({
     });
   },
 
-  // 查看模式：显示操作弹窗
-  // onShowPostActions() {
-  //   this.setData({ postActionsVisible: true });
-  // },
-
-  // onPostActionsClose() {
-  //   this.setData({ postActionsVisible: false });
-  // },
 
   // 查看模式：跳转编辑
   onEditPost() {
-    this.setData({ postActionsVisible: false });
-    const id = (this.data.post as any).id;
-    wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=edit` });
+    if (hasCompletedQuestionnaireProfile()) {
+      this.navigateToEditPost();
+      return;
+    }
+
+    const activityId =
+      (this.data.post as any)?.activity?.id ||
+      this.data.selectedActivity?.id ||
+      "";
+    this.setData({
+      joinConsentActivityId: activityId,
+      joinConsentPopupVisible: true,
+    });
   },
 
-  // onDeletePost() {
-  //   this.setData({ postActionsVisible: false });
-  //   wx.showModal({
-  //     title: "确认删除",
-  //     content: "删除后无法恢复，确定要删除吗？",
-  //     confirmColor: "#f62459",
-  //     success: async (res) => {
-  //       if (!res.confirm) return;
-  //       try {
-  //         const id = (this.data.post as any).id;
-  //         await request(`/submissions/${id}`, { method: "DELETE" });
-  //         wx.showToast({ title: "已删除", icon: "success" });
-  //         setTimeout(() => wx.navigateBack(), 1500);
-  //       } catch (err: any) {
-  //         wx.showToast({ title: err.error || "删除失败", icon: "none" });
-  //       }
-  //     },
-  //   });
-  // },
+  onJoinConsentClose() {
+    if (
+      this.data.mode === "edit" &&
+      !this.data.questionnaireJourneyId
+    ) {
+      this.leavePostPageAfterPublish();
+      return;
+    }
+    this.setData({ joinConsentPopupVisible: false });
+  },
+
+  onJoinConsentComplete(e: WechatMiniprogram.CustomEvent) {
+    if (this.data.mode === "edit") {
+      this.setData({
+        joinConsentPopupVisible: false,
+        questionnaireJourneyId: e.detail.questionnaireJourneyId || "",
+      });
+      return;
+    }
+
+    this.setData({ joinConsentPopupVisible: false });
+    this.navigateToEditPost(e.detail.questionnaireJourneyId);
+  },
+
+  navigateToEditPost(questionnaireJourneyId = "") {
+    const id = (this.data.post as any).id;
+    wx.navigateTo({
+      url:
+        `/pages/post/post?id=${id}&mode=edit` +
+        (questionnaireJourneyId
+          ? `&questionnaireJourneyId=${encodeURIComponent(questionnaireJourneyId)}`
+          : ""),
+    });
+  },
+
   onViewNavbarBack() {
     wx.navigateBack();
   },

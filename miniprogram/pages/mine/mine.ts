@@ -1,5 +1,10 @@
 import request from "../../utils/http";
 import { guardProtectedPage } from "../../utils/auth";
+import {
+  fetchQuery,
+  getCurrentUserQueryKey,
+} from "../../utils/query-cache";
+import { showCommonDialog } from "../../utils/common-dialog";
 
 const STATUS = [
   {
@@ -72,7 +77,7 @@ Page({
     await this.loadOwnTracks();
     await this.loadOwnWorks();
   },
-  async loadOwnWorks() {
+  async loadOwnWorks(options: { force?: boolean } = {}) {
     if (this.data.loading || this.data.noMore) {
       return;
     }
@@ -105,17 +110,34 @@ Page({
       if (activeTrack === "other") {
         url += "&withoutActivity=true";
       }
-      const res = await request(url);
-      const { items = [], pagination } = res;
-
-      const works = items;
-
-      const noMore = items.length < pageSize;
+      const snapshot = await fetchQuery({
+        queryKey: [
+          "mine",
+          "works",
+          getCurrentUserQueryKey(),
+          activeTrack,
+          activeStatus,
+        ],
+        force: options.force || page > 1,
+        queryFn: async () => {
+          const res = await request(url);
+          const { items = [], pagination } = res;
+          const works = page === 1 ? items : [...oldWorks, ...items];
+          return {
+            visibleWorks: works,
+            page,
+            total: pagination.total || 0,
+            noMore: items.length < pageSize,
+            flag: flag || (pagination.total || works.length) > 0,
+          };
+        },
+      });
       this.setData({
-        visibleWorks: page === 1 ? works : [...oldWorks, ...works],
-        total: pagination.total || 0,
-        noMore,
-        ...(!flag ? { flag: (pagination.total || works.length) > 0 } : {}),
+        visibleWorks: snapshot.visibleWorks,
+        page: snapshot.page,
+        total: snapshot.total,
+        noMore: snapshot.noMore,
+        flag: snapshot.flag,
       });
     } catch (err: any) {
       console.log("获取我的投稿数据出错：", err);
@@ -124,10 +146,9 @@ Page({
         return;
       }
 
-      wx.showModal({
+      showCommonDialog(this, {
         title: "获取失败",
         content: err.error || err.errMsg + "，请稍后再试",
-        showCancel: false,
       });
     } finally {
       this.setData({
@@ -137,22 +158,25 @@ Page({
     }
   },
 
-  async loadOwnTracks() {
+  async loadOwnTracks(options: { force?: boolean } = {}) {
     try {
-      const res = await request("/profile/activities");
-      const { items } = res;
-      const mapItems = items.map((item) => ({
-        id: item.id,
-        title: item.title,
-      }));
-
-      this.setData({
-        tracks: [
-          { id: "all", title: "全部" },
-          ...mapItems,
-          { id: "other", title: "其他" },
-        ] as any,
+      const tracks = await fetchQuery({
+        queryKey: ["mine", "tracks", getCurrentUserQueryKey()],
+        force: options.force,
+        queryFn: async () => {
+          const res = await request("/profile/activities");
+          const mapItems = (res.items || []).map((item) => ({
+            id: item.id,
+            title: item.title,
+          }));
+          return [
+            { id: "all", title: "全部" },
+            ...mapItems,
+            { id: "other", title: "其他" },
+          ] as any;
+        },
       });
+      this.setData({ tracks });
     } catch (err: any) {
       console.log("获取我的参赛活动数据出错：", err);
 
@@ -160,10 +184,9 @@ Page({
         return;
       }
 
-      wx.showModal({
+      showCommonDialog(this, {
         title: "获取我的参赛活动数据出错",
         content: err.error || err.errMsg + "，请稍后重试",
-        showCancel: false,
       });
     }
   },
@@ -252,7 +275,7 @@ Page({
       visibleWorks: [],
     });
 
-    this.loadOwnWorks().finally(() => {
+    this.loadOwnWorks({ force: true }).finally(() => {
       wx.stopPullDownRefresh();
     });
   },

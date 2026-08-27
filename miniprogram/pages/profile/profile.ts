@@ -1,4 +1,5 @@
 import request from "../../utils/http";
+import { showCommonDialog } from "../../utils/common-dialog";
 import ENV from "../../config/setting";
 import {
   isLoggedIn,
@@ -81,10 +82,9 @@ Page({
       if (err?.code === "AUTH_REQUIRED") {
         return;
       }
-      wx.showModal({
+      showCommonDialog(this, {
         title: "获取用户数据出错",
         content: err.error,
-        showCancel: false,
       });
     }
   },
@@ -208,14 +208,15 @@ Page({
   },
 
   onLogout() {
-    wx.showModal({
+    showCommonDialog(this, {
       title: "提示",
       content: "确定要退出登录吗？",
-      success: (res) => {
-        if (res.confirm) {
-          const app = getApp<any>();
-          app.logout();
-        }
+      showCancel: true,
+      confirmText: "退出登录",
+      cancelText: "取消",
+      onConfirm: () => {
+        const app = getApp<any>();
+        app.logout();
       },
     });
   },
