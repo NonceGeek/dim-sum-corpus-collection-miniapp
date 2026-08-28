@@ -1,6 +1,8 @@
 interface LoginPromptOptions {
   content?: string;
   replaceCurrentPage?: boolean;
+  returnToPrevious?: boolean;
+  onConfirm?: () => void;
 }
 
 const DEFAULT_LOGIN_PROMPT = "登录后才能使用该功能，当前仍可继续浏览公开内容。";
@@ -25,8 +27,14 @@ export function isLoggedIn(): boolean {
   );
 }
 
-function getLoginUrl(redirectUrl: string): string {
-  return `/pages/login/login?redirect=${encodeURIComponent(redirectUrl)}`;
+function getLoginUrl(
+  redirectUrl: string,
+  returnToPrevious = false,
+): string {
+  return (
+    `/pages/login/login?redirect=${encodeURIComponent(redirectUrl)}` +
+    (returnToPrevious ? "&returnToPrevious=1" : "")
+  );
 }
 
 function getCurrentPageUrl(): string {
@@ -85,7 +93,11 @@ export function promptLogin(
     confirmText: "去登录",
     cancelText: "暂不登录",
     onConfirm: () => {
-      const loginUrl = getLoginUrl(redirectUrl);
+      options.onConfirm?.();
+      const loginUrl = getLoginUrl(
+        redirectUrl,
+        options.returnToPrevious === true,
+      );
       if (options.replaceCurrentPage) {
         wx.redirectTo({ url: loginUrl });
       } else {

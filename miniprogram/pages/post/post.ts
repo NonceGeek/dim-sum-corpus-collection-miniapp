@@ -1120,7 +1120,10 @@ Page({
     this.pendingPageExit = true;
     wx.disableAlertBeforeUnload();
     if (this.data.exitGuardVisible) {
-      this.setData({ exitGuardVisible: false });
+      this.setData({ exitGuardVisible: false }, () => {
+        // 某些设备取消边缘手势时不会稳定触发 afterleave，主动完成真实页面退出。
+        wx.nextTick(() => this.finishPostPageExit());
+      });
       return;
     }
     this.finishPostPageExit();

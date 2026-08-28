@@ -6,6 +6,12 @@ import { fetchQuery } from "../../utils/query-cache";
 const SHARE_TITLE = `${ENV.title}｜${ENV.subtitle}`;
 const SHARE_PATH = "/pages/index/index";
 const TIMELINE_IMAGE = "/public/image/logo.png";
+const BASE_SWIPER_WIDTH = 375;
+const BASE_SWIPER_HEIGHT = 200;
+
+function getSwiperHeight(windowWidth: number) {
+  return Math.round((windowWidth / BASE_SWIPER_WIDTH) * BASE_SWIPER_HEIGHT);
+}
 
 interface ISwiperList {
   id: string;
@@ -25,6 +31,7 @@ Page({
     bannerImageProps: {
       mode: "widthFix",
     },
+    swiperHeight: BASE_SWIPER_HEIGHT,
     swiperList: [],
 
     cardList: [],
@@ -37,6 +44,7 @@ Page({
   loadMoreObserver: null as any,
 
   async onLoad() {
+    this.updateSwiperHeight(wx.getSystemInfoSync().windowWidth);
     this.syncTheme();
     wx.showShareMenu({
       menus: ["shareAppMessage", "shareTimeline"],
@@ -57,6 +65,14 @@ Page({
 
   onShow() {
     this.syncTheme();
+  },
+
+  onResize(res: WechatMiniprogram.OnWindowResizeCallbackResult) {
+    this.updateSwiperHeight(res.size.windowWidth);
+  },
+
+  updateSwiperHeight(windowWidth: number) {
+    this.setData({ swiperHeight: getSwiperHeight(windowWidth) });
   },
 
   syncTheme() {

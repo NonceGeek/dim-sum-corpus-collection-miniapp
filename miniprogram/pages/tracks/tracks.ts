@@ -103,12 +103,12 @@ Page({
 
   onShow() {
     this.syncTheme();
-    if (this.data.shouldResumeJoin && isLoggedIn()) {
-      this.setData({
-        shouldResumeJoin: false,
-        joinConsentPopupVisible: true,
-      });
-    }
+    if (!this.data.shouldResumeJoin) return;
+
+    this.setData({
+      shouldResumeJoin: false,
+      ...(isLoggedIn() ? { joinConsentPopupVisible: true } : {}),
+    });
   },
 
   onReachBottom() {
@@ -256,6 +256,8 @@ Page({
     if (!isLoggedIn()) {
       promptLogin(`/pages/tracks/tracks?id=${this.data.trackId}&join=1`, {
         content: "登录后才能投稿，当前仍可继续浏览活动内容。",
+        returnToPrevious: true,
+        onConfirm: () => this.setData({ shouldResumeJoin: true }),
       });
       return;
     }

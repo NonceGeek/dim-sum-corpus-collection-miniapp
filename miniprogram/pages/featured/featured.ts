@@ -203,16 +203,14 @@ Page({
 
   onShow() {
     this.syncTheme();
-    if (
-      this.data.shouldResumeJoin &&
-      this.data.joinConsentActivityId &&
-      isLoggedIn()
-    ) {
-      this.setData({
-        shouldResumeJoin: false,
-        joinConsentPopupVisible: true,
-      });
-    }
+    if (!this.data.shouldResumeJoin) return;
+
+    const shouldOpenJoinConsent =
+      Boolean(this.data.joinConsentActivityId) && isLoggedIn();
+    this.setData({
+      shouldResumeJoin: false,
+      ...(shouldOpenJoinConsent ? { joinConsentPopupVisible: true } : {}),
+    });
   },
 
   onContentSwiperChange(e: any) {
@@ -367,7 +365,15 @@ Page({
     if (!isLoggedIn()) {
       promptLogin(
         `/pages/featured/featured?joinActivityId=${encodeURIComponent(itemId)}`,
-        { content: "登录后才能投稿，当前仍可继续浏览精选内容。" },
+        {
+          content: "登录后才能投稿，当前仍可继续浏览精选内容。",
+          returnToPrevious: true,
+          onConfirm: () =>
+            this.setData({
+              joinConsentActivityId: itemId,
+              shouldResumeJoin: true,
+            }),
+        },
       );
       return;
     }

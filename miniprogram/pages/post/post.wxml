@@ -1,16 +1,16 @@
 <view class="upload-page theme-{{currentTheme}}">
   <block wx:if="{{mode === 'edit'}}">
-    <!-- 可滚动的假页面：既接管返回，也承载整页投稿内容。 -->
+    <!-- 空的返回哨兵：只接管返回，投稿内容保留在真实页面上，避免侧滑时白屏。 -->
     <page-container
       show="{{exitGuardVisible}}"
       duration="0"
       overlay="{{false}}"
       position="right"
       z-index="0"
-      custom-style="width: 100vw; height: 100vh; overflow: scroll; -webkit-overflow-scrolling: touch; background: var(--bg-page);"
+      custom-style="width: 100vw; height: 100vh; pointer-events: none; background: transparent;"
       bind:beforeleave="onExitGuardBeforeLeave"
       bind:afterleave="onExitGuardAfterLeave"
-    >
+    />
     <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">
       <view slot="left" class="custom-navbar-back" bind:tap="onNavbarBack">
         <t-icon name="chevron-left" size="28px" />
@@ -285,7 +285,6 @@
       </view>
     </t-popup>
 
-    </page-container>
   </block>
   <block wx:else>
     <t-navbar fixed="{{true}}" placeholder="{{true}}" z-index="{{100}}" class="custom-navbar">

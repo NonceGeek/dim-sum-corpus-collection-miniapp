@@ -3,7 +3,7 @@
     <!-- 轮播图 - 顶格 -->
     <view class="swiper-wrapper">
       <t-swiper current="{{current}}" autoplay="{{autoplay}}" duration="{{duration}}" interval="{{interval}}"
-        list="{{swiperList}}" image-props="{{bannerImageProps}}" navigation="{{ { type: 'dots-bar' } }}" height="{{200}}"
+        list="{{swiperList}}" image-props="{{bannerImageProps}}" navigation="{{ { type: 'dots-bar' } }}" height="{{swiperHeight}}"
         bind:click="onClickToTrack"/>
     </view>
 
