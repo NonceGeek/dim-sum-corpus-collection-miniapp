@@ -262,7 +262,7 @@
           <view
             class="record-side-btn record-asr {{recordReady && !recordProcessing ? 'visible' : ''}}"
             bind:tap="onTranscribeRecordedAudio">
-            <t-icon name="chat" size="28" color="var(--primary-light)" />
+            <t-icon name="chat" size="28" color="var(--text-white)" />
             <text class="record-side-text">转文字</text>
           </view>
         </view>
