@@ -7,7 +7,7 @@
   cancel-btn="{{cancelBtn}}"
   close-on-overlay-click="{{false}}"
   overlay-props="{{overlayProps}}"
-  custom-style="width: calc(100vw - 96rpx); max-width: 620rpx; border-radius: 32rpx; overflow: hidden; background-color: transparent; --td-dialog-width: calc(100vw - 96rpx); --td-dialog-border-radius: 32rpx; --td-dialog-title-color: var(--text-primary); --td-dialog-content-color: var(--text-secondary); --td-popup-border-radius: 32rpx; --td-popup-bg-color: transparent;"
+  custom-style="width: calc(100vw - 96rpx); max-width: 620rpx; border-radius: var(--radius-2xl); overflow: hidden; background-color: transparent; --td-dialog-width: calc(100vw - 96rpx); --td-dialog-border-radius: var(--radius-2xl); --td-dialog-title-color: var(--text-primary); --td-dialog-content-color: var(--text-secondary); --td-popup-border-radius: var(--radius-2xl); --td-popup-bg-color: transparent;"
   t-class="common-dialog theme-{{currentTheme}} {{showCancel ? 'has-cancel' : 'single-action'}}"
   t-class-content="common-dialog-content"
   t-class-confirm="common-dialog-confirm"

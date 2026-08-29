@@ -127,11 +127,11 @@
 
     <!-- 底部功能按钮 -->
     <view class="bottom-actions">
-      <t-button theme="default" shape="round" size="large" class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
+      <t-button theme="default" shape="round" size="large" block t-class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
         我的参赛作品
       </t-button>
 
-      <t-button theme="default" shape="round" size="large" class="bottom-btn" hover-class="none" bind:tap="onAllTracks">
+      <t-button theme="default" shape="round" size="large" block t-class="bottom-btn" hover-class="none" bind:tap="onAllTracks">
         查看全部活动
       </t-button>
     </view>

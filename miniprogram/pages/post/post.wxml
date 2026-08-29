@@ -210,10 +210,38 @@
     <t-popup visible="{{recordPopupVisible}}" placement="bottom" t-class="post-popup-host record-popup-host theme-{{currentTheme}}" bind:visible-change="onRecordPopupClose"
       close-on-overlay-click="{{!recordProcessing}}">
       <view class="record-popup theme-{{currentTheme}}">
-        <view class="record-hint">
-          {{recordReady ? '录音完成，请选择下一步' : (recording ? '正在录音，点击中间按钮结束' : '点击开始录音，最长60秒')}}
+        <view class="record-popup-header">
+          <view class="record-popup-header-spacer"></view>
+          <view class="record-hint">
+            {{recordReady ? '录音完成，请选择下一步' : (recording ? '正在录音，点击中间按钮结束' : '点击开始录音，最长60秒')}}
+          </view>
+          <view class="record-popup-close" catch:tap="onRecordPopupCloseTap">
+            <text class="record-popup-close-text">×</text>
+          </view>
         </view>
-        <view class="record-btn-area {{recordActionsAnimating ? 'actions-entering' : ''}}">
+        <view class="record-btn-area {{recordReady ? 'ready' : ''}}">
+          <view wx:if="{{recordReady}}" class="record-ready-preview">
+            <view
+              class="record-voice-bubble pending-record-bubble {{pendingRecordPlaying ? 'playing' : ''}}"
+              hover-class="pending-record-bubble--active"
+              catch:tap="onPendingRecordBubbleTap"
+              catch:longpress="onRerecordPendingAudio">
+              <t-icon
+                name="{{pendingRecordPlaying ? 'pause-circle-filled' : 'play-circle-filled'}}"
+                size="40rpx"
+                color="var(--text-white)"
+              />
+              <view class="pending-record-wave" aria-hidden="true">
+                <view class="pending-record-wave-bar"></view>
+                <view class="pending-record-wave-bar"></view>
+                <view class="pending-record-wave-bar"></view>
+                <view class="pending-record-wave-bar"></view>
+              </view>
+              <text class="pending-record-duration">{{pendingRecordDuration || recordTime}}''</text>
+              <view class="record-voice-bubble-tail"></view>
+            </view>
+            <text class="pending-record-tip">点击播放，长按重新录音</text>
+          </view>
           <view
             wx:if="{{recording && !recordStopping}}"
             class="record-voice-preview"
@@ -240,12 +268,6 @@
             </view>
             <text class="record-send-hint">点击 发语音</text>
           </view>
-          <view
-            class="record-side-btn record-cancel {{recordReady && !recordProcessing ? 'visible' : ''}}"
-            bind:tap="onCancelRecordedAudio">
-            <t-icon name="close-circle" size="28" color="var(--text-muted)" />
-            <text class="record-side-text">取消</text>
-          </view>
           <view class="record-btn {{recording ? 'recording' : ''}} {{recordReady ? 'ready' : ''}} {{!recording && !recordReady ? 'idle' : ''}} {{recordStarting || recordProcessing || recordStopping ? 'disabled' : ''}}"
             bind:tap="onRecordButtonTap">
             <block wx:if="{{recording && !recordStopping}}">
@@ -254,16 +276,14 @@
             </block>
             <block wx:else>
               <view class="record-btn-text">
-                {{recordStarting ? '准备中' : (recordProcessing ? '处理中' : (recordStopping ? '结束中' : (recordReady ? '使用原音' : '开始录音')))}}
+                {{recordStarting ? '准备中' : (recordProcessing ? '处理中' : (recordStopping ? '结束中' : (recordReady ? '仅使用录音' : '开始录音')))}}
               </view>
-              <view class="record-timer" wx:if="{{recordStopping || recordReady}}">{{recordTime}}'' / 60''</view>
             </block>
           </view>
           <view
             class="record-side-btn record-asr {{recordReady && !recordProcessing ? 'visible' : ''}}"
             bind:tap="onTranscribeRecordedAudio">
-            <t-icon name="chat" size="28" color="var(--text-white)" />
-            <text class="record-side-text">转文字</text>
+            <text class="record-side-text">转文字并使用录音</text>
           </view>
         </view>
       </view>
@@ -272,14 +292,19 @@
     <!-- 转文字结果弹窗 -->
     <t-popup visible="{{asrPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" close-on-overlay-click="{{false}}">
       <view class="asr-popup theme-{{currentTheme}}">
-        <view class="asr-popup-title">语音转文字</view>
+        <view class="asr-popup-header">
+          <view class="asr-popup-header-spacer"></view>
+          <view class="asr-popup-title">语音转文字</view>
+          <view class="asr-popup-close" catch:tap="onAsrCancel">
+            <text class="asr-popup-close-text">×</text>
+          </view>
+        </view>
         <t-textarea class="asr-textarea" value="{{asrText}}" placeholder="转换结果将显示在这里，可直接编辑"
           placeholder-style="color: var(--text-muted)" autosize="{{false}}" borderless="{{true}}"
           bind:change="onAsrTextInput" />
         <view class="asr-actions">
-          <t-button class="asr-btn asr-btn-secondary" theme="default" shape="round" size="medium" hover-class="none" bind:tap="onAsrCancel">取消</t-button>
-          <t-button class="asr-btn asr-btn-secondary" theme="default" shape="round" size="medium" hover-class="none" bind:tap="onAsrUseAudio">发原语音</t-button>
-          <t-button class="asr-btn asr-btn-confirm" theme="primary" shape="round" size="medium" hover-class="none" bind:tap="onAsrConfirm">
+          <t-button theme="default" shape="round" size="medium" block t-class="asr-btn asr-btn-secondary" hover-class="none" bind:tap="onAsrUseAudio">仅使用录音</t-button>
+          <t-button theme="primary" shape="round" size="medium" block t-class="asr-btn asr-btn-confirm" hover-class="none" bind:tap="onAsrConfirm">
             确认</t-button>
         </view>
       </view>

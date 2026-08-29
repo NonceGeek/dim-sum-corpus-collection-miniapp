@@ -30,6 +30,19 @@ text {
    Light Mode - CSS Variables
    ============================================ */
 page {
+  --pd-sm: 16rpx;
+  --pd-base: 24rpx;
+  --pd-lg: 32rpx;
+  --pd-xl: 40rpx;
+  --pd-2xl: 48rpx;
+
+  --fs-24: 24rpx;
+  --fs-28: 28rpx;
+  --fs-32: 32rpx;
+  --fs-40: 40rpx;
+  --fs-56: 56rpx;
+  --fs-72: 72rpx;
+
   /* ==========================================
      皮肤层 —— 换风格只改下面这些色值
      ========================================== */
@@ -108,11 +121,14 @@ page {
   --radius-md: 16rpx;
   --radius-lg: 24rpx;
   --radius-xl: 32rpx;
+  --radius-2xl: 40rpx;
   --radius-full: 9999rpx;
 
   /* 按钮 */
-  --btn-height: 88rpx;
-  --btn-height-lg: 96rpx;
+  --btn-height: 92rpx;
+  --btn-height-lg: var(--btn-height);
+  --td-button-medium-height: var(--btn-height);
+  --td-button-large-height: var(--btn-height);
 
   /* TDesign 覆盖 */
   --td-bg-color-container: var(--bg-card);
@@ -126,6 +142,10 @@ page {
   --td-component-border: var(--border-color);
   --td-brand-color: var(--primary);
   --td-popup-bg-color: var(--bg-page);
+  --td-popup-border-radius: var(--radius-2xl);
+  --td-dialog-border-radius: var(--radius-2xl);
+  --td-picker-border-radius: var(--radius-2xl);
+  --td-action-sheet-border-radius: var(--radius-2xl);
   --td-cell-bg-color: var(--bg-card);
   --td-navbar-bg-color: var(--bg-card);
   --td-navbar-background: var(--bg-card);
@@ -161,6 +181,7 @@ page {
 
   background-color: var(--bg-page);
   color: var(--text-primary);
+  box-sizing: border-box;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
@@ -336,6 +357,15 @@ page {
    通用组件样式
    ============================================ */
 
+/* 全局字号工具类 */
+.fs-24 {
+  font-size: var(--fs-24) !important;
+}
+
+.fs-32 {
+  font-size: var(--fs-32) !important;
+}
+
 /* 毛玻璃效果 */
 .glass-effect {
   background: rgba(255, 255, 255, 0.8);
@@ -355,7 +385,7 @@ page {
   align-items: center;
   padding: 4rpx 16rpx;
   border-radius: var(--radius-full);
-  font-size: 24rpx;
+  font-size: var(--fs-24);
   font-weight: 500;
 }
 

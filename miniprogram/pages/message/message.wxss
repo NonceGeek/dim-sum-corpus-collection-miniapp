@@ -3,7 +3,8 @@
 .page {
   min-height: 100vh;
   background: var(--bg-page);
-  padding: 24rpx;
+  padding: var(--pd-base);
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
@@ -15,8 +16,8 @@
 
 .message-card {
   background: var(--bg-card);
-  border-radius: 24rpx;
-  padding: 32rpx;
+  border-radius: var(--radius-lg);
+  padding: var(--pd-lg);
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 }
@@ -63,7 +64,7 @@
   width: 42%;
   height: 30rpx;
   margin-left: 18rpx;
-  border-radius: 8rpx;
+  border-radius: var(--radius-sm);
 }
 
 .message-skeleton-dot {
@@ -77,7 +78,7 @@
   width: 92%;
   height: 24rpx;
   margin-bottom: 16rpx;
-  border-radius: 8rpx;
+  border-radius: var(--radius-sm);
 }
 
 .message-skeleton-content--short {
@@ -88,7 +89,7 @@
   width: 26%;
   height: 22rpx;
   margin: 24rpx 0 0 auto;
-  border-radius: 8rpx;
+  border-radius: var(--radius-sm);
 }
 
 @keyframes message-skeleton-shimmer {
@@ -108,7 +109,7 @@
 }
 
 .card-icon {
-  font-size: 40rpx;
+  font-size: var(--fs-40);
   margin-right: 16rpx;
 }
 
@@ -119,7 +120,7 @@
 }
 
 .card-title {
-  font-size: 32rpx;
+  font-size: var(--fs-32);
   font-weight: 700;
   color: var(--text-primary);
   margin-left: 10rpx;
@@ -134,25 +135,25 @@
 }
 
 .card-content {
-  font-size: 28rpx;
+  font-size: var(--fs-28);
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 16rpx;
 }
 
 .card-time {
-  font-size: 24rpx;
+  font-size: var(--fs-24);
   color: var(--text-muted);
   text-align: right;
 }
 .list-footer {
-  padding: 32rpx 0 48rpx;
+  padding: var(--pd-lg) 0 var(--pd-2xl);
 
   text-align: center;
 }
 
 .footer-text {
-  font-size: 24rpx;
+  font-size: var(--fs-24);
 
   color: var(--text-muted);
 }
@@ -166,24 +167,31 @@
 
 .post-actions {
   position: fixed;
-  bottom: 150rpx;
+  bottom: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  text-align: center;
+  box-sizing: border-box;
+  padding: 24rpx var(--pd-base) calc(24rpx + env(safe-area-inset-bottom));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bottom-btn {
+  width: 100% !important;
   background: var(--gradient-primary) !important;
   border: none !important;
   color: var(--text-white) !important;
   border-radius: var(--radius-full) !important;
   box-shadow: var(--shadow-primary) !important;
-  margin-right: 24rpx;
+  margin: 0 !important;
 }
 
 .bottom-btn .t-button__text {
-  font-size: 16rpx !important;
+  font-size: var(--fs-32) !important;
 }
 
 .t-button--default::after {

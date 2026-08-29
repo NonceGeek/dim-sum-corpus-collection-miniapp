@@ -11,14 +11,6 @@ import { showCommonDialog } from "../../utils/common-dialog";
 
 const TYPE_JSON = ENV.TYPE_JSON;
 
-const formatRules = (rules: unknown) => {
-  if (Array.isArray(rules)) {
-    return rules.filter(Boolean).join("\n");
-  }
-
-  return typeof rules === "string" ? rules : "";
-};
-
 const getTitleFontSize = (title: string) => {
   const characters = Array.from(title.trim());
   const visualLength = characters.reduce((length, character) => {
@@ -45,19 +37,8 @@ Page({
     total: 0,
     loading: false,
     noMore: false,
-    ruleDialogVisible: false,
     joinConsentPopupVisible: false,
     shouldResumeJoin: false,
-    ruleDialogDescription: "",
-    ruleDialogRules: "",
-    ruleDialogConfirmBtn: {
-      content: "确定",
-      variant: "base",
-      theme: "primary",
-      shape: "round",
-      size: "medium",
-      hoverClass: "none",
-    },
     select: "phrase",
     type: [{ label: "全部", value: "all" }, ...ENV.TYPE],
   },
@@ -240,16 +221,9 @@ Page({
   },
 
   onRule() {
-    const { track } = this.data;
-    this.setData({
-      ruleDialogVisible: true,
-      ruleDialogDescription: track.description || "暂无",
-      ruleDialogRules: formatRules(track.rules) || "暂无",
+    wx.navigateTo({
+      url: `/pages/activity-detail/activity-detail?id=${encodeURIComponent(this.data.trackId)}`,
     });
-  },
-
-  onRuleDialogClose() {
-    this.setData({ ruleDialogVisible: false });
   },
 
   onPost() {

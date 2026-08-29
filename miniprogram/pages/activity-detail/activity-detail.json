@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "join-consent-popup": "/components/join-consent-popup/join-consent-popup"
+  },
+  "navigationBarTitleText": "活动详情"
+}

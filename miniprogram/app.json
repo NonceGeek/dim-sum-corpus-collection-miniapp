@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/login/login",
     "pages/featured/featured",
+    "pages/activity-detail/activity-detail",
     "pages/post/post",
     "pages/profile/profile",
     "pages/tracks/tracks",

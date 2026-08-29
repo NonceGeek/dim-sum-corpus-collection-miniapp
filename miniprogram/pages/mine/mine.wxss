@@ -49,7 +49,7 @@
   position: relative;
   z-index: 2;
   display: block;
-  font-size: 72rpx;
+  font-size: var(--fs-72);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0;
@@ -75,10 +75,10 @@
   z-index: 1;
   max-width: 280rpx;
   padding: 12rpx 18rpx;
-  border-radius: 999rpx;
+  border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.92);
   color: var(--accent);
-  font-size: 24rpx;
+  font-size: var(--fs-24);
   font-weight: 600;
   line-height: 1.2;
   box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.12);
@@ -166,7 +166,7 @@
 
 .filter-title {
   flex-shrink: 0;
-  font-size: 32rpx;
+  font-size: var(--fs-32);
   font-weight: 800;
 }
 
@@ -174,7 +174,7 @@
   flex: 1;
   min-width: 0;
   color: rgba(0, 0, 0, 0.58);
-  font-size: 24rpx;
+  font-size: var(--fs-24);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -215,10 +215,10 @@
   justify-content: center;
   min-height: 56rpx;
   padding: 0 22rpx;
-  border-radius: 999rpx;
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 28rpx;
+  font-size: var(--fs-28);
   font-weight: 500;
   line-height: 1;
   transition:
@@ -256,7 +256,7 @@
   position: absolute;
   left: 0;
   width: 100%;
-  border-radius: 999rpx;
+  border-radius: var(--radius-full);
   background: var(--gradient-accent);
   transform-origin: left center;
 }
@@ -303,7 +303,7 @@
   border-radius: 8rpx;
   background: rgba(255, 255, 255, 0.72);
   color: rgba(0, 0, 0, 0.48);
-  font-size: 27rpx;
+  font-size: var(--fs-28);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -323,7 +323,7 @@
 }
 
 .sort-title {
-  font-size: 32rpx;
+  font-size: var(--fs-32);
   font-weight: 800;
 }
 
@@ -338,7 +338,7 @@
   border-radius: 10rpx;
   background: rgba(255, 255, 255, 0.72);
   color: rgba(0, 0, 0, 0.5);
-  font-size: 28rpx;
+  font-size: var(--fs-28);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -351,7 +351,7 @@
 }
 
 .works-section {
-  padding: 0 12rpx 40rpx;
+  padding: 0 var(--pd-base) var(--pd-xl);
   transition: opacity 0.2s ease;
 }
 
@@ -363,12 +363,12 @@
   text-align: center;
   padding: 64rpx 32rpx;
   color: var(--text-muted);
-  font-size: 26rpx;
+  font-size: var(--fs-28);
 }
 
 .bottom-btn {
   min-width: 240rpx;
-  height: 76rpx !important;
+  height: var(--btn-height) !important;
   padding: 0 40rpx !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -392,7 +392,7 @@
 .bottom-btn .t-button__text {
   width: 100%;
   text-align: center !important;
-  font-size: 30rpx !important;
+  font-size: var(--fs-32) !important;
   font-weight: 700 !important;
 }
 

@@ -48,12 +48,12 @@
 
     <view class="list-footer">
       <view wx:if="{{noMore}}" class="footer-text">
-        没有更多消息了
+        没有更多了
       </view>
     </view>
 
     <view wx:if="{{showButton}}" class="post-actions">
-      <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onReadAll">
+      <t-button theme="default" shape="round" size="medium" block t-class="bottom-btn" hover-class="none" bind:tap="onReadAll">
         将所有消息标记为已读
       </t-button>
 

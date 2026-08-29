@@ -119,13 +119,12 @@ Page({
     recordStopping: false,
     recordReady: false,
     recordProcessing: false,
-    recordActionsAnimating: false,
     recordTime: 0,
     recordTimer: null as any,
-    recordActionsAnimationTimer: null as any,
     audioUrl: "",
     audioDuration: 0,
     audioPlaying: false,
+    pendingRecordPlaying: false,
     pendingRecordPath: "",
     pendingRecordDuration: 0,
     recordMode: "normal" as "normal" | "discard",
@@ -141,6 +140,8 @@ Page({
   },
   audioStateHandler: null as any,
   audioErrorHandler: null as any,
+  pendingRecordAudioContext: null as any,
+  pendingRecordLongPressAt: 0,
   allowRecordPopupClose: false,
   recordCancelledOnHide: false,
   exitConfirmVisible: false,
@@ -244,15 +245,37 @@ Page({
     };
     activeAudioStateHandler = this.audioStateHandler;
     activeAudioErrorHandler = this.audioErrorHandler;
+
+    const pendingRecordAudioContext = wx.createInnerAudioContext();
+    pendingRecordAudioContext.onPlay(() => {
+      this.setData({ pendingRecordPlaying: true });
+    });
+    pendingRecordAudioContext.onPause(() => {
+      this.setData({ pendingRecordPlaying: false });
+    });
+    pendingRecordAudioContext.onStop(() => {
+      this.setData({ pendingRecordPlaying: false });
+    });
+    pendingRecordAudioContext.onEnded(() => {
+      this.setData({ pendingRecordPlaying: false });
+    });
+    pendingRecordAudioContext.onError((err: any) => {
+      this.setData({ pendingRecordPlaying: false });
+      wx.showToast({
+        title: err?.errMsg || "录音播放失败",
+        icon: "none",
+      });
+    });
+    this.pendingRecordAudioContext = pendingRecordAudioContext;
   },
   onUnload() {
     wx.disableAlertBeforeUnload();
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
-    if (this.data.recordActionsAnimationTimer) {
-      clearTimeout(this.data.recordActionsAnimationTimer);
-    }
+    this.stopPendingRecordPlayback();
+    this.pendingRecordAudioContext?.destroy();
+    this.pendingRecordAudioContext = null;
     this.stopAudioPlayback();
     if (activeAudioStateHandler === this.audioStateHandler) {
       activeAudioStateHandler = null;
@@ -395,6 +418,7 @@ Page({
   },
 
   onHide() {
+    this.stopPendingRecordPlayback();
     this.stopAudioPlayback();
     if (!this.data.recording) return;
 
@@ -425,8 +449,8 @@ Page({
   getPendingRecordingResetState() {
     return {
       recordReady: false,
-      recordActionsAnimating: false,
       recordTime: 0,
+      pendingRecordPlaying: false,
       pendingRecordPath: "",
       pendingRecordDuration: 0,
     };
@@ -1308,12 +1332,17 @@ Page({
   },
 
   closeRecordPopup() {
+    this.stopPendingRecordPlayback();
     this.allowRecordPopupClose = true;
     this.setData({ recordPopupVisible: false }, () => {
       setTimeout(() => {
         this.allowRecordPopupClose = false;
       }, 100);
     });
+  },
+
+  onRecordPopupCloseTap() {
+    this.onRecordPopupClose();
   },
 
   // 关闭录音弹窗
@@ -1457,6 +1486,7 @@ Page({
 
   // 真正开始录音
   doStartRecord() {
+    this.stopPendingRecordPlayback();
     this.stopAudioPlayback();
     activeRecorderStopHandler = this.handleRecordStop;
     this.setData({
@@ -1466,10 +1496,6 @@ Page({
       recordStopping: false,
       recordMode: "normal",
     });
-
-    if (this.data.recordActionsAnimationTimer) {
-      clearTimeout(this.data.recordActionsAnimationTimer);
-    }
 
     (this as any)._recordStartTime = Date.now();
     const timer = setInterval(() => {
@@ -1501,6 +1527,7 @@ Page({
   // 取消已完成但尚未使用的录音
   onCancelRecordedAudio() {
     if (this.data.recordProcessing) return;
+    this.stopPendingRecordPlayback();
     this.setData(
       {
         ...this.getPendingRecordingResetState(),
@@ -1528,6 +1555,7 @@ Page({
     const { pendingRecordPath, pendingRecordDuration } = this.data;
     if (!pendingRecordPath || this.data.recordProcessing) return;
 
+    this.stopPendingRecordPlayback();
     this.setData({ recordProcessing: true });
     wx.showLoading({ title: "上传中..." });
     try {
@@ -1563,6 +1591,7 @@ Page({
     const { pendingRecordPath, pendingRecordDuration } = this.data;
     if (!pendingRecordPath || this.data.recordProcessing) return;
 
+    this.stopPendingRecordPlayback();
     this.setData({ recordProcessing: true });
     wx.showLoading({ title: "上传中..." });
     try {
@@ -1570,7 +1599,7 @@ Page({
       this.setData({
         pendingAudioUrl: audioUrl,
         pendingAudioDuration: pendingRecordDuration,
-        asrText: "（转换中...）",
+        asrText: "",
         asrPopupVisible: true,
         recordReady: false,
         recordTime: 0,
@@ -1580,14 +1609,13 @@ Page({
       this.closeRecordPopup();
 
       wx.hideLoading();
+      wx.showLoading({ title: "转换中", mask: true });
       const asrRes = await request("/transcriptions", {
         method: "POST",
         data: { audioUrl },
       });
       console.log("asrRes:", asrRes);
-      setTimeout(() => {
-        this.setData({ asrText: asrRes.text });
-      }, 800);
+      this.setData({ asrText: asrRes.text });
     } catch (err: any) {
       console.error(err);
       if (err?.code !== "AUTH_REQUIRED") {
@@ -1634,6 +1662,59 @@ Page({
     }
     if (this.data.audioPlaying) {
       this.setData({ audioPlaying: false });
+    }
+  },
+
+  onPendingRecordBubbleTap() {
+    if (Date.now() - this.pendingRecordLongPressAt < 800) return;
+
+    const { pendingRecordPath, pendingRecordPlaying, recordProcessing } =
+      this.data;
+    if (recordProcessing) return;
+    if (!pendingRecordPath || !this.pendingRecordAudioContext) {
+      wx.showToast({ title: "暂无可播放的录音", icon: "none" });
+      return;
+    }
+
+    if (pendingRecordPlaying) {
+      this.pendingRecordAudioContext.pause();
+      return;
+    }
+
+    if (this.pendingRecordAudioContext.src !== pendingRecordPath) {
+      this.pendingRecordAudioContext.src = pendingRecordPath;
+    }
+    this.pendingRecordAudioContext.play();
+  },
+
+  onRerecordPendingAudio() {
+    if (
+      !this.data.recordReady ||
+      !this.data.pendingRecordPath ||
+      this.data.recordProcessing
+    ) {
+      return;
+    }
+
+    this.pendingRecordLongPressAt = Date.now();
+    this.stopPendingRecordPlayback();
+    this.setData(
+      {
+        ...this.getPendingRecordingResetState(),
+      },
+      () => {
+        this.syncUnsavedExitGuard();
+        this.checkAndStartRecord();
+      },
+    );
+  },
+
+  stopPendingRecordPlayback() {
+    if (this.pendingRecordAudioContext) {
+      this.pendingRecordAudioContext.stop();
+    }
+    if (this.data.pendingRecordPlaying) {
+      this.setData({ pendingRecordPlaying: false });
     }
   },
 
@@ -1737,9 +1818,6 @@ Page({
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
-    if (this.data.recordActionsAnimationTimer) {
-      clearTimeout(this.data.recordActionsAnimationTimer);
-    }
     const { tempFilePath, duration } = res;
     // 系统自动停止时返回值可能略大于配置上限，统一限制到 60 秒。
     const durationSec = Math.min(
@@ -1754,7 +1832,6 @@ Page({
       recording: false,
       recordStopping: false,
       recordTimer: null,
-      recordActionsAnimationTimer: null,
     });
 
     if (recordMode === "discard") {
@@ -1769,21 +1846,12 @@ Page({
       return;
     }
 
-    const animationTimer = setTimeout(() => {
-      this.setData({
-        recordActionsAnimating: false,
-        recordActionsAnimationTimer: null,
-      });
-    }, 700);
-
     this.setData(
       {
         recordReady: true,
-        recordActionsAnimating: true,
         recordTime: durationSec,
         pendingRecordPath: tempFilePath,
         pendingRecordDuration: durationSec,
-        recordActionsAnimationTimer: animationTimer,
         recordMode: "normal",
       },
       () => this.syncUnsavedExitGuard(),

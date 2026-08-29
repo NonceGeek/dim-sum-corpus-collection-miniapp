@@ -1,0 +1,72 @@
+<view class="activity-detail-page theme-{{currentTheme}}">
+  <!-- 活动标题区：与 tracks 页面保持同一套三层结构 -->
+  <view class="tracks-header">
+    <image wx:if="{{!loading}}" class="header-bg" src="{{activity.bannerUrl || '/public/image/yue.jpg'}}"
+      mode="aspectFill" />
+    <view class="header-overlay"></view>
+    <view class="track-header-skeleton" wx:if="{{loading}}">
+      <view class="tracks-skeleton-block track-header-skeleton-tag"></view>
+      <view class="tracks-skeleton-block track-header-skeleton-title"></view>
+      <view class="tracks-skeleton-block track-header-skeleton-time"></view>
+    </view>
+    <view class="ice-text-layer ice-animate" wx:if="{{!loading}}">
+      <view class="activity-tag" wx:if="{{activity.activityTag}}">
+        <text>{{activity.activityTag}}</text>
+      </view>
+      <view class="activity-name ice-title" style="font-size: {{titleFontSize}}rpx;">
+        <text class="ice-copy">{{activity.title}}</text>
+      </view>
+      <view class="activity-time ice-subtitle">
+        <text class="ice-copy">{{activity.startsAt}} - {{activity.endsAt}}</text>
+      </view>
+    </view>
+  </view>
+
+  <block wx:if="{{loading}}">
+    <view class="detail-content">
+      <view class="detail-card">
+        <view class="skeleton-line skeleton-title"></view>
+        <view class="skeleton-line"></view>
+        <view class="skeleton-line skeleton-short"></view>
+      </view>
+      <view class="detail-card">
+        <view class="skeleton-line skeleton-title"></view>
+        <view class="skeleton-line"></view>
+        <view class="skeleton-line"></view>
+        <view class="skeleton-line skeleton-short"></view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="detail-content">
+      <view class="detail-card">
+        <text class="detail-section-title">活动描述</text>
+        <text class="detail-section-text">{{description}}</text>
+      </view>
+      <view class="detail-card">
+        <text class="detail-section-title">活动规则</text>
+        <text class="detail-section-text">{{rules}}</text>
+      </view>
+    </view>
+  </block>
+
+  <view class="detail-footer">
+    <t-button theme="default" shape="round" size="large" block t-class="detail-footer-button detail-footer-back" hover-class="none" bind:tap="onBackToBrowse">
+      返回浏览
+    </t-button>
+    <t-button theme="primary" shape="round" size="large" block t-class="detail-footer-button detail-footer-join" hover-class="none" bind:tap="onJoin">
+      我要参赛
+    </t-button>
+  </view>
+
+  <join-consent-popup
+    visible="{{joinConsentPopupVisible}}"
+    activity-id="{{activityId}}"
+    current-theme="{{currentTheme}}"
+    bind:close="onJoinConsentClose"
+    bind:complete="onJoinConsentComplete"
+  />
+</view>
+<common-dialog id="login-prompt" />
+<common-dialog id="common-dialog" />

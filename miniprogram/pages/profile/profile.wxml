@@ -13,9 +13,6 @@
         <view class="nickname-row">
           <text class="nickname">{{username}}</text>
 
-          <!-- <view class="vip-tag">
-            粤语创作者
-          </view> -->
         </view>
 
         <view class="user-id" wx:if="{{submissionCount > 0}}">
@@ -35,14 +32,11 @@
       <button class="guest-login-btn" bind:tap="onLogin">登录</button>
     </view>
 
-    <!-- <view class="edit-btn">
-      编辑资料
-    </view> -->
   </view>
 
 
   <!-- 功能列表 -->
-  <t-cell-group class="menu-group" theme="card">
+  <t-cell-group t-class="menu-group" theme="card">
     <t-cell title="消息中心" class="chat-section" arrow bind:click="onMessageClick" bordered="{{false}}">
       <view slot="left-icon" class="setting-icon chat-icon">
         <t-icon name="chat" size="48rpx" />

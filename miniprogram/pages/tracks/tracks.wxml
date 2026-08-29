@@ -1,7 +1,7 @@
 <view class="container theme-{{currentTheme}}">
 
   <!-- 活动标题区：三层结构 -->
-  <view class="tracks-header">
+  <view class="tracks-header" bind:tap="onRule">
 
     <!-- 背景 -->
     <image wx:if="{{!trackLoading}}" class="header-bg" src="{{track.bannerUrl || '/public/image/yue.jpg'}}"
@@ -20,13 +20,11 @@
       </view>
 
       <view class="activity-name ice-title" style="font-size: {{trackTitleFontSize}}rpx;">
-        <view class="ice-highlighter"></view>
         <text class="ice-copy">{{track.title}}</text>
       </view>
 
       <view class="activity-time ice-subtitle">
-        <view class="ice-highlighter"></view>
-        <text class="ice-copy">{{track.startsAt}} - {{track.endsAt}}，期待您的参与</text>
+        <text class="ice-copy">{{track.startsAt}} - {{track.endsAt}}</text>
       </view>
 
     </view>
@@ -81,36 +79,14 @@
   </view>
 
   <view class="post-actions">
-    <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
+    <t-button theme="default" shape="round" size="large" block t-class="bottom-btn" hover-class="none" bind:tap="onMyWorks">
       我的参赛作品
     </t-button>
 
-    <t-button theme="default" shape="round" size="medium" class="bottom-btn" hover-class="none" bind:tap="onPost" wx:if="{{track.canSubmit}}">
+    <t-button theme="default" shape="round" size="large" block t-class="bottom-btn" hover-class="none" bind:tap="onPost" wx:if="{{track.canSubmit}}">
       我也想参赛
     </t-button>
   </view>
-
-  <t-dialog
-    visible="{{ruleDialogVisible}}"
-    title="活动详情"
-    confirm-btn="{{ruleDialogConfirmBtn}}"
-    t-class="rule-dialog"
-    t-class-confirm="rule-dialog-confirm"
-    custom-style="border-radius: 32rpx; overflow: hidden; background-color: transparent; --td-dialog-border-radius: 32rpx; --td-popup-border-radius: 32rpx; --td-popup-bg-color: transparent;"
-    bind:confirm="onRuleDialogClose"
-    bind:close="onRuleDialogClose"
-  >
-    <view slot="content" class="rule-dialog-content">
-      <view class="rule-dialog-section">
-        <text class="rule-dialog-label">描述：</text>
-        <text class="rule-dialog-text">{{ruleDialogDescription}}</text>
-      </view>
-      <view class="rule-dialog-section">
-        <text class="rule-dialog-label">规则：</text>
-        <text class="rule-dialog-text">{{ruleDialogRules}}</text>
-      </view>
-    </view>
-  </t-dialog>
 
   <join-consent-popup
     visible="{{joinConsentPopupVisible}}"
