@@ -111,14 +111,14 @@
             <!-- 不参与任何活动 -->
             <view class="topic-item-popup" bind:tap="onNoActivity">
               <view class="activity-item-content">
-                <text class="topic-item-text">不参与任何活动</text>
+                <text class="topic-item-text {{selectedActivity && selectedActivity.id === '' ? 'activity-item-title-selected' : ''}}">不参与任何活动</text>
               </view>
               <t-icon wx:if="{{selectedActivity && selectedActivity.id === ''}}" name="check" size="16" color="var(--primary)" />
             </view>
             <view class="topic-item-popup" wx:for="{{activityList}}" wx:key="id" bind:tap="onSelectActivity"
               data-id="{{item.id}}" data-title="{{item.title}}">
               <view class="activity-item-content">
-                <text class="topic-item-text">{{item.title}}</text>
+                <text class="topic-item-text {{selectedActivity && selectedActivity.id === item.id ? 'activity-item-title-selected' : ''}}">{{item.title}}</text>
                 <text class="activity-item-description" wx:if="{{item.description}}">{{item.description}}</text>
               </view>
               <t-icon wx:if="{{selectedActivity && selectedActivity.id === item.id}}" name="check" size="16"
@@ -194,6 +194,7 @@
               <text class="topic-item-text">#{{item}}</text>
               <t-icon wx:if="{{selectedTopicMap[item]}}" name="check" size="16" color="var(--primary)" />
             </view>
+            <view class="topic-list-bottom-spacer" aria-hidden="true"></view>
           </scroll-view>
         </view>
       </t-popup>
@@ -342,10 +343,10 @@
       <view class="view-title" wx:if="{{post.title}}">{{post.title}}</view>
 
       <!-- 音频 -->
-      <view class="audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
+      <view class="audio-player view-audio-player" wx:if="{{audioUrl}}" bind:tap="onPlayAudio">
         <view class="audio-info">
-          <t-icon name="play-circle-fill" size="36" color="var(--primary)" />
-          <text class="audio-label">录音</text>
+          <t-icon name="{{audioPlaying ? 'pause' : 'play'}}" size="40rpx" color="var(--primary)" />
+          <text class="audio-label">点击播放录音</text>
           <text class="audio-duration" wx:if="{{audioDuration}}">{{audioDuration}}''</text>
         </view>
       </view>

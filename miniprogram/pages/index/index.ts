@@ -27,7 +27,7 @@ Page({
     current: 0,
     autoplay: true,
     duration: 500,
-    interval: 10000,
+    interval: 5000,
     bannerImageProps: {
       mode: "widthFix",
     },

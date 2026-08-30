@@ -6,11 +6,7 @@ import {
 } from "../../utils/query-cache";
 import { showCommonDialog } from "../../utils/common-dialog";
 
-const getMessagesQueryKey = () => [
-  "message",
-  "list",
-  getCurrentUserQueryKey(),
-];
+const getMessagesQueryKey = () => ["message", "list", getCurrentUserQueryKey()];
 
 const getIconColor = (type) => {
   const obj = {
@@ -127,11 +123,7 @@ Page({
           return item;
         });
         if (workid) {
-          if (type === "中奖信息") {
-            wx.navigateTo({
-              url: `/pages/mine/mine`,
-            });
-          } else if (type === "审核信息") {
+          if (type === "审核信息" || type === "中奖信息") {
             wx.navigateTo({
               url: `/pages/post/post?id=${workid}&mode=view`,
             });

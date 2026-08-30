@@ -275,6 +275,11 @@
   margin-bottom: 0;
 }
 
+.view-audio-player {
+  min-height: 80rpx;
+  box-sizing: border-box;
+}
+
 .audio-info {
   display: flex;
   align-items: center;
@@ -370,6 +375,9 @@
   --td-popup-border-radius: var(--radius-2xl);
   --td-picker-border-radius: var(--radius-2xl);
   background-color: var(--bg-card) !important;
+  border-top-left-radius: var(--radius-2xl) !important;
+  border-top-right-radius: var(--radius-2xl) !important;
+  overflow: hidden;
 }
 
 .post-picker-root .t-popup,
@@ -457,6 +465,11 @@
   padding: 8rpx 0;
 }
 
+.topic-list-bottom-spacer {
+  height: calc(180rpx + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+
 .topic-item-popup {
   display: flex;
   align-items: center;
@@ -485,6 +498,12 @@
   font-size: var(--fs-24);
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+.activity-item-title-selected {
+  color: var(--primary);
+  font-size: var(--fs-32);
+  font-weight: 600;
 }
 
 .loading-tip {

@@ -3,6 +3,7 @@ const BASE_IMAGE_WIDTH = 330;
 const BASE_TITLE_LINE_HEIGHT = 40;
 const BASE_FOOTER_HEIGHT = 84;
 const BASE_CARD_GAP = 12;
+const RECENTLY_VIEWED_STORAGE_KEY = "waterfallRecentlyViewedWorkId";
 
 Component({
   properties: {
@@ -33,6 +34,7 @@ Component({
     rightItems: [],
     leftHeight: 0,
     rightHeight: 0,
+    recentlyViewedId: "",
     _layoutQueue: [],
     _layoutTimer: null as any,
   },
@@ -46,11 +48,47 @@ Component({
   },
   lifetimes: {
     attached() {
-      this.refreshColumns((this.data.items as any[]) || []);
+      this.syncRecentlyViewed();
+    },
+  },
+  pageLifetimes: {
+    show() {
+      this.syncRecentlyViewed();
     },
   },
 
   methods: {
+    syncRecentlyViewed() {
+      const pendingRecentlyViewedId = String(
+        (this as any)._pendingRecentlyViewedId || "",
+      );
+
+      if (pendingRecentlyViewedId) {
+        try {
+          wx.setStorageSync(
+            RECENTLY_VIEWED_STORAGE_KEY,
+            pendingRecentlyViewedId,
+          );
+        } catch (err) {
+          console.warn("保存刚刚浏览记录失败", err);
+        }
+        (this as any)._pendingRecentlyViewedId = "";
+      }
+
+      let recentlyViewedId = "";
+      try {
+        recentlyViewedId = String(
+          wx.getStorageSync(RECENTLY_VIEWED_STORAGE_KEY) || "",
+        );
+      } catch (err) {
+        console.warn("读取刚刚浏览记录失败", err);
+      }
+
+      this.setData({ recentlyViewedId }, () => {
+        this.refreshColumns((this.data.items as any[]) || []);
+      });
+    },
+
     refreshColumns(items: any[]) {
       const cache = (this as any)._imageRatioCache || {};
 
@@ -65,6 +103,9 @@ Component({
           ...item,
           _wfIndex: index,
           _isAudioOnly: this.isAudioOnlyMedia(item),
+          _isRecentlyViewed:
+            Boolean(this.data.recentlyViewedId) &&
+            String(item?.id) === String(this.data.recentlyViewedId),
           _badgeCount: this.getBadgeCount(item),
           displayViewCount: this.formatViewCount(item?.viewCount),
         };
@@ -215,6 +256,7 @@ Component({
     },
     onItemTap(e: any) {
       const { id, index } = e.currentTarget.dataset;
+      (this as any)._pendingRecentlyViewedId = String(id || "");
       this.triggerEvent("itemtap", { id, index, item: this.data.items[index] });
     },
   },

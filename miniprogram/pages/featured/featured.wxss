@@ -113,7 +113,6 @@
 .card-swiper {
   height: 1010rpx;
   width: 100%;
-  padding-bottom: var(--pd-base);
   box-sizing: border-box;
 }
 
@@ -595,7 +594,7 @@
   width: 100%;
   gap: var(--pd-base);
   box-sizing: border-box;
-  margin-top: 48rpx;
+  margin-top: var(--pd-base);
 }
 
 .bottom-btn {

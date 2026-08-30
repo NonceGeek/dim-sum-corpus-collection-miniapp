@@ -29,9 +29,9 @@
           <view class="main-card">
             <view class="card-header">
               <view>
-                <view class="card-title">{{track.displayTitleFull}}</view>
+                <view class="card-title" bind:tap="onActivityDetail" data-id="{{track.id}}">{{track.displayTitleFull}}</view>
                 <view class="card-en">活动时间：{{track.startsAt}} - {{track.endsAt}}</view>
-                <view class="card-desc">{{track.displayDescription}}</view>
+                <view class="card-desc" bind:tap="onActivityDetail" data-id="{{track.id}}">{{track.displayDescription}}</view>
                 <view class="media-req-slot" wx:if="{{track.hasMediaReq}}">
                   <view class="media-req-row">
                     <view class="media-requirement-item" wx:if="{{track.requiresImage}}">
@@ -71,7 +71,7 @@
             <block wx:else>
               <view class="empty-work-stage {{index === currentIndex ? 'is-active' : ''}}">
                 <image class="empty-work-image" src="{{track.bannerUrl ? track.bannerUrl :'/public/image/yue.jpg'}}"
-                  mode="aspectFill" />
+                  mode="aspectFill" bind:tap="onActivityDetail" data-id="{{track.id}}" />
                 <view class="firework-layer">
                   <view class="firework firework-1"></view>
                   <view class="firework firework-2"></view>

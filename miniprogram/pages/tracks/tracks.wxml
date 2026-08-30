@@ -84,7 +84,7 @@
     </t-button>
 
     <t-button theme="default" shape="round" size="large" block t-class="bottom-btn" hover-class="none" bind:tap="onPost" wx:if="{{track.canSubmit}}">
-      我也想参赛
+      我要参赛
     </t-button>
   </view>
 

@@ -117,6 +117,13 @@
           </view>
           <image wx:if="{{!item._isAudioOnly}}" src="{{item.coverUrl}}" mode="widthFix"
             class="card-image" />
+          <view wx:if="{{item._isRecentlyViewed && !item._isAudioOnly}}" class="recently-viewed-overlay">
+            <text class="recently-viewed-text">刚刚浏览</text>
+          </view>
+        </view>
+        <view wx:if="{{item._isRecentlyViewed && item._isAudioOnly}}"
+          class="recently-viewed-overlay recently-viewed-overlay--audio-only">
+          <text class="recently-viewed-text">刚刚浏览</text>
         </view>
         <view class="card-title {{item._isAudioOnly ? 'card-title--audio-only' : ''}}">
           <t-icon wx:if="{{item._isAudioOnly}}" name="microphone" size="32rpx"
@@ -191,6 +198,13 @@
           </view>
           <image wx:if="{{!item._isAudioOnly}}" src="{{item.coverUrl}}" mode="widthFix"
             class="card-image" />
+          <view wx:if="{{item._isRecentlyViewed && !item._isAudioOnly}}" class="recently-viewed-overlay">
+            <text class="recently-viewed-text">刚刚浏览</text>
+          </view>
+        </view>
+        <view wx:if="{{item._isRecentlyViewed && item._isAudioOnly}}"
+          class="recently-viewed-overlay recently-viewed-overlay--audio-only">
+          <text class="recently-viewed-text">刚刚浏览</text>
         </view>
         <view class="card-title {{item._isAudioOnly ? 'card-title--audio-only' : ''}}">
           <t-icon wx:if="{{item._isAudioOnly}}" name="microphone" size="32rpx"

@@ -337,6 +337,13 @@ Page({
     });
   },
 
+  onActivityDetail(e: any) {
+    const activityId = e.currentTarget.dataset.id;
+    wx.navigateTo({
+      url: `/pages/activity-detail/activity-detail?id=${encodeURIComponent(activityId)}`,
+    });
+  },
+
   onAllTracks() {
     this.setData({
       allTracksPopupVisible: true,
