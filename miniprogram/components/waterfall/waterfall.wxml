@@ -116,7 +116,7 @@
             </view>
           </view>
           <image wx:if="{{!item._isAudioOnly}}" src="{{item.coverUrl}}" mode="widthFix"
-            class="card-image" />
+            class="card-image {{item._isRecentlyViewed ? 'card-image--recently-viewed' : ''}}" />
           <view wx:if="{{item._isRecentlyViewed && !item._isAudioOnly}}" class="recently-viewed-overlay">
             <text class="recently-viewed-text">刚刚浏览</text>
           </view>
@@ -197,7 +197,7 @@
             </view>
           </view>
           <image wx:if="{{!item._isAudioOnly}}" src="{{item.coverUrl}}" mode="widthFix"
-            class="card-image" />
+            class="card-image {{item._isRecentlyViewed ? 'card-image--recently-viewed' : ''}}" />
           <view wx:if="{{item._isRecentlyViewed && !item._isAudioOnly}}" class="recently-viewed-overlay">
             <text class="recently-viewed-text">刚刚浏览</text>
           </view>
