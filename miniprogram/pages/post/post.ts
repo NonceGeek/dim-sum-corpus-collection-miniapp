@@ -27,6 +27,20 @@ sharedAudioManager.onError((err) => {
   activeAudioErrorHandler?.(err);
 });
 
+// iOS 上 InnerAudioContext 默认 obeyMuteSwitch=true：手机静音键打开时录音回放完全没声音；
+// 且录音结束后音频会话仍是录音模式，不显式设置会走听筒而不是扬声器。
+const applyPlaybackAudioOption = () => {
+  try {
+    wx.setInnerAudioOption({
+      obeyMuteSwitch: false,
+      speakerOn: true,
+      fail: () => {},
+    });
+  } catch (err) {
+    console.warn("setInnerAudioOption 失败", err);
+  }
+};
+
 const TYPES = ENV.TYPE;
 
 const getMediaPolicy = (activity: any) => {
@@ -141,6 +155,7 @@ Page({
   audioStateHandler: null as any,
   audioErrorHandler: null as any,
   pendingRecordAudioContext: null as any,
+  pendingRecordPlaybackPath: "",
   pendingRecordLongPressAt: 0,
   allowRecordPopupClose: false,
   recordCancelledOnHide: false,
@@ -245,37 +260,13 @@ Page({
     };
     activeAudioStateHandler = this.audioStateHandler;
     activeAudioErrorHandler = this.audioErrorHandler;
-
-    const pendingRecordAudioContext = wx.createInnerAudioContext();
-    pendingRecordAudioContext.onPlay(() => {
-      this.setData({ pendingRecordPlaying: true });
-    });
-    pendingRecordAudioContext.onPause(() => {
-      this.setData({ pendingRecordPlaying: false });
-    });
-    pendingRecordAudioContext.onStop(() => {
-      this.setData({ pendingRecordPlaying: false });
-    });
-    pendingRecordAudioContext.onEnded(() => {
-      this.setData({ pendingRecordPlaying: false });
-    });
-    pendingRecordAudioContext.onError((err: any) => {
-      this.setData({ pendingRecordPlaying: false });
-      wx.showToast({
-        title: err?.errMsg || "录音播放失败",
-        icon: "none",
-      });
-    });
-    this.pendingRecordAudioContext = pendingRecordAudioContext;
   },
   onUnload() {
     wx.disableAlertBeforeUnload();
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }
-    this.stopPendingRecordPlayback();
-    this.pendingRecordAudioContext?.destroy();
-    this.pendingRecordAudioContext = null;
+    this.clearPendingRecordPlayback();
     this.stopAudioPlayback();
     if (activeAudioStateHandler === this.audioStateHandler) {
       activeAudioStateHandler = null;
@@ -1486,7 +1477,7 @@ Page({
 
   // 真正开始录音
   doStartRecord() {
-    this.stopPendingRecordPlayback();
+    this.clearPendingRecordPlayback();
     this.stopAudioPlayback();
     activeRecorderStopHandler = this.handleRecordStop;
     this.setData({
@@ -1527,7 +1518,7 @@ Page({
   // 取消已完成但尚未使用的录音
   onCancelRecordedAudio() {
     if (this.data.recordProcessing) return;
-    this.stopPendingRecordPlayback();
+    this.clearPendingRecordPlayback();
     this.setData(
       {
         ...this.getPendingRecordingResetState(),
@@ -1555,7 +1546,7 @@ Page({
     const { pendingRecordPath, pendingRecordDuration } = this.data;
     if (!pendingRecordPath || this.data.recordProcessing) return;
 
-    this.stopPendingRecordPlayback();
+    this.clearPendingRecordPlayback();
     this.setData({ recordProcessing: true });
     wx.showLoading({ title: "上传中..." });
     try {
@@ -1591,7 +1582,7 @@ Page({
     const { pendingRecordPath, pendingRecordDuration } = this.data;
     if (!pendingRecordPath || this.data.recordProcessing) return;
 
-    this.stopPendingRecordPlayback();
+    this.clearPendingRecordPlayback();
     this.setData({ recordProcessing: true });
     wx.showLoading({ title: "上传中..." });
     try {
@@ -1643,6 +1634,8 @@ Page({
       return;
     }
 
+    applyPlaybackAudioOption();
+
     sharedAudioManager.title = "录音播放";
     sharedAudioManager.epname = "录音";
     sharedAudioManager.singer = "用户";
@@ -1665,26 +1658,82 @@ Page({
     }
   },
 
-  onPendingRecordBubbleTap() {
+  async onPendingRecordBubbleTap() {
     if (Date.now() - this.pendingRecordLongPressAt < 800) return;
 
     const { pendingRecordPath, pendingRecordPlaying, recordProcessing } =
       this.data;
     if (recordProcessing) return;
-    if (!pendingRecordPath || !this.pendingRecordAudioContext) {
+    if (!pendingRecordPath) {
       wx.showToast({ title: "暂无可播放的录音", icon: "none" });
       return;
     }
 
     if (pendingRecordPlaying) {
-      this.pendingRecordAudioContext.pause();
+      this.pendingRecordAudioContext?.pause();
       return;
     }
 
-    if (this.pendingRecordAudioContext.src !== pendingRecordPath) {
-      this.pendingRecordAudioContext.src = pendingRecordPath;
+    if (this.pendingRecordAudioContext && this.pendingRecordPlaybackPath) {
+      applyPlaybackAudioOption();
+      this.pendingRecordAudioContext.play();
+      return;
     }
-    this.pendingRecordAudioContext.play();
+
+    this.setData({ recordProcessing: true });
+    wx.showLoading({ title: "准备试听..." });
+    try {
+      const playbackPath = `${wx.env.USER_DATA_PATH}/pending-record-${Date.now()}.mp3`;
+      await new Promise<void>((resolve, reject) => {
+        wx.getFileSystemManager().copyFile({
+          srcPath: pendingRecordPath,
+          destPath: playbackPath,
+          success: () => resolve(),
+          fail: reject,
+        });
+      });
+
+      if (this.data.pendingRecordPath !== pendingRecordPath) {
+        wx.getFileSystemManager().unlink({ filePath: playbackPath });
+        return;
+      }
+
+      applyPlaybackAudioOption();
+
+      const audioContext = wx.createInnerAudioContext();
+      audioContext.volume = 1;
+      audioContext.onPlay(() => {
+        this.setData({ pendingRecordPlaying: true });
+      });
+      audioContext.onPause(() => {
+        this.setData({ pendingRecordPlaying: false });
+      });
+      audioContext.onStop(() => {
+        this.setData({ pendingRecordPlaying: false });
+      });
+      audioContext.onEnded(() => {
+        this.setData({ pendingRecordPlaying: false });
+      });
+      audioContext.onError((err: any) => {
+        this.setData({ pendingRecordPlaying: false });
+        wx.showToast({
+          title: err?.errMsg || "录音播放失败",
+          icon: "none",
+        });
+      });
+      audioContext.autoplay = true;
+      this.pendingRecordAudioContext = audioContext;
+      this.pendingRecordPlaybackPath = playbackPath;
+      audioContext.src = playbackPath;
+    } catch (err: any) {
+      wx.showToast({
+        title: err?.errMsg || "准备录音试听失败",
+        icon: "none",
+      });
+    } finally {
+      wx.hideLoading();
+      this.setData({ recordProcessing: false });
+    }
   },
 
   onRerecordPendingAudio() {
@@ -1697,7 +1746,7 @@ Page({
     }
 
     this.pendingRecordLongPressAt = Date.now();
-    this.stopPendingRecordPlayback();
+    this.clearPendingRecordPlayback();
     this.setData(
       {
         ...this.getPendingRecordingResetState(),
@@ -1710,11 +1759,24 @@ Page({
   },
 
   stopPendingRecordPlayback() {
-    if (this.pendingRecordAudioContext) {
-      this.pendingRecordAudioContext.stop();
-    }
     if (this.data.pendingRecordPlaying) {
+      this.pendingRecordAudioContext?.stop();
       this.setData({ pendingRecordPlaying: false });
+    }
+  },
+
+  clearPendingRecordPlayback() {
+    this.stopPendingRecordPlayback();
+    this.pendingRecordAudioContext?.destroy();
+    this.pendingRecordAudioContext = null;
+
+    const playbackPath = this.pendingRecordPlaybackPath;
+    this.pendingRecordPlaybackPath = "";
+    if (playbackPath) {
+      wx.getFileSystemManager().unlink({
+        filePath: playbackPath,
+        fail: () => {},
+      });
     }
   },
 
@@ -1815,6 +1877,8 @@ Page({
   handleRecordStop(res: any) {
     console.log("录音结束：", res);
     wx.disableAlertBeforeUnload();
+    // 录音结束后音频会话仍停留在录音模式，先切回外放再进入试听流程。
+    applyPlaybackAudioOption();
     if (this.data.recordTimer) {
       clearInterval(this.data.recordTimer);
     }

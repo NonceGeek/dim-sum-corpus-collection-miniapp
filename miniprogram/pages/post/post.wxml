@@ -1,4 +1,4 @@
-<view class="upload-page theme-{{currentTheme}}">
+<view class="upload-page upload-page--{{mode}} theme-{{currentTheme}}">
   <block wx:if="{{mode === 'edit'}}">
     <!-- 空的返回哨兵：只接管返回，投稿内容保留在真实页面上，避免侧滑时白屏。 -->
     <page-container
@@ -19,7 +19,8 @@
     </t-navbar>
 
 
-    <view class="upload-content">
+    <scroll-view class="upload-content" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="upload-content-inner">
       <!-- 图片上传区域 -->
       <view class="image-upload-section" wx:if="{{canChooseVisualMedia || imageList.length > 0}}">
         <view class="image-list">
@@ -197,13 +198,15 @@
         </view>
       </t-popup>
 
-      <!-- 底部按钮 -->
-      <view class="footer">
-        <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
-          disabled="{{!canPublish}}" hover-class="none">
-          投稿
-        </t-button>
       </view>
+    </scroll-view>
+
+    <!-- 底部按钮 -->
+    <view class="footer">
+      <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
+        disabled="{{!canPublish}}" hover-class="none">
+        投稿
+      </t-button>
     </view>
 
     <!-- 录音弹窗 -->
