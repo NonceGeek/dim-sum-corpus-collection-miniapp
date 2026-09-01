@@ -68,8 +68,16 @@
     </view>
 
   <!-- 外观模式选择 -->
-  <t-action-sheet class="theme-action-sheet theme-{{currentTheme}}" visible="{{showThemeSheet}}" items="{{themeOptions}}" bind:selected="onThemeSelect"
-    bind:cancel="onThemeSheetClose" bind:close="onThemeSheetClose" />
+  <t-popup t-class="theme-popup theme-{{currentTheme}}" t-class-content="theme-popup-content" visible="{{showThemeSheet}}" placement="bottom"
+    bind:visible-change="onThemeSheetClose">
+    <view class="theme-sheet-panel">
+      <view class="theme-sheet-option" wx:for="{{themeOptions}}" wx:key="value" data-value="{{item.value}}" bind:tap="onThemeSelect">
+        {{item.label}}
+      </view>
+      <view class="theme-sheet-gap" />
+      <view class="theme-sheet-cancel" bind:tap="onThemeSheetClose">取消</view>
+    </view>
+  </t-popup>
 
   <app-tab-bar value="profile" />
 </view>

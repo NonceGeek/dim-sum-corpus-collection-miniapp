@@ -1,11 +1,12 @@
 const TYPE = [
-  { label: "用语", value: "用语" },
-  { label: "诗歌", value: "诗歌" },
-  { label: "故事", value: "故事" },
-  { label: "标语", value: "标语" },
-  { label: "地名解说", value: "地名解说" },
+  { label: "一句粤语/俗语", value: "一句粤语/俗语" },
+  { label: "诗歌/歌词", value: "诗歌/歌词" },
+  { label: "人物或地方故事", value: "人物或地方故事" },
+  { label: "宣传口号/创意标语", value: "宣传口号/创意标语" },
+  { label: "地名来历与介绍", value: "地名来历与介绍" },
   { label: "歇后语", value: "歇后语" },
   { label: "自然对话", value: "自然对话" },
+  { label: "其他", value: "其他" },
 ];
 
 const TYPE_JSON = TYPE.reduce<Record<string, string>>((result, item) => {

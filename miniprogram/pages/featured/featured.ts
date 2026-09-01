@@ -20,65 +20,7 @@ interface ITrack {
   endsAt: string;
   submissionCount: number;
 }
-const TITLE_ARRAY = [
-  {
-    title: "粤语唔止一种讲法",
-    subtitle: "欢迎所有野生创作",
-  },
-  {
-    title: "15种民间表达",
-    subtitle: "欢迎你用粤语重新定义世界",
-  },
-  {
-    title: "粤语唔止一种讲法",
-    subtitle: "欢迎所有野生创作",
-  },
-  {
-    title: "收集民间灵魂",
-    subtitle: "欢迎乱入粤语世界",
-  },
-  {
-    title: "万千讲法",
-    subtitle: "皆是人间烟火",
-  },
-  {
-    title: "字有乡音",
-    subtitle: "话有来处",
-  },
-  {
-    title: "让正在消失的表达",
-    subtitle: "重新被听见",
-  },
-  {
-    title: "收录民间癫话",
-    subtitle: "欢迎对号入座",
-  },
-  {
-    title: "15种粤语生存方式",
-    subtitle: "欢迎唔被定义嘅你",
-  },
-  {
-    title: "15种人间声气",
-    subtitle: "欢迎你留下讲法",
-  },
-  {
-    title: "15种民间声气",
-    subtitle: "欢迎唔被定义嘅你",
-  },
-  {
-    title: "收录民间声气",
-    subtitle: "等你发声",
-  },
-  {
-    title: "你把声",
-    subtitle: "值得被听见",
-  },
-];
 
-const getRandomTitle = () => {
-  const index = Math.floor(Math.random() * TITLE_ARRAY.length);
-  return TITLE_ARRAY[index];
-};
 
 const truncateText = (text = "", maxLength: number) => {
   if (text.length <= maxLength) {
@@ -93,9 +35,18 @@ const formatTrack = (item: any) => {
   const requiresVideo = requiredTypes.includes("video");
   const requiresAudio = requiredTypes.includes("audio");
   const requiresImage = requiredTypes.includes("image");
+  const works = Array.isArray(item.works)
+    ? item.works.map((work: any) => ({
+        ...work,
+        hasImage: Array.isArray(work.media)
+          ? work.media.some((media: any) => media?.type === "image")
+          : false,
+      }))
+    : [];
 
   return {
     ...item,
+    works,
     displayTitleFull: truncateText(item.title, 35),
     displayTitle: truncateText(item.title, 8),
     displayDescription: truncateText(item.description, 100),
@@ -118,10 +69,8 @@ Page({
     currentIndex: 0,
     descIndex: 0,
     descAnimClass: "show",
-    descTexts: ["你讲咩呀～", "收声啦你", "边个教你噶"],
     tabScrollLeft: 0,
     allTracksPopupVisible: false,
-    visibleTabs: [] as any[],
     topTracks: [] as ITrack[],
     allTracks: [] as ITrack[],
     allTracksPage: 1,
@@ -142,19 +91,10 @@ Page({
       shouldResumeJoin: Boolean(options.joinActivityId),
     });
     this.syncTheme();
-    this.updateBannerTitle();
-    this.startDescCycle();
 
     await this.loadTopTracks();
   },
 
-  updateBannerTitle() {
-    const bannerTitle = getRandomTitle();
-    this.setData({
-      bannerTitle: bannerTitle.title,
-      bannerSubtitle: bannerTitle.subtitle,
-    });
-  },
 
   async loadTopTracks(options: { force?: boolean } = {}) {
     try {
@@ -175,7 +115,6 @@ Page({
         {
           topTracks: tracks,
         },
-        () => this.updateVisibleTabs(),
       );
     } catch (err) {
       console.log("加载活动报错:", err);
@@ -218,7 +157,6 @@ Page({
     this.setData({
       currentIndex: current,
     });
-    this.updateVisibleTabs();
   },
 
   onTabSwiperChange(e: any) {
@@ -241,80 +179,8 @@ Page({
     this.setData({
       currentIndex: newIndex,
     });
-    this.updateVisibleTabs();
   },
 
-  updateVisibleTabs() {
-    const trackCount = this.data.topTracks.length;
-    if (trackCount === 0) return;
-    const current = this.data.currentIndex;
-    const prevIndex = (current - 1 + trackCount) % trackCount;
-    const nextIndex = (current + 1) % trackCount;
-    this.setData({
-      visibleTabs: [
-        {
-          ...this.data.topTracks[prevIndex],
-          _position: "prev",
-          _originalIndex: prevIndex,
-        },
-        {
-          ...this.data.topTracks[current],
-          _position: "current",
-          _originalIndex: current,
-        },
-        {
-          ...this.data.topTracks[nextIndex],
-          _position: "next",
-          _originalIndex: nextIndex,
-        },
-      ],
-    });
-  },
-
-  startDescCycle() {
-    this.timer = setInterval(() => {
-      this.setData({ descAnimClass: "hide" });
-      setTimeout(() => {
-        let next = this.data.descIndex + 1;
-        if (next >= this.data.descTexts.length) {
-          next = 0;
-        }
-        this.setData({
-          descIndex: next,
-          descAnimClass: "show",
-        });
-      }, 500);
-    }, 3000);
-  },
-  scrollTabToCenter(index: number) {
-    const query = wx.createSelectorQuery();
-
-    query.select(`#tab-${index}`).boundingClientRect();
-    query.select(".tab-scroll").boundingClientRect();
-
-    query.exec((res) => {
-      const tabRect = res[0] as any;
-      const scrollRect = res[1] as any;
-
-      if (!tabRect || !scrollRect) return;
-
-      // 当前 scrollLeft
-      const currentScrollLeft = this.data.tabScrollLeft || 0;
-
-      // tab中心点
-      const tabCenter = tabRect.left + tabRect.width / 2;
-
-      // scroll-view中心点
-      const scrollCenter = scrollRect.width / 2;
-
-      // 需要移动距离
-      const distance = tabCenter - scrollCenter;
-
-      this.setData({
-        tabScrollLeft: currentScrollLeft + distance,
-      });
-    });
-  },
 
   syncTheme() {
     const app = getApp<any>();
@@ -412,6 +278,16 @@ Page({
       url: `/pages/tracks/tracks?id=${itemId}`,
     });
   },
+
+  onWorkCoverTap(e: WechatMiniprogram.TouchEvent) {
+    const workId = e.currentTarget.dataset.id;
+    if (!workId) return;
+
+    wx.navigateTo({
+      url: `/pages/post/post?id=${encodeURIComponent(workId)}&mode=view`,
+    });
+  },
+
   async loadMoreTracks() {
     if (this.data.allTracksLoading || this.data.allTracksNoMore) {
       return;

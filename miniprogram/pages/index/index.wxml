@@ -4,7 +4,18 @@
     <view class="swiper-wrapper">
       <t-swiper current="{{current}}" autoplay="{{autoplay}}" duration="{{duration}}" interval="{{interval}}"
         list="{{swiperList}}" image-props="{{bannerImageProps}}" navigation="{{ { type: 'dots-bar' } }}" height="{{swiperHeight}}"
-        bind:click="onClickToTrack"/>
+        bind:change="onSwiperChange" bind:click="onClickToTrack"/>
+      <view class="banner-glass" wx:if="{{swiperList.length}}">
+        <view class="banner-activity-tag" wx:if="{{swiperList[current].activityTag}}">
+          <text>{{swiperList[current].activityTag}}</text>
+        </view>
+        <view class="banner-glass-title" style="font-size: {{swiperList[current].titleFontSize}}rpx;">
+          <text>{{swiperList[current].title}}</text>
+        </view>
+        <view class="banner-glass-time" wx:if="{{swiperList[current].startsAt && swiperList[current].endsAt}}">
+          <text>{{swiperList[current].startsAt}} - {{swiperList[current].endsAt}}</text>
+        </view>
+      </view>
     </view>
 
     <!-- 卡片列表 -->

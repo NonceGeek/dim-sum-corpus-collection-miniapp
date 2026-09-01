@@ -2,7 +2,7 @@
 
   <block wx:if="{{topTracks.length > 0}}">
     <!-- 顶部Banner -->
-    <view class="top-banner">
+    <!-- <view class="top-banner">
       <view class="banner-danmaku-track">
         <view class="banner-danmaku-list">
           <text class="banner-title-text">
@@ -19,7 +19,7 @@
           {{descTexts[descIndex]}}
         </view>
       </view>
-    </view>
+    </view> -->
 
     <!-- 赛道卡片轮播 -->
     <swiper class="card-swiper" current="{{currentIndex}}" bindchange="onContentSwiperChange" indicator-dots="{{false}}"
@@ -57,13 +57,36 @@
               <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
                 <view class="video-list">
                   <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
-                    <view class="video-cover-wrapper">
-                      <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
-                    </view>
-                    <view class="author-row">
-                      <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
-                      <text class="author-name">{{item.author.name}}</text>
-                    </view>
+                    <block wx:if="{{item.hasImage}}">
+                      <view class="video-cover-wrapper" bind:tap="onWorkCoverTap" data-id="{{item.id}}">
+                        <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+                      </view>
+                      <view class="work-title">{{item.title}}</view>
+                      <view class="author-row">
+                        <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
+                        <text class="author-name">{{item.author.name}}</text>
+                      </view>
+                    </block>
+                    <block wx:else>
+                      <view class="audio-cover" bind:tap="onWorkCoverTap" data-id="{{item.id}}">
+                        <view class="audio-cover-icon">
+                          <t-icon name="microphone" size="64rpx" color="var(--primary)" t-class="audio-work-icon" />
+                        </view>
+                        <view class="audio-wave" aria-hidden="true">
+                          <view class="audio-wave-bar audio-wave-bar--1"></view>
+                          <view class="audio-wave-bar audio-wave-bar--2"></view>
+                          <view class="audio-wave-bar audio-wave-bar--3"></view>
+                          <view class="audio-wave-bar audio-wave-bar--4"></view>
+                          <view class="audio-wave-bar audio-wave-bar--5"></view>
+                        </view>
+                        <text class="audio-cover-label">语音作品</text>
+                      </view>
+                      <view class="work-title">{{item.title}}</view>
+                      <view class="author-row">
+                        <image class="avatar" src="{{item.author.avatar}}" mode="aspectFill" />
+                        <text class="author-name">{{item.author.name}}</text>
+                      </view>
+                    </block>
                   </view>
                 </view>
               </scroll-view>
@@ -102,27 +125,30 @@
               </t-button>
             </view>
 
-            <!-- 底部小箭头 -->
-            <view class="arrow-bottom"></view>
           </view>
         </swiper-item>
       </block>
     </swiper>
 
-    <!-- 底部tab -->
-    <view class="tab-container">
-      <view class="tab-list">
-        <view wx:for="{{visibleTabs}}" wx:key="_position" wx:for-item="item"
-          class="tab-item {{item._position === 'current' ? 'active' : ''}}" bindtap="onTabTap"
-          data-position="{{item._position}}">
-          <view class="tab-title">
-            {{item.displayTitle}}
-          </view>
-          <view class="tab-sub" wx:if="{{item._position === 'current' && item.submissionCount > 0}}">
-            {{item.submissionCount}}个作品已参赛
-          </view>
-        </view>
+    <view class="swiper-arrow-layer">
+      <view wx:if="{{topTracks.length > 1}}" class="swiper-arrow swiper-arrow--prev" bind:tap="onTabTap"
+        data-position="prev" hover-class="none" aria-label="上一个活动">
+        <t-icon name="chevron-left" size="36rpx" color="{{currentTheme === 'dark' ? '#ffffff' : '#374151'}}"
+          t-class="swiper-arrow-icon" />
       </view>
+      <view wx:if="{{topTracks.length > 1}}" class="swiper-arrow swiper-arrow--next" bind:tap="onTabTap"
+        data-position="next" hover-class="none" aria-label="下一个活动">
+        <t-icon name="chevron-right" size="36rpx" color="{{currentTheme === 'dark' ? '#ffffff' : '#374151'}}"
+          t-class="swiper-arrow-icon" />
+      </view>
+    </view>
+
+    <view class="card-swiper-dots" wx:if="{{topTracks.length > 1}}" aria-label="活动轮播位置">
+      <view wx:for="{{topTracks}}" wx:key="id" class="card-swiper-dot {{index === currentIndex ? 'is-active' : ''}}"></view>
+    </view>
+    <view class="card-swiper-tip" wx:if="{{topTracks.length > 1}}">
+      <t-icon name="info-circle" size="28rpx" color="var(--text-muted)" />
+      <text class="card-swiper-tip-text">可左右滑动查看活动</text>
     </view>
 
     <!-- 底部功能按钮 -->

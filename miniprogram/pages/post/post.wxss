@@ -542,8 +542,13 @@
   opacity: 1 !important;
 }
 
-.btn-submit-inner.t-button--disabled {
-  opacity: 0.5 !important;
+.btn-submit-inner.t-button--disabled,
+.btn-submit-inner--disabled,
+.btn-submit-inner--disabled:active,
+.btn-submit-inner--disabled.t-button--hover,
+.btn-submit-inner--disabled.t-button--active {
+  background: var(--text-muted) !important;
+  opacity: 0.55 !important;
   box-shadow: none !important;
 }
 
@@ -1388,5 +1393,5 @@
 }
 
 .t-search__input-box .t-input__keyword {
-  color: var(--text-on-light) !important;
+  color: var(--text-primary) !important;
 }

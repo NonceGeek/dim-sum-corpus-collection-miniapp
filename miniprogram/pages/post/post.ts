@@ -49,9 +49,13 @@ const getMediaPolicy = (activity: any) => {
   const hasImage = requiredTypes.includes("image");
   const hasVideo = requiredTypes.includes("video");
   const hasAudio = requiredTypes.includes("audio");
-  const isVideoOnly = hasActivity && requiredTypes.length === 1 && hasVideo;
+  const requireVideoCoverUpload = hasActivity && hasVideo;
   const maxImageCount =
-    !hasActivity || hasImage ? MAX_IMAGE : isVideoOnly ? MIN_IMAGE : 0;
+    !hasActivity || hasImage
+      ? MAX_IMAGE
+      : requireVideoCoverUpload
+        ? MIN_IMAGE
+        : 0;
   const maxVideoCount = !hasActivity || hasVideo ? 1 : 0;
 
   return {
@@ -62,8 +66,9 @@ const getMediaPolicy = (activity: any) => {
     allowAudioUpload: !hasActivity || hasAudio,
     maxImageCount,
     maxVideoCount,
-    requireImageUpload: hasActivity && (hasImage || isVideoOnly),
+    requireImageUpload: hasActivity && (hasImage || hasVideo),
     requireVideoUpload: hasActivity && hasVideo,
+    requireVideoCoverUpload,
     requireAudioUpload: hasActivity && hasAudio,
   };
 };
@@ -574,13 +579,25 @@ Page({
   async onChooseImage() {
     const mediaPolicy = getMediaPolicy(this.data.selectedActivity);
     const { maxImageCount, maxVideoCount } = mediaPolicy;
+    const currentImageCount = this.data.imageList.filter(
+      (file) => file.type === "image",
+    ).length;
+    const currentVideoCount = this.data.imageList.filter(
+      (file) => file.type === "video",
+    ).length;
+    const requireVideoCoverUpload =
+      mediaPolicy.requireVideoCoverUpload || currentVideoCount > 0;
     const ruleDescription = [
       mediaPolicy.allowImageUpload
-        ? mediaPolicy.requireImageUpload
+        ? requireVideoCoverUpload
           ? mediaPolicy.maxImageCount === MIN_IMAGE
-            ? "图片：1张（必传）"
-            : "图片：1-8张（必传）"
-          : "图片：最多8张（选填）"
+            ? "图片：1张（视频封面必传）"
+            : "图片：1-8张（视频封面必传）"
+          : mediaPolicy.requireImageUpload
+            ? mediaPolicy.maxImageCount === MIN_IMAGE
+              ? "图片：1张（必传）"
+              : "图片：1-8张（必传）"
+            : "图片：最多8张（选填）"
         : "图片：不支持上传",
       mediaPolicy.allowVideoUpload
         ? mediaPolicy.requireVideoUpload
@@ -588,12 +605,6 @@ Page({
           : "视频：最多1个，且不能超过30秒（选填）"
         : "视频：不支持上传",
     ].join("\n");
-    const currentImageCount = this.data.imageList.filter(
-      (file) => file.type === "image",
-    ).length;
-    const currentVideoCount = this.data.imageList.filter(
-      (file) => file.type === "video",
-    ).length;
     const remainingImageCount = Math.max(maxImageCount - currentImageCount, 0);
     const remainingVideoCount = Math.max(maxVideoCount - currentVideoCount, 0);
     const maxCount = remainingImageCount + remainingVideoCount;
@@ -951,6 +962,11 @@ Page({
 
     if (!mediaPolicy.allowImageUpload && imageCount > 0) {
       violations.push("该活动不支持上传图片");
+    } else if (
+      (mediaPolicy.requireVideoCoverUpload || videoCount > 0) &&
+      imageCount < MIN_IMAGE
+    ) {
+      violations.push("上传视频时需额外上传1张图片作为封面");
     } else if (mediaPolicy.requireImageUpload && imageCount < MIN_IMAGE) {
       violations.push("缺少图片，至少需要1张");
     } else if (imageCount > mediaPolicy.maxImageCount) {

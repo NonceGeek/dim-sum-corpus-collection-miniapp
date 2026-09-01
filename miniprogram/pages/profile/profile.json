@@ -2,7 +2,7 @@
   "usingComponents": {
     "t-button": "tdesign-miniprogram/button/button",
     "t-icon": "tdesign-miniprogram/icon/icon",
-    "t-action-sheet": "tdesign-miniprogram/action-sheet/action-sheet",
+    "t-popup": "tdesign-miniprogram/popup/popup",
     "t-image": "tdesign-miniprogram/image/image",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
     "t-cell": "tdesign-miniprogram/cell/cell",

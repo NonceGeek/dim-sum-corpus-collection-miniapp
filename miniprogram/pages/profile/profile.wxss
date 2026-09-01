@@ -139,22 +139,36 @@
   overflow: hidden;
 }
 
-.theme-action-sheet {
-  --td-action-sheet-border-color: transparent;
-  --td-action-sheet-border-radius: var(--radius-2xl);
+.theme-popup {
   --td-popup-border-radius: var(--radius-2xl);
+  overflow: hidden;
+  border-top-left-radius: var(--radius-2xl) !important;
+  border-top-right-radius: var(--radius-2xl) !important;
   background-color: var(--bg-card) !important;
 }
 
-.theme-action-sheet .t-popup,
-.theme-action-sheet .t-popup__content {
+.theme-popup-content,
+.theme-sheet-panel {
+  overflow: hidden;
+  border-top-left-radius: var(--radius-2xl) !important;
+  border-top-right-radius: var(--radius-2xl) !important;
   background-color: var(--bg-card) !important;
 }
 
-.theme-action-sheet .t-action-sheet__description::after,
-.theme-action-sheet .t-action-sheet__list-item::after,
-.theme-action-sheet .t-action-sheet__gap-grid {
-  display: none;
+.theme-sheet-option,
+.theme-sheet-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pd-lg);
+  color: var(--text-primary);
+  font-size: var(--fs-32);
+  line-height: 48rpx;
+}
+
+.theme-sheet-gap {
+  height: 16rpx;
+  background-color: var(--bg-page);
 }
 
 /* 退出 */

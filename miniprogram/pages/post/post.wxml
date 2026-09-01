@@ -133,6 +133,7 @@
             <view class="loading-tip" wx:elif="{{!activityLoading && activityList.length === 0}}">
               <text>暂无活动</text>
             </view>
+            <view class="topic-list-bottom-spacer" aria-hidden="true"></view>
           </scroll-view>
         </view>
       </t-popup>
@@ -204,8 +205,9 @@
 
     <!-- 底部按钮 -->
     <view class="footer">
-      <t-button theme="primary" shape="round" bind:tap="onPublish" class="btn-submit btn-submit-inner"
-        disabled="{{!canPublish}}" hover-class="none">
+      <t-button theme="primary" shape="round" bind:tap="onPublish"
+        class="btn-submit btn-submit-inner {{!canPublish ? 'btn-submit-inner--disabled' : ''}}"
+        aria-disabled="{{!canPublish}}" hover-class="none">
         投稿
       </t-button>
     </view>

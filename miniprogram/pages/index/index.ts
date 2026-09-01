@@ -1,5 +1,6 @@
 import { STATIC_FILE } from "../../app";
 import ENV from "../../config/setting";
+import { formatDate } from "../../utils/date";
 import request from "../../utils/http";
 import { fetchQuery } from "../../utils/query-cache";
 
@@ -13,10 +14,26 @@ function getSwiperHeight(windowWidth: number) {
   return Math.round((windowWidth / BASE_SWIPER_WIDTH) * BASE_SWIPER_HEIGHT);
 }
 
+function getBannerTitleFontSize(title: string) {
+  const characters = Array.from((title || "").trim());
+  const visualLength = characters.reduce((length, character) => {
+    return length + (/^[\x00-\xff]$/.test(character) ? 0.55 : 1);
+  }, 0);
+
+  if (visualLength === 0) return 46;
+
+  const availableWidth = 600 - Math.max(0, characters.length - 1) * 4;
+  return Math.max(36, Math.min(46, Math.floor(availableWidth / visualLength)));
+}
+
 interface ISwiperList {
   id: string;
   title: string;
   bannerUrl: string;
+  activityTag: string;
+  startsAt: string;
+  endsAt: string;
+  titleFontSize: number;
   linkType: string;
   linkId: string;
   value: string;
@@ -94,6 +111,14 @@ Page({
             return activities.map((activity: ISwiperList) => ({
               id: activity.id,
               title: activity.title,
+              activityTag: activity.activityTag || "",
+              startsAt: activity.startsAt
+                ? formatDate(activity.startsAt, "YYYY-MM-DD")
+                : "",
+              endsAt: activity.endsAt
+                ? formatDate(activity.endsAt, "YYYY-MM-DD")
+                : "",
+              titleFontSize: getBannerTitleFontSize(activity.title || ""),
               imageUrl: activity.bannerUrl || STATIC_FILE,
               linkType: "activity",
               linkId: activity.id,
@@ -104,7 +129,10 @@ Page({
           }
         },
       });
-      this.setData({ swiperList });
+      this.setData({
+        swiperList,
+        current: 0,
+      });
     } catch (err: any) {
       console.error("加载轮播图失败", err);
       wx.showToast({
@@ -218,6 +246,11 @@ Page({
   onWaterfallTap(e: any) {
     const { id } = e.detail;
     wx.navigateTo({ url: `/pages/post/post?id=${id}&mode=view` });
+  },
+
+  onSwiperChange(e: WechatMiniprogram.CustomEvent) {
+    const current = Number(e.detail?.current) || 0;
+    this.setData({ current });
   },
 
   onClickToTrack(e) {

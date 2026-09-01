@@ -145,7 +145,18 @@ Component({
 
     isAudioOnlyMedia(item: any) {
       const media = Array.isArray(item?.media) ? item.media : [];
-      return media.length > 0 && media.every((file) => file?.type === "audio");
+      const isMediaAudioOnly =
+        media.length > 0 && media.every((file) => file?.type === "audio");
+      const imageUrls = Array.isArray(item?.imageUrls) ? item.imageUrls : [];
+      const audioUrls = Array.isArray(item?.audioUrls) ? item.audioUrls : [];
+      const hasNoCoverUrl =
+        typeof item?.coverUrl === "string"
+          ? item.coverUrl.trim().length === 0
+          : !item?.coverUrl;
+      const isUrlListAudioOnly =
+        imageUrls.length === 0 && hasNoCoverUrl && audioUrls.length > 0;
+
+      return isMediaAudioOnly || isUrlListAudioOnly;
     },
 
     getEstimatedItemHeight(item: any, cache?: any) {

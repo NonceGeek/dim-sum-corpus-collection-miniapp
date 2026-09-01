@@ -174,7 +174,7 @@ Page({
    * 选择主题
    */
   onThemeSelect(e: any) {
-    const { value } = e.detail.selected;
+    const value = e.currentTarget.dataset.value;
     const app = getApp<any>();
 
     app.setThemeMode(value);
