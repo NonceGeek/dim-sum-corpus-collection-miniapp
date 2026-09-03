@@ -1,5 +1,6 @@
 import { IAppOption } from "../../../typings";
 import ENV from "../../config/setting";
+import { releaseLoginNavigationLock } from "../../utils/auth";
 const { miniProgram } = wx.getAccountInfoSync();
 
 function decodeRedirect(rawRedirect: string): string {
@@ -24,6 +25,7 @@ Page({
   },
 
   onLoad(options: Record<string, string | undefined>) {
+    releaseLoginNavigationLock();
     this.syncTheme();
     this.setData({ returnToPrevious: options.returnToPrevious === "1" });
     const redirect = decodeRedirect(options.redirect || "");

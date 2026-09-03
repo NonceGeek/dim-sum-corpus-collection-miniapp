@@ -267,5 +267,4 @@
   bind:close="onJoinConsentClose"
   bind:complete="onJoinConsentComplete"
 />
-<common-dialog id="login-prompt" />
 <common-dialog id="common-dialog" />

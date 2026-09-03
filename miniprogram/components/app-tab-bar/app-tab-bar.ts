@@ -23,10 +23,7 @@ Component({
       this.triggerEvent("change", { value });
 
       if (value === "upload") {
-        navigateToProtectedPage(
-          "/pages/post/post?mode=edit",
-          "登录后才能投稿，当前仍可继续浏览公开内容。",
-        );
+        navigateToProtectedPage("/pages/post/post?mode=edit");
         return;
       }
 

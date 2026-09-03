@@ -189,10 +189,7 @@ Page({
   },
 
   onMyWorks() {
-    navigateToProtectedPage(
-      "/pages/mine/mine",
-      "登录后才能查看我的作品，当前仍可继续浏览精选内容。",
-    );
+    navigateToProtectedPage("/pages/mine/mine");
   },
 
   onMorePosts(e: any) {
@@ -239,7 +236,6 @@ Page({
       promptLogin(
         `/pages/featured/featured?joinActivityId=${encodeURIComponent(itemId)}`,
         {
-          content: "登录后才能投稿，当前仍可继续浏览精选内容。",
           returnToPrevious: true,
           onConfirm: () =>
             this.setData({

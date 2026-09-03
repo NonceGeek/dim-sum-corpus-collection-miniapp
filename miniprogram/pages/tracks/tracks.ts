@@ -192,10 +192,7 @@ Page({
   },
 
   onMyWorks() {
-    navigateToProtectedPage(
-      "/pages/mine/mine",
-      "登录后才能查看我的参赛作品，当前仍可继续浏览活动内容。",
-    );
+    navigateToProtectedPage("/pages/mine/mine");
   },
 
   onAllTracks() {
@@ -229,7 +226,6 @@ Page({
   onPost() {
     if (!isLoggedIn()) {
       promptLogin(`/pages/tracks/tracks?id=${this.data.trackId}&join=1`, {
-        content: "登录后才能投稿，当前仍可继续浏览活动内容。",
         returnToPrevious: true,
         onConfirm: () => this.setData({ shouldResumeJoin: true }),
       });

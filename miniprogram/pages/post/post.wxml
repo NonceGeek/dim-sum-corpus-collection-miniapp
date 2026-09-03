@@ -404,4 +404,3 @@
   bind:complete="onJoinConsentComplete"
 />
 <common-dialog id="common-dialog" />
-<common-dialog id="login-prompt" />

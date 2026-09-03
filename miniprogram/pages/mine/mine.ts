@@ -65,10 +65,7 @@ Page({
     this.syncTheme();
 
     if (
-      !guardProtectedPage(
-        "/pages/mine/mine",
-        "登录后才能查看我的参赛作品，当前仍可继续浏览公开内容。",
-      )
+      !guardProtectedPage("/pages/mine/mine")
     ) {
       this.setData({ isInitialWorksLoading: false });
       return;

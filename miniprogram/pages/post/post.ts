@@ -186,13 +186,7 @@ Page({
       .join("&");
     const currentUrl = `/pages/post/post?${query}`;
 
-    if (
-      pageMode !== "view" &&
-      !guardProtectedPage(
-        currentUrl,
-        "登录后才能投稿，当前仍可继续浏览公开内容。",
-      )
-    ) {
+    if (pageMode !== "view" && !guardProtectedPage(currentUrl)) {
       return;
     }
 

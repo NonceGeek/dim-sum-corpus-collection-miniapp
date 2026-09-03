@@ -95,16 +95,11 @@ Page({
       return;
     }
 
-    promptLogin("/pages/message/message", {
-      content: "登录后才能查看消息，您也可以暂不登录并继续浏览。",
-    });
+    promptLogin("/pages/message/message");
   },
 
   onWorksClick() {
-    navigateToProtectedPage(
-      "/pages/mine/mine",
-      "登录后才能查看我的参赛作品，您也可以暂不登录并继续浏览。",
-    );
+    navigateToProtectedPage("/pages/mine/mine");
   },
 
   onLogin() {

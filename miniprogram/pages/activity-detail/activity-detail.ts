@@ -108,7 +108,6 @@ Page({
     const returnUrl = `/pages/activity-detail/activity-detail?id=${encodeURIComponent(this.data.activityId)}&join=1`;
     if (!isLoggedIn()) {
       promptLogin(returnUrl, {
-        content: "登录后才能投稿，当前仍可继续浏览活动内容。",
         returnToPrevious: true,
         onConfirm: () => this.setData({ shouldResumeJoin: true }),
       });

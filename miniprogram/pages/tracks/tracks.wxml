@@ -96,5 +96,4 @@
     bind:complete="onJoinConsentComplete"
   />
 </view>
-<common-dialog id="login-prompt" />
 <common-dialog id="common-dialog" />
