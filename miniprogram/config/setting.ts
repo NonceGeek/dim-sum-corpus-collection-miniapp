@@ -25,7 +25,7 @@ export default {
   privacyUrl: "https://search.aidimsum.com/privacy", // 隐私政策URL
   // 版本号，格式为 YYYYMMDD
   // 每次发布新版本时，请更新此版本号，以便小程序能够正确识别新版本并进行更新
-  VERSION: "20260826",
+  VERSION: "20260903",
   TYPE,
   TYPE_JSON,
 };
