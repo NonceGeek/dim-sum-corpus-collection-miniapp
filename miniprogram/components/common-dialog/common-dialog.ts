@@ -28,6 +28,7 @@ Component({
     },
     cancelBtn: false as false | Record<string, unknown>,
     overlayProps: {
+      zIndex: 13999,
       style: "--td-overlay-bg-color: rgba(0, 0, 0, 0.52);",
     },
   },
@@ -66,6 +67,7 @@ Component({
             }
           : false,
         overlayProps: {
+          zIndex: 13999,
           style: `--td-overlay-bg-color: ${
             currentTheme === "dark"
               ? "rgba(0, 0, 0, 0.68)"
