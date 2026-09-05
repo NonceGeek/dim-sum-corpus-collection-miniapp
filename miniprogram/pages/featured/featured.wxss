@@ -119,11 +119,19 @@
   box-sizing: border-box;
 }
 
+.swiper-arrow-layer--two-line {
+  top: -525rpx;
+}
+
 .card-swiper {
   margin-top: var(--pd-base);
   height: 1010rpx;
   width: 100%;
   box-sizing: border-box;
+}
+
+.card-swiper--two-line {
+  height: 1050rpx;
 }
 
 .swiper-arrow {
@@ -309,6 +317,11 @@
   box-sizing: border-box;
 }
 
+.video-scroll--two-line {
+  flex-basis: 460rpx;
+  height: 460rpx;
+}
+
 .video-list {
   display: flex;
   gap: 20rpx;
@@ -403,7 +416,7 @@
   line-height: 40rpx;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
 }

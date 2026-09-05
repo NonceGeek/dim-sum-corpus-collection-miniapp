@@ -6,6 +6,8 @@ import uploadFileWithAuth from "../../utils/upload";
 
 const MAX_AUDIO_DURATION = 60;
 const MAX_VIDEO_DURATION = 30;
+const MAX_TITLE_LENGTH = 100;
+const MAX_CONTENT_LENGTH = 400;
 const MIN_IMAGE = 1;
 const MAX_IMAGE = 8;
 const sharedRecorderManager = wx.getRecorderManager();
@@ -950,6 +952,14 @@ Page({
     const videoCount = imageList.filter((i) => i.type === "video").length;
     const hasAnyMedia = imageCount > 0 || videoCount > 0 || Boolean(audioUrl);
 
+    if (title.length > MAX_TITLE_LENGTH) {
+      violations.push(`标题不能超过${MAX_TITLE_LENGTH}字符`);
+    }
+
+    if (content.length > MAX_CONTENT_LENGTH) {
+      violations.push(`内容简介不能超过${MAX_CONTENT_LENGTH}字符`);
+    }
+
     if (mediaPolicy.hasActivity && mediaPolicy.requiredTypes.length === 0) {
       violations.push("该活动未配置投稿媒体类型");
     }
@@ -1001,22 +1011,30 @@ Page({
       violations.push(`录音不能超过${MAX_AUDIO_DURATION}秒`);
     }
 
+    const message = !selectedType
+      ? "请选择类型"
+      : !title.trim()
+        ? "请填写标题"
+        : !content.trim()
+          ? "请填写内容简介"
+          : title.length > MAX_TITLE_LENGTH
+            ? `标题不能超过${MAX_TITLE_LENGTH}字符`
+            : content.length > MAX_CONTENT_LENGTH
+              ? `内容简介不能超过${MAX_CONTENT_LENGTH}字符`
+              : tags.length === 0
+                ? "请添加标签"
+                : violations[0] || "";
+
     return {
       canPublish:
         Boolean(selectedType) &&
         Boolean(title.trim()) &&
         Boolean(content.trim()) &&
+        title.length <= MAX_TITLE_LENGTH &&
+        content.length <= MAX_CONTENT_LENGTH &&
         tags.length > 0 &&
         violations.length === 0,
-      message: !selectedType
-        ? "请选择类型"
-        : !title.trim()
-          ? "请填写标题"
-          : !content.trim()
-            ? "请填写正文"
-            : tags.length === 0
-              ? "请添加标签"
-              : violations[0] || "",
+      message,
       violations,
     };
   },
@@ -1826,7 +1844,7 @@ Page({
     this.commitPendingAudio();
   },
 
-  // 转文字弹窗：确认，同时保存录音并把文字追加到正文。
+  // 转文字弹窗：确认，同时保存录音并把文字追加到内容简介。
   onAsrConfirm() {
     const text = this.data.asrText.trim();
     if (!text) {

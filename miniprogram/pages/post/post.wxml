@@ -42,8 +42,12 @@
       </view>
 
       <!-- 标题输入 -->
-      <t-input placeholder="请填写标题" value="{{title}}" bind:change="onTitleInput" class="title-input"
-        borderless="{{true}}" placeholder-class="input-placeholder" maxlength="{{20}}" />
+      <view class="input-section title-section">
+        <t-textarea placeholder="请填写标题" value="{{title}}" bind:change="onTitleInput" class="title-input"
+          maxlength="{{100}}" autosize="{{true}}" borderless="{{true}}"
+          placeholder-style="color: var(--text-muted)" />
+        <view class="word-count">{{title.length}}/100</view>
+      </view>
 
       <!-- 内容输入 -->
       <view class="input-section content-section">
@@ -64,10 +68,10 @@
           </view>
         </view>
         <t-textarea placeholder="请输入内容简介" value="{{content}}" bind:change="onContentInput" class="content-textarea"
-          maxlength="{{200}}" autocursor="{{true}}" autosize="{{true}}" borderless="{{true}}"
+          maxlength="{{400}}" autocursor="{{true}}" autosize="{{true}}" borderless="{{true}}"
           placeholder-style="color: var(--text-muted)" />
         <view class="textarea-footer">
-          <view class="word-count">{{content.length}}/200</view>
+          <view class="word-count">{{content.length}}/400</view>
 
         </view>
       </view>

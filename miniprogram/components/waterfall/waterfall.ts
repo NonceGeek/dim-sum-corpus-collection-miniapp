@@ -169,7 +169,7 @@ Component({
 
       // ❗升级：按字符 + 中英文混合估算
       const titleLength = title.replace(/[^\x00-\xff]/g, "aa").length;
-      const titleLines = Math.max(1, Math.ceil(titleLength / 14));
+      const titleLines = Math.min(2, Math.max(1, Math.ceil(titleLength / 14)));
 
       const titleHeight = titleLines * BASE_TITLE_LINE_HEIGHT;
       const badgeCount = this.getBadgeCount(item);

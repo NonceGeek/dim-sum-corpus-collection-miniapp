@@ -43,6 +43,13 @@ const formatTrack = (item: any) => {
           : false,
       }))
     : [];
+  const hasTwoLineWorkTitle = works.some((work: any) => {
+    const titleLength = String(work?.title || "").replace(
+      /[^\x00-\xff]/g,
+      "aa",
+    ).length;
+    return titleLength > 14;
+  });
 
   return {
     ...item,
@@ -58,6 +65,7 @@ const formatTrack = (item: any) => {
     requiresAudio,
     requiresImage,
     hasMediaReq: requiresVideo || requiresAudio || requiresImage,
+    hasTwoLineWorkTitle,
   };
 };
 

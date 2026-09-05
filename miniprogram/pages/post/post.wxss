@@ -195,22 +195,15 @@
 
 .title-input {
   font-size: var(--fs-32);
-  border-radius: var(--radius-lg);
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 0 16rpx;
+  width: 100%;
+  min-height: 52rpx;
+  padding: 0 !important;
 }
 
-/* 控制 t-input 高度为 100rpx */
-.title-input.t-input {
-  --td-input-vertical-padding: 0 !important;
-  padding: 0rpx var(--pd-lg) !important;
-  height: 100rpx !important;
-  max-height: 100rpx !important;
-}
-.title-input .t-input__wrap {
-  height: 100rpx !important;
-  align-items: center !important;
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
 .input-placeholder {

@@ -22,7 +22,7 @@
     </view> -->
 
     <!-- 赛道卡片轮播 -->
-    <swiper class="card-swiper" current="{{currentIndex}}" bindchange="onContentSwiperChange" indicator-dots="{{false}}"
+    <swiper class="card-swiper {{topTracks[currentIndex].hasTwoLineWorkTitle ? 'card-swiper--two-line' : ''}}" current="{{currentIndex}}" bindchange="onContentSwiperChange" indicator-dots="{{false}}"
       autoplay="{{false}}" circular="{{true}}">
       <block wx:for="{{topTracks}}" wx:key="index" wx:for-item="track">
         <swiper-item>
@@ -54,7 +54,7 @@
 
             <!-- 视频列表 -->
             <block wx:if="{{track.works.length > 0}}">
-              <scroll-view class="video-scroll" scroll-x="true" show-scrollbar="false">
+              <scroll-view class="video-scroll {{track.hasTwoLineWorkTitle ? 'video-scroll--two-line' : ''}}" scroll-x="true" show-scrollbar="false">
                 <view class="video-list">
                   <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
                     <block wx:if="{{item.hasImage}}">
@@ -130,7 +130,7 @@
       </block>
     </swiper>
 
-    <view class="swiper-arrow-layer">
+    <view class="swiper-arrow-layer {{topTracks[currentIndex].hasTwoLineWorkTitle ? 'swiper-arrow-layer--two-line' : ''}}">
       <view wx:if="{{topTracks.length > 1}}" class="swiper-arrow swiper-arrow--prev" bind:tap="onTabTap"
         data-position="prev" hover-class="none" aria-label="上一个活动">
         <t-icon name="chevron-left" size="36rpx" color="{{currentTheme === 'dark' ? '#ffffff' : '#374151'}}"
