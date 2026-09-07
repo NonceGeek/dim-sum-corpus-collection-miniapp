@@ -46,7 +46,9 @@
         <t-textarea placeholder="请填写标题" value="{{title}}" bind:change="onTitleInput" class="title-input"
           maxlength="{{100}}" autosize="{{true}}" borderless="{{true}}"
           placeholder-style="color: var(--text-muted)" />
-        <view class="word-count">{{title.length}}/100</view>
+        <view class="textarea-footer">
+          <view class="word-count">{{title.length}}/100</view>
+        </view>
       </view>
 
       <!-- 内容输入 -->
