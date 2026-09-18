@@ -429,6 +429,10 @@
   color: var(--text-muted);
 }
 
+.topic-popup-confirm--active {
+  color: var(--primary);
+}
+
 .topic-search {
   padding: 24rpx 32rpx;
   border-bottom: 1px solid var(--border-color);

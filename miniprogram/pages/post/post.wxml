@@ -105,7 +105,8 @@
       </view>
 
       <!-- 活动选择弹窗 -->
-      <t-popup visible="{{activityPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onActivityPopupClose">
+      <root-portal enable="{{activityPopupVisible}}">
+      <t-popup visible="{{activityPopupVisible}}" placement="bottom" z-index="{{11500}}" overlay-props="{{selectionPopupOverlayProps}}" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onActivityPopupClose">
         <view class="topic-popup theme-{{currentTheme}}">
           <view class="topic-popup-header">
             <text class="topic-popup-title">选择活动</text>
@@ -147,6 +148,7 @@
           </scroll-view>
         </view>
       </t-popup>
+      </root-portal>
 
       <!-- 话题标签 -->
       <view class="topic-section">
@@ -173,17 +175,20 @@
       </view>
 
       <!-- Picker 弹出层 -->
-      <t-picker class="post-picker-root theme-{{currentTheme}}" t-class="post-picker-panel theme-{{currentTheme}}" visible="{{pickerVisible}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
+      <root-portal enable="{{pickerVisible}}">
+      <t-picker class="post-picker-root theme-{{currentTheme}}" t-class="post-picker-panel theme-{{currentTheme}}" visible="{{pickerVisible}}" popup-props="{{selectionPopupProps}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
         title="选择投稿类型">
         <t-picker-item options="{{typeOptions}}" />
       </t-picker>
+      </root-portal>
 
       <!-- 话题选择弹窗 -->
-      <t-popup visible="{{topicPopupVisible}}" placement="bottom" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onTopicPopupClose">
+      <root-portal enable="{{topicPopupVisible}}">
+      <t-popup visible="{{topicPopupVisible}}" placement="bottom" z-index="{{11500}}" overlay-props="{{selectionPopupOverlayProps}}" t-class="post-popup-host theme-{{currentTheme}}" bind:visible-change="onTopicPopupClose">
         <view class="topic-popup theme-{{currentTheme}}">
           <view class="topic-popup-header">
             <text class="topic-popup-title">选择标签</text>
-            <view class="topic-popup-close" bind:tap="onTopicPopupClose">
+            <view class="topic-popup-close topic-popup-confirm {{selectedTopics.length > 0 ? 'topic-popup-confirm--active' : ''}}" bind:tap="onTopicPopupClose">
               确定
             </view>
           </view>
@@ -209,6 +214,7 @@
           </scroll-view>
         </view>
       </t-popup>
+      </root-portal>
 
       </view>
     </scroll-view>

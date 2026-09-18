@@ -104,6 +104,15 @@ Page({
     canPublish: false,
     pickerVisible: false,
     pickerValue: [],
+    selectionPopupProps: {
+      zIndex: 11500,
+      overlayProps: {
+        zIndex: 11400,
+      },
+    },
+    selectionPopupOverlayProps: {
+      zIndex: 11400,
+    },
     typeOptions: TYPES,
     topicPopupVisible: false,
     topicSearchKeyword: "",
