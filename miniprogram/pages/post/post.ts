@@ -977,6 +977,12 @@ Page({
 
     if (!mediaPolicy.allowImageUpload && imageCount > 0) {
       violations.push("该活动不支持上传图片");
+    } else if (
+      !mediaPolicy.supportsImageUpload &&
+      videoCount === 0 &&
+      imageCount > 0
+    ) {
+      violations.push("视频封面需与视频一起上传");
     } else if (videoCount > 0 && imageCount === 0) {
       violations.push("请上传1张视频封面");
     } else if (imageCount > mediaPolicy.maxImageCount) {
