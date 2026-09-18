@@ -987,6 +987,12 @@ Page({
 
     if (!mediaPolicy.allowVideoUpload && videoCount > 0) {
       violations.push("该活动不支持上传视频");
+    } else if (
+      mediaPolicy.requiredTypes.length === 1 &&
+      mediaPolicy.requiredTypes[0] === "video" &&
+      videoCount === 0
+    ) {
+      violations.push("请上传1个视频");
     } else if (videoCount > 1) {
       violations.push(`视频只能上传1个，当前有${videoCount}个`);
     }
