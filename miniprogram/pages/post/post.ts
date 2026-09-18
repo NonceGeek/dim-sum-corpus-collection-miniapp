@@ -9,6 +9,104 @@ const MAX_VIDEO_DURATION = 30;
 const MAX_TITLE_LENGTH = 100;
 const MAX_CONTENT_LENGTH = 400;
 const MAX_IMAGE = 8;
+const PRECHECK_LABEL_TEXT: Record<string, string> = {
+  politics: "涉政",
+  pornographic: "涉黄",
+  sexualHint: "性暗示",
+  sexual: "性感",
+  profanity: "辱骂",
+  terror: "暴恐",
+  ad: "广告",
+  contraband: "违禁",
+  inappropriate: "不良",
+  religion: "民族宗教",
+};
+const TEXT_PRECHECK_LABEL_TEXT: Record<string, string> = {
+  violent_extremism: "极端主义或暴力血腥行为",
+  violent_weapons: "武器弹药",
+  pornographic_special_taste: "色情特殊癖好",
+  sexual_terms_activity: "性行为描述",
+  pornographic_adult_works: "色情作品",
+  sexual_terms_suggestive: "性暗示",
+  pornographic_adult_activity: "淫秽色情",
+  sexual_terms_sex: "性教育",
+  pornographic_adult_goods: "成人用品",
+  pornographic_adult_trade: "色情交易",
+  sexual_suggestive_rude: "低俗色情",
+  sexual_suggestive_hint: "软色情",
+  sexual_terms_offend: "性骚扰",
+  sexual_terms_physical: "性生理科普",
+  sexual_terms_kiss: "不当亲吻描述",
+  sexual_terms_animal: "动物繁殖科普",
+  pornographic_lgbtq_group: "LGBTQ+相关",
+  contraband_drug: "毒品相关",
+  contraband_gambling: "赌博相关",
+  contraband_entity: "违禁工具",
+  contraband_act_threat: "威胁行为",
+  contraband_act_law: "违法犯罪行为",
+  contraband_fraud: "传销或诈骗",
+  customized_p: "自定义词库",
+  customized: "自定义词库",
+  special_language: "特殊语言",
+  inappropriate_minor_sex: "未成年人色情",
+  inappropriate_minor_behavior: "未成年人不当行为",
+  inappropriate_minor_abuse: "虐待或剥削未成年人",
+  inappropriate_suicide: "自残或自杀",
+  inappropriate_minor_safty: "危害未成年人安全",
+  inappropriate_minor_relationship: "未成年人不当交友",
+  inappropriate_minor_phychology: "影响未成年人心理健康",
+  inappropriate_discrimination: "偏见或歧视",
+  inappropriate_superstition: "封建迷信",
+  inappropriate_minor_addiction: "未成年人防沉迷规避",
+  inappropriate_oral: "低俗口头语",
+  inappropriate_profanity: "辱骂或冒犯",
+  inappropriate_nonsense: "无意义灌水",
+  inappropriate_minor_mention: "未成年人相关",
+  inappropriate_ethics: "违背伦理道德",
+  political_country_humans: "国家拟人化",
+  political_past_coreleader: "历任国家核心领导人相关",
+  political_sensitive_event: "其他政治敏感事件",
+  political_rights_conflict: "维权冲突",
+  political_foreign_leader: "外国领导人相关",
+  political_cn_ideology: "意识形态违规",
+  political_event_internationality: "现代政治事件或国际关系",
+  political_cn_otherleader: "中国其他重要领导人相关",
+  political_private_family: "核心领导人未公开家属相关",
+  political_negative_group: "负面人物或组织",
+  political_known_family: "核心领导人公开家属相关",
+  political_limited_event: "重大政治敏感事件",
+  political_unproper_coreleader: "核心领导人不当描述",
+  political_current_coreleader: "现任国家核心领导人相关",
+  political_cn_separatism: "中国领土分裂",
+  political_cn_entity: "政治实体",
+  political_a: "高优先级政治敏感",
+  privacy_b: "商业敏感数据",
+  privacy_p: "个人隐私信息",
+  pt_by_spam: "垃圾广告",
+  pt_to_sites: "站外引流",
+  pt_to_phone: "电话号码",
+  pt_to_contact: "广告联系方式",
+  pt_by_tradeingame: "游戏交易广告",
+  religion_b: "佛教相关",
+  religion_c: "基督教相关",
+  religion_t: "道教相关",
+  religion_h: "印度教相关",
+  religion_i: "伊斯兰教相关",
+  violent_extremist: "极端组织",
+  violent_incidents: "极端主义事件",
+  sexual_suggestive: "低俗",
+  pornographic_adult: "色情",
+  sexual_terms: "性健康",
+  contraband_act: "违禁行为",
+  inappropriate_minor: "未成年人不当",
+  political_entity: "政治实体",
+  political_n: "敏感政治",
+  political_other_negative: "其他非法组织",
+  political_p: "政治敏感人物",
+  political_main_negative: "重大非法组织",
+  political_figure: "政治人物",
+  pt_by_recruitment: "网络兼职或网赚广告",
+};
 const sharedRecorderManager = wx.getRecorderManager();
 const sharedAudioManager = wx.getBackgroundAudioManager();
 let activeRecorderStopHandler: ((res: any) => void) | null = null;
@@ -1325,9 +1423,46 @@ Page({
 
       if (precheck.verdict !== "pass") {
         wx.hideLoading();
+        const imageIssues = Array.isArray(precheck.details?.images)
+          ? precheck.details.images
+              .filter((item: any) => item?.verdict !== "pass")
+              .map((item: any) => {
+                const imageNumber = Number.isInteger(item?.index)
+                  ? item.index + 1
+                  : "未知";
+                const labels = Array.isArray(item?.labels)
+                  ? item.labels
+                      .map(
+                        (label: string) => PRECHECK_LABEL_TEXT[label] || label,
+                      )
+                      .filter(Boolean)
+                      .join("、")
+                  : "";
+                return `第${imageNumber}张图片疑似含有${labels || "违规"}内容`;
+              })
+          : [];
+        const textLabels = Array.isArray(precheck.details?.text?.labels)
+          ? precheck.details.text.labels
+              .map(
+                (label: string) =>
+                  TEXT_PRECHECK_LABEL_TEXT[label] ||
+                  PRECHECK_LABEL_TEXT[label] ||
+                  label,
+              )
+              .filter(Boolean)
+              .join("、")
+          : "";
+        const textIssue =
+          precheck.details?.text?.verdict !== "pass"
+            ? `文字内容疑似含有${textLabels || "违规"}内容`
+            : "";
+        const detailIssues = [textIssue, ...imageIssues].filter(Boolean);
         this.showPostDialog({
           title: "提示",
-          content: precheck.error || "内容审核未通过",
+          content:
+            (detailIssues.length > 0
+              ? `${detailIssues.join("；")}，请修改后重试`
+              : precheck.error) || "内容审核未通过",
         });
         return;
       }
