@@ -146,6 +146,7 @@ Page({
   async loadCardList(options: { force?: boolean } = {}) {
     if (this.data.loading || this.data.noMore) return;
 
+
     const isInitialLoad =
       this.data.page === 1 && this.data.cardList.length === 0;
 
@@ -155,26 +156,29 @@ Page({
     });
 
     try {
-      const { page, pageSize } = this.data;
-      const snapshot = await fetchQuery({
-        queryKey: ["index", "submissions"],
-        force: options.force || page > 1,
-        queryFn: async () => {
-          const res = await request(
-            `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
-          );
-          const items = res.items || [];
-          return {
-            cardList: page === 1 ? items : [...this.data.cardList, ...items],
-            page,
-            noMore: items.length < pageSize,
-          };
-        },
-      });
+      const { page, pageSize, cardList: oldList } = this.data;
+
+      const fetchPage = async () => {
+        const res = await request(
+          `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
+        );
+        return res.items || [];
+      };
+
+      // 只缓存第一页(首屏高频);翻页直接请求,避免把后续页写进同一份缓存。
+      const items =
+        page === 1
+          ? await fetchQuery({
+              queryKey: ["index", "submissions"],
+              force: options.force,
+              queryFn: fetchPage,
+            })
+          : await fetchPage();
+
+
       this.setData({
-        cardList: snapshot.cardList,
-        page: snapshot.page,
-        noMore: snapshot.noMore,
+        cardList: page === 1 ? items : [...oldList, ...items],
+        noMore: items.length < pageSize,
       });
     } catch (err: any) {
       console.error("加载卡片列表失败", err);

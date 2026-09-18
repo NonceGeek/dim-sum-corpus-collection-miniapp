@@ -124,6 +124,16 @@
   gap: 16rpx;
 }
 
+.video-cover-required-tip {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 12rpx;
+  font-size: var(--fs-24);
+  line-height: 32rpx;
+  color: var(--warning);
+}
+
 .image-upload-tip {
   display: flex;
   align-items: center;

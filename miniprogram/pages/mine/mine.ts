@@ -107,34 +107,33 @@ Page({
       if (activeTrack === "other") {
         url += "&withoutActivity=true";
       }
-      const snapshot = await fetchQuery({
-        queryKey: [
-          "mine",
-          "works",
-          getCurrentUserQueryKey(),
-          activeTrack,
-          activeStatus,
-        ],
-        force: options.force || page > 1,
-        queryFn: async () => {
-          const res = await request(url);
-          const { items = [], pagination } = res;
-          const works = page === 1 ? items : [...oldWorks, ...items];
-          return {
-            visibleWorks: works,
-            page,
-            total: pagination.total || 0,
-            noMore: items.length < pageSize,
-            flag: flag || (pagination.total || works.length) > 0,
-          };
-        },
-      });
+      const fetchPage = async () => {
+        const res = await request(url);
+        const { items = [], pagination } = res;
+        return { items, total: pagination?.total || 0 };
+      };
+
+      // 只缓存第一页;翻页直接请求,避免覆盖该筛选组合的首页缓存。
+      const { items: works, total } =
+        page === 1
+          ? await fetchQuery({
+              queryKey: [
+                "mine",
+                "works",
+                getCurrentUserQueryKey(),
+                activeTrack,
+                activeStatus,
+              ],
+              force: options.force,
+              queryFn: fetchPage,
+            })
+          : await fetchPage();
+
       this.setData({
-        visibleWorks: snapshot.visibleWorks,
-        page: snapshot.page,
-        total: snapshot.total,
-        noMore: snapshot.noMore,
-        flag: snapshot.flag,
+        visibleWorks: page === 1 ? works : [...oldWorks, ...works],
+        total,
+        noMore: works.length < pageSize,
+        flag: flag || (total || works.length) > 0,
       });
     } catch (err: any) {
       console.log("获取我的投稿数据出错：", err);

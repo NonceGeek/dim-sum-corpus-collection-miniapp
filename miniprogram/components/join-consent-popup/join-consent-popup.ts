@@ -210,14 +210,13 @@ Component({
       try {
         const result = await this.requestQuestionnaireEntry(activityId);
 
+        // 分支只看 flowType（见 docs/corpus-collection-api.md 5. 问卷流程表）：
+        // full_questionnaire=填问卷+验手机、phone_only=只验手机、reused=均已完成可直接进。
+        // registrationType 只是"问卷档案是不是复用的"这一信息字段，不代表登记完成，
+        // 拿它判 reused 会把 phone_only 误当成放行，跳过弹窗且手机号没验，发布必 403。
         const flowType = result?.flowType as FlowType | "reused" | undefined;
-        const registrationType = result?.registrationType as
-          | "first_time"
-          | "reused"
-          | undefined;
-        const isReused =
-          flowType === "reused" || registrationType === "reused";
-        if (!result?.journeyId || (!flowType && !isReused)) {
+        const isReused = flowType === "reused";
+        if (!result?.journeyId || !flowType) {
           throw new Error("参赛旅程数据不完整");
         }
 

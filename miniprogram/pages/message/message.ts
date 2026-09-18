@@ -61,32 +61,32 @@ Page({
     try {
       const { page, pageSize, messages: oldMessages } = this.data;
 
-      const snapshot = await fetchQuery({
-        queryKey: getMessagesQueryKey(),
-        force: options.force || page > 1,
-        queryFn: async () => {
-          const res = await request(
-            `/messages?page=${page}&pageSize=${pageSize}`,
-          );
-          const list = (res.items || []).map((item) => {
-            const { icon, color } = getIconColor(item.type);
-            return { ...item, icon, color };
-          });
-          const messages = page === 1 ? list : [...oldMessages, ...list];
-          return {
-            messages,
-            page,
-            noMore: list.length < pageSize,
-            showButton: messages.some((item) => !item.isRead),
-          };
-        },
-      });
+      const fetchPage = async () => {
+        const res = await request(
+          `/messages?page=${page}&pageSize=${pageSize}`,
+        );
+        return (res.items || []).map((item) => {
+          const { icon, color } = getIconColor(item.type);
+          return { ...item, icon, color };
+        });
+      };
+
+      // 只缓存第一页;翻页直接请求,避免覆盖首页缓存。
+      const list =
+        page === 1
+          ? await fetchQuery({
+              queryKey: getMessagesQueryKey(),
+              force: options.force,
+              queryFn: fetchPage,
+            })
+          : await fetchPage();
+
+      const messages = page === 1 ? list : [...oldMessages, ...list];
 
       this.setData({
-        messages: snapshot.messages,
-        page: snapshot.page,
-        noMore: snapshot.noMore,
-        showButton: snapshot.showButton,
+        messages,
+        noMore: list.length < pageSize,
+        showButton: messages.some((item) => !item.isRead),
       });
     } catch (err) {
       console.error("loadMessages error", err);

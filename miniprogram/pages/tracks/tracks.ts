@@ -148,25 +148,25 @@ Page({
         url += `&submissionType=${typeLabel}`;
       }
 
-      const snapshot = await fetchQuery({
-        queryKey: ["tracks", "works", this.data.trackId, currentTrackType],
-        force: options.force || page > 1,
-        queryFn: async () => {
-          const { items = [], pagination } = await request(url);
-          return {
-            cardList: page === 1 ? items : [...oldList, ...items],
-            page,
-            total: pagination.total,
-            noMore: items.length < 10,
-          };
-        },
-      });
+      const fetchPage = async () => {
+        const { items = [], pagination } = await request(url);
+        return { items, total: pagination?.total || 0 };
+      };
+
+      // 只缓存第一页;翻页直接请求,避免污染该赛道/类型的首页缓存。
+      const { items, total } =
+        page === 1
+          ? await fetchQuery({
+              queryKey: ["tracks", "works", this.data.trackId, currentTrackType],
+              force: options.force,
+              queryFn: fetchPage,
+            })
+          : await fetchPage();
 
       this.setData({
-        cardList: snapshot.cardList,
-        page: snapshot.page,
-        noMore: snapshot.noMore,
-        total: snapshot.total,
+        cardList: page === 1 ? items : [...oldList, ...items],
+        noMore: items.length < 10,
+        total,
       });
     } catch (err: any) {
       console.error("加载卡片列表失败", err);

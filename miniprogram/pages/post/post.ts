@@ -8,7 +8,6 @@ const MAX_AUDIO_DURATION = 60;
 const MAX_VIDEO_DURATION = 30;
 const MAX_TITLE_LENGTH = 100;
 const MAX_CONTENT_LENGTH = 400;
-const MIN_IMAGE = 1;
 const MAX_IMAGE = 8;
 const sharedRecorderManager = wx.getRecorderManager();
 const sharedAudioManager = wx.getBackgroundAudioManager();
@@ -51,27 +50,19 @@ const getMediaPolicy = (activity: any) => {
   const hasImage = requiredTypes.includes("image");
   const hasVideo = requiredTypes.includes("video");
   const hasAudio = requiredTypes.includes("audio");
-  const requireVideoCoverUpload = hasActivity && hasVideo;
-  const maxImageCount =
-    !hasActivity || hasImage
-      ? MAX_IMAGE
-      : requireVideoCoverUpload
-        ? MIN_IMAGE
-        : 0;
+  // 视频作品可以额外上传 1 张封面；封面不改变活动支持的正文媒体组合。
+  const maxImageCount = !hasActivity || hasImage ? MAX_IMAGE : hasVideo ? 1 : 0;
   const maxVideoCount = !hasActivity || hasVideo ? 1 : 0;
 
   return {
     hasActivity,
     requiredTypes,
+    supportsImageUpload: !hasActivity || hasImage,
     allowImageUpload: maxImageCount > 0,
     allowVideoUpload: maxVideoCount > 0,
     allowAudioUpload: !hasActivity || hasAudio,
     maxImageCount,
     maxVideoCount,
-    requireImageUpload: hasActivity && (hasImage || hasVideo),
-    requireVideoUpload: hasActivity && hasVideo,
-    requireVideoCoverUpload,
-    requireAudioUpload: hasActivity && hasAudio,
   };
 };
 
@@ -107,6 +98,7 @@ Page({
     allowVideoUpload: true,
     allowAudioUpload: true,
     canChooseVisualMedia: true,
+    showVideoCoverUpload: false,
     selectedTopics: [] as string[],
     selectedTopicMap: {} as Record<string, boolean>,
     canPublish: false,
@@ -581,27 +573,22 @@ Page({
     const currentVideoCount = this.data.imageList.filter(
       (file) => file.type === "video",
     ).length;
-    const requireVideoCoverUpload =
-      mediaPolicy.requireVideoCoverUpload || currentVideoCount > 0;
     const ruleDescription = [
       mediaPolicy.allowImageUpload
-        ? requireVideoCoverUpload
-          ? mediaPolicy.maxImageCount === MIN_IMAGE
-            ? "图片：1张（视频封面必传）"
-            : "图片：1-8张（视频封面必传）"
-          : mediaPolicy.requireImageUpload
-            ? mediaPolicy.maxImageCount === MIN_IMAGE
-              ? "图片：1张（必传）"
-              : "图片：1-8张（必传）"
-            : "图片：最多8张（选填）"
+        ? mediaPolicy.maxImageCount === 1
+          ? "封面：1张"
+          : "图片：最多8张"
         : "图片：不支持上传",
       mediaPolicy.allowVideoUpload
-        ? mediaPolicy.requireVideoUpload
-          ? "视频：1个，且不能超过30秒（必传）"
-          : "视频：最多1个，且不能超过30秒（选填）"
+        ? "视频：最多1个，且不能超过30秒"
         : "视频：不支持上传",
+      "图片、录音、视频至少选择一种",
     ].join("\n");
-    const remainingImageCount = Math.max(maxImageCount - currentImageCount, 0);
+    const canChooseImageNow =
+      mediaPolicy.supportsImageUpload || currentVideoCount > 0;
+    const remainingImageCount = canChooseImageNow
+      ? Math.max(maxImageCount - currentImageCount, 0)
+      : 0;
     const remainingVideoCount = Math.max(maxVideoCount - currentVideoCount, 0);
     const maxCount = remainingImageCount + remainingVideoCount;
 
@@ -632,22 +619,41 @@ Page({
         try {
           wx.showLoading({ title: "压缩中..." });
 
-          const tempFiles = res.tempFiles.map((file: any) => ({
+          const selectedFiles = res.tempFiles.map((file: any) => ({
             url: file.tempFilePath,
             type: file.fileType === "video" ? "video" : "image",
             ...(file.fileType === "video"
-              ? { durationSec: file.duration }
+              ? {
+                  durationSec: file.duration,
+                  thumbTempFilePath: file.thumbTempFilePath || "",
+                }
               : {}),
           }));
-          const selectedImageCount = tempFiles.filter(
+          const selectedImageCount = selectedFiles.filter(
             (file) => file.type === "image",
           ).length;
-          const selectedVideoCount = tempFiles.filter(
+          const selectedVideoCount = selectedFiles.filter(
             (file) => file.type === "video",
           ).length;
+          const selectedVideo = selectedFiles.find(
+            (file) => file.type === "video",
+          );
+          const autoCover =
+            currentImageCount === 0 &&
+            selectedImageCount === 0 &&
+            selectedVideo?.thumbTempFilePath
+              ? {
+                  url: selectedVideo.thumbTempFilePath,
+                  type: "image",
+                }
+              : null;
+          const tempFiles = autoCover
+            ? [...selectedFiles, autoCover]
+            : selectedFiles;
+          const uploadImageCount = selectedImageCount + (autoCover ? 1 : 0);
 
           if (
-            currentImageCount + selectedImageCount > maxImageCount ||
+            currentImageCount + uploadImageCount > maxImageCount ||
             currentVideoCount + selectedVideoCount > maxVideoCount
           ) {
             this.showPostDialog({
@@ -670,8 +676,13 @@ Page({
             return;
           }
 
+          const uploadCandidates = tempFiles.map((file: any) => {
+            const uploadFile = { ...file };
+            delete uploadFile.thumbTempFilePath;
+            return uploadFile;
+          });
           const compressedFiles = await Promise.all(
-            tempFiles.map((file) => this.compressMediaFile(file)),
+            uploadCandidates.map((file) => this.compressMediaFile(file)),
           );
 
           wx.showLoading({ title: "上传中..." });
@@ -966,13 +977,8 @@ Page({
 
     if (!mediaPolicy.allowImageUpload && imageCount > 0) {
       violations.push("该活动不支持上传图片");
-    } else if (
-      (mediaPolicy.requireVideoCoverUpload || videoCount > 0) &&
-      imageCount < MIN_IMAGE
-    ) {
-      violations.push("上传视频时需额外上传1张图片作为封面");
-    } else if (mediaPolicy.requireImageUpload && imageCount < MIN_IMAGE) {
-      violations.push("缺少图片，至少需要1张");
+    } else if (videoCount > 0 && imageCount === 0) {
+      violations.push("请上传1张视频封面");
     } else if (imageCount > mediaPolicy.maxImageCount) {
       violations.push(
         `图片最多上传${mediaPolicy.maxImageCount}张，当前有${imageCount}张`,
@@ -981,20 +987,16 @@ Page({
 
     if (!mediaPolicy.allowVideoUpload && videoCount > 0) {
       violations.push("该活动不支持上传视频");
-    } else if (mediaPolicy.requireVideoUpload && videoCount < 1) {
-      violations.push("缺少视频，需要上传1个视频");
     } else if (videoCount > 1) {
       violations.push(`视频只能上传1个，当前有${videoCount}个`);
     }
 
     if (!mediaPolicy.allowAudioUpload && audioUrl) {
       violations.push("该活动不支持上传录音");
-    } else if (mediaPolicy.requireAudioUpload && !audioUrl) {
-      violations.push("缺少录音，需要上传1个录音");
     }
 
-    if (!mediaPolicy.hasActivity && !hasAnyMedia) {
-      violations.push("不参与活动时，至少需要上传一种媒体");
+    if (!hasAnyMedia) {
+      violations.push("图片、录音、视频至少需要上传一种");
     }
 
     const overDurationVideo = imageList.find(
@@ -1055,9 +1057,11 @@ Page({
       (item) => item.type === "video",
     ).length;
     const canChooseVisualMedia =
-      imageCount < mediaPolicy.maxImageCount ||
+      ((mediaPolicy.supportsImageUpload || videoCount > 0) &&
+        imageCount < mediaPolicy.maxImageCount) ||
       videoCount < mediaPolicy.maxVideoCount;
-    this.setData({ canPublish, canChooseVisualMedia });
+    const showVideoCoverUpload = videoCount === 1 && imageCount === 0;
+    this.setData({ canPublish, canChooseVisualMedia, showVideoCoverUpload });
     this.syncUnsavedExitGuard();
 
     if (!showMediaRuleError) {
