@@ -48,6 +48,7 @@ Page({
     bannerImageProps: {
       mode: "widthFix",
     },
+    currentTheme: "light",
     swiperHeight: BASE_SWIPER_HEIGHT,
     swiperList: [],
 
@@ -66,8 +67,7 @@ Page({
     wx.showShareMenu({
       menus: ["shareAppMessage", "shareTimeline"],
     });
-    await this.loadSwiperData();
-    await this.loadCardList();
+    await Promise.all([this.loadSwiperData(), this.loadCardList()]);
     wx.nextTick(() => {
       this.initLoadMoreObserver();
     });
@@ -104,29 +104,24 @@ Page({
         queryKey: ["index", "swiper"],
         force: options.force,
         queryFn: async () => {
-          wx.showLoading({ title: "加载中..." });
-          try {
-            const res = await request("/activities?timeStatus=ongoing");
-            const activities = (res.items || []).slice(0, 5);
-            return activities.map((activity: ISwiperList) => ({
-              id: activity.id,
-              title: activity.title,
-              activityTag: activity.activityTag || "",
-              startsAt: activity.startsAt
-                ? formatDate(activity.startsAt, "YYYY-MM-DD")
-                : "",
-              endsAt: activity.endsAt
-                ? formatDate(activity.endsAt, "YYYY-MM-DD")
-                : "",
-              titleFontSize: getBannerTitleFontSize(activity.title || ""),
-              imageUrl: activity.bannerUrl || STATIC_FILE,
-              linkType: "activity",
-              linkId: activity.id,
-              value: activity.bannerUrl || STATIC_FILE,
-            }));
-          } finally {
-            wx.hideLoading();
-          }
+          const res = await request("/activities?timeStatus=ongoing");
+          const activities = (res.items || []).slice(0, 5);
+          return activities.map((activity: ISwiperList) => ({
+            id: activity.id,
+            title: activity.title,
+            activityTag: activity.activityTag || "",
+            startsAt: activity.startsAt
+              ? formatDate(activity.startsAt, "YYYY-MM-DD")
+              : "",
+            endsAt: activity.endsAt
+              ? formatDate(activity.endsAt, "YYYY-MM-DD")
+              : "",
+            titleFontSize: getBannerTitleFontSize(activity.title || ""),
+            imageUrl: activity.bannerUrl || STATIC_FILE,
+            linkType: "activity",
+            linkId: activity.id,
+            value: activity.bannerUrl || STATIC_FILE,
+          }));
         },
       });
       this.setData({

@@ -6,6 +6,9 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-primary);
   padding: 0 64rpx;

@@ -64,9 +64,9 @@ App<IAppOption>({
   /**
    * 初始化主题设置
    */
-  async initTheme() {
+  initTheme() {
     try {
-      const savedMode = (await this.getStorage("themeMode")) as ThemeMode;
+      const savedMode = wx.getStorageSync("themeMode") as ThemeMode;
       const systemInfo = wx.getSystemInfoSync();
       const systemTheme = (systemInfo.theme || "light") as ThemeValue;
 
@@ -105,8 +105,27 @@ App<IAppOption>({
     });
 
     this.applyNavigationBarTheme(theme);
+    this.applyBackgroundTheme(theme);
+    wx.nextTick(() => this.applyBackgroundTheme(theme));
 
     console.log("主题已应用:", theme);
+  },
+
+  /**
+   * 应用窗口背景主题（下拉/上拉回弹露出的区域）
+   */
+  applyBackgroundTheme(theme: ThemeValue) {
+    const backgroundColor = theme === "dark" ? "#0D1117" : "#F5F7FA";
+
+    wx.setBackgroundColor({
+      backgroundColor,
+      backgroundColorTop: backgroundColor,
+      backgroundColorBottom: backgroundColor,
+    });
+
+    wx.setBackgroundTextStyle({
+      textStyle: theme === "dark" ? "light" : "dark",
+    });
   },
 
   /**
@@ -136,8 +155,12 @@ App<IAppOption>({
    * 获取当前实际主题
    */
   getTheme(): ThemeValue {
-    this.applyNavigationBarTheme(this.globalData.theme as ThemeValue);
-    return this.globalData.theme as ThemeValue;
+    const theme = this.globalData.theme as ThemeValue;
+    this.applyNavigationBarTheme(theme);
+    this.applyBackgroundTheme(theme);
+    // 页面配置会在首次 onShow 后落地一次；渲染完成后再次覆盖原生回弹层。
+    wx.nextTick(() => this.applyBackgroundTheme(theme));
+    return theme;
   },
 
   /**

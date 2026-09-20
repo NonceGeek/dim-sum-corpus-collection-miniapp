@@ -1,3 +1,8 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+}
+
 .page {
   background-color: var(--bg-page);
   color: var(--text-primary);

@@ -4,6 +4,7 @@ const TYPE = [
   { label: "人物或地方故事", value: "人物或地方故事" },
   { label: "宣传口号/创意标语", value: "宣传口号/创意标语" },
   { label: "地名来历与介绍", value: "地名来历与介绍" },
+  { label: "粤菜来历与介绍", value: "粤菜来历与介绍" },
   { label: "歇后语", value: "歇后语" },
   { label: "自然对话", value: "自然对话" },
   { label: "其他", value: "其他" },
@@ -25,7 +26,7 @@ export default {
   privacyUrl: "https://search.aidimsum.com/privacy", // 隐私政策URL
   // 版本号，格式为 YYYYMMDD
   // 每次发布新版本时，请更新此版本号，以便小程序能够正确识别新版本并进行更新
-  VERSION: "2026091801",
+  VERSION: "20260919",
   TYPE,
   TYPE_JSON,
 };

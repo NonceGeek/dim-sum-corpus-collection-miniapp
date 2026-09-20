@@ -47,6 +47,14 @@ Page({
     await this.loadMessages();
   },
 
+  onShow() {
+    this.syncTheme();
+  },
+
+  onReady() {
+    this.syncTheme();
+  },
+
   async loadMessages(options: { force?: boolean } = {}) {
     if (this.data.loading || this.data.noMore) return;
 
@@ -157,6 +165,7 @@ Page({
     this.loadMessages();
   },
   onPullDownRefresh() {
+    this.syncTheme();
     this.setData({
       page: 1,
       noMore: false,

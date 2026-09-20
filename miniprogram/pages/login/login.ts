@@ -41,6 +41,10 @@ Page({
     this.syncTheme();
   },
 
+  onReady() {
+    this.syncTheme();
+  },
+
   syncTheme() {
     const app = getApp<any>();
     const currentTheme = app.getTheme() || "light";

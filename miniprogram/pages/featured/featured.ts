@@ -141,6 +141,7 @@ Page({
   },
 
   async onPullDownRefresh() {
+    this.syncTheme();
     try {
       await this.loadTopTracks({ force: true });
     } finally {
@@ -158,6 +159,10 @@ Page({
       shouldResumeJoin: false,
       ...(shouldOpenJoinConsent ? { joinConsentPopupVisible: true } : {}),
     });
+  },
+
+  onReady() {
+    this.syncTheme();
   },
 
   onContentSwiperChange(e: any) {

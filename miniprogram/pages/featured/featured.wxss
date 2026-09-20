@@ -125,13 +125,13 @@
 
 .card-swiper {
   margin-top: var(--pd-base);
-  height: 1010rpx;
+  height: 1030rpx;
   width: 100%;
   box-sizing: border-box;
 }
 
 .card-swiper--two-line {
-  height: 1050rpx;
+  height: 1070rpx;
 }
 
 .swiper-arrow {
@@ -311,15 +311,15 @@
 
 /* 视频区域 */
 .video-scroll {
-  flex: 0 0 420rpx;
-  height: 420rpx;
+  flex: 0 0 440rpx;
+  height: 440rpx;
   margin-top: auto;
   box-sizing: border-box;
 }
 
 .video-scroll--two-line {
-  flex-basis: 460rpx;
-  height: 460rpx;
+  flex-basis: 480rpx;
+  height: 480rpx;
 }
 
 .video-list {

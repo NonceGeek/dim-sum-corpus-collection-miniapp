@@ -17,8 +17,7 @@
   "window": {
     "navigationBarTitleText": "文化征集",
     "navigationBarBackgroundColor": "@navBgColor",
-    "navigationBarTextStyle": "@textColor",
-    "backgroundColor": "@backgroundColor"
+    "navigationBarTextStyle": "@textColor"
   },
   "componentFramework": "glass-easel",
   "lazyCodeLoading": "requiredComponents",
