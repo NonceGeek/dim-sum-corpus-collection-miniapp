@@ -108,7 +108,7 @@
               <view class="work-status-text" wx:elif="{{item.awardStatus === 'claimed'}}">已兑奖</view>
               <view class="work-status-text" wx:else>已过期</view>
             </view>
-            <view wx:if="{{showFeatured && item.isFeatured && item.reviewStatus === 'approved'}}" class="work-status status-pending_review">
+            <view wx:if="{{showFeatured && item.isFeatured}}" class="work-status status-pending_review">
               <view class="work-status-icon">
                 <t-icon name="star" size="24rpx" color="var(--text-white)" t-class="icon-class"/>
               </view>
@@ -189,7 +189,7 @@
               <view class="work-status-text" wx:elif="{{item.awardStatus === 'claimed'}}">已兑奖</view>
               <view class="work-status-text" wx:else>已过期</view>
             </view>
-            <view wx:if="{{showFeatured && item.isFeatured  && item.reviewStatus === 'approved'}}" class="work-status status-pending_review">
+            <view wx:if="{{showFeatured && item.isFeatured}}" class="work-status status-pending_review">
               <view class="work-status-icon">
                 <t-icon name="star" size="24rpx" color="var(--text-white)" t-class="icon-class" />
               </view>

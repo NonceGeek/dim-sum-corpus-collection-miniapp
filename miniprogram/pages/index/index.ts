@@ -155,7 +155,7 @@ Page({
 
       const fetchPage = async () => {
         const res = await request(
-          `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest`,
+          `/home/submissions?page=${page}&pageSize=${pageSize}&sort=latest&showOnHome=true`,
         );
         return res.items || [];
       };

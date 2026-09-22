@@ -213,8 +213,7 @@ Component({
 
       if (
         this.data.showFeatured &&
-        item?.isFeatured &&
-        reviewStatus === "approved"
+        item?.isFeatured
       ) {
         count += 1;
       }

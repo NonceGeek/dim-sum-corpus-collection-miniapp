@@ -6,6 +6,6 @@
     "app-tab-bar": "/components/app-tab-bar/app-tab-bar",
     "join-consent-popup": "/components/join-consent-popup/join-consent-popup"
   },
-  "navigationBarTitleText": "精选内容",
+  "navigationBarTitleText": "精选活动",
   "enablePullDownRefresh": true
 }

@@ -23,6 +23,7 @@
       <waterfall
         items="{{cardList}}"
         loading="{{isInitialCardLoading}}"
+        showFeatured
         bind:itemtap="onWaterfallTap"
       />
     </view>
