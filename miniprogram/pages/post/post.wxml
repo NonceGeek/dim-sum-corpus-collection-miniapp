@@ -21,27 +21,14 @@
 
     <scroll-view class="upload-content" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="upload-content-inner">
-      <!-- 图片上传区域 -->
-      <view class="image-upload-section" wx:if="{{canChooseVisualMedia || imageList.length > 0}}">
-        <view class="image-list">
-          <block wx:for="{{imageList}}" wx:key="index">
-            <view class="image-item">
-              <image src="{{item.url}}" mode="aspectFill" class="uploaded-image" />
-              <view class="delete-btn" catch:tap="onDeleteImage" data-index="{{index}}">
-                <t-icon name="close" size="16" color="var(--text-white)" />
-              </view>
-            </view>
-          </block>
-          <view class="image-item add-btn"
-            wx:if="{{canChooseVisualMedia}}"
-            catch:tap="onChooseImage">
-            <t-icon name="add" size="48"
-              color="{{currentTheme === 'dark' ? 'var(--text-secondary)' : 'var(--text-muted)'}}" />
-          </view>
+      <view class="type-section">
+        <view class="type-label">
+          <text>选择活动</text>
         </view>
-        <view class="video-cover-required-tip" wx:if="{{showVideoCoverUpload}}">
-          <t-icon name="info-circle" size="14" />
-          <text>请上传1张视频封面</text>
+        <view class="type-picker-wrapper" bind:tap="onShowActivityPopup">
+          <text
+            class="type-value {{selectedActivity && selectedActivity.title ? '' : 'placeholder'}}">{{selectedActivity && selectedActivity.title ? selectedActivity.title : '请选择活动'}}</text>
+          <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
         </view>
       </view>
 
@@ -82,6 +69,34 @@
         </view>
       </view>
 
+      <view class="channel-section" wx:if="{{allowVideoUpload || localVideo}}">
+        <view class="channel-heading">本地视频</view>
+        <text class="channel-note">最多 1 个，时长不超过 30 秒</text>
+        <video wx:if="{{localVideo}}" class="submission-video-preview" src="{{localVideo.url}}" poster="{{resolvedCoverUrl}}" controls />
+        <text class="channel-error" wx:if="{{!allowVideoUpload}}">当前活动不支持本地视频，请移除或切换活动。</text>
+        <view class="channel-actions local-video-actions">
+          <t-button wx:if="{{localVideo}}" size="small" variant="text" bind:tap="onRemoveLocalVideo">移除视频</t-button>
+          <t-button wx:elif="{{allowVideoUpload}}" size="small" variant="outline" bind:tap="onChooseLocalVideo" disabled="{{mediaUploading}}">选择视频</t-button>
+        </view>
+      </view>
+
+      <view class="channel-section" wx:if="{{supportsBodyImages || imageCount > 0}}">
+        <view class="channel-heading">图片</view>
+        <text class="channel-note">{{supportsBodyImages ? '最多 8 张；未单独设置封面时，第一张图片作为列表封面。' : '保留的图片仅可作为视频封面；可移除后在下方更换封面。'}}</text>
+        <view class="image-list">
+          <block wx:for="{{imageList}}" wx:key="index">
+            <view class="image-item" wx:if="{{item.type === 'image'}}">
+              <image src="{{item.url}}" mode="aspectFill" class="uploaded-image" />
+              <text wx:if="{{!inheritedCoverUrl && item.url === resolvedCoverUrl}}" class="submission-cover-badge">封面</text>
+              <view class="delete-btn" catch:tap="onDeleteImage" data-index="{{index}}"><t-icon name="close" size="16" color="var(--text-white)" /></view>
+            </view>
+          </block>
+          <view class="image-item add-btn" wx:if="{{supportsBodyImages && imageCount < 8}}" catch:tap="onChooseImage">
+            <t-icon name="add" size="32" color="var(--text-muted)" /><text class="media-add-label">添加图片</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 投稿类型选择 -->
       <view class="type-section">
         <view class="type-label">
@@ -93,14 +108,53 @@
         </view>
       </view>
 
-      <view class="type-section">
-        <view class="type-label">
-          <text>选择活动</text>
+      <!-- 话题标签 -->
+      <view class="topic-section">
+        <view class="topic-header">
+          <text class="topic-title">添加标签</text>
         </view>
-        <view class="type-picker-wrapper" bind:tap="onShowActivityPopup">
-          <text
-            class="type-value {{selectedActivity && selectedActivity.title ? '' : 'placeholder'}}">{{selectedActivity && selectedActivity.title ? selectedActivity.title : '请选择活动'}}</text>
-          <t-icon name="chevron-down" size="20" color="var(--text-muted)" />
+        <view class="topic-list">
+          <block wx:for="{{selectedActivity.tags}}" wx:key="index">
+            <view class="topic-tag">
+              <text class="topic-text">#{{item}}</text>
+            </view>
+          </block>
+          <block wx:for="{{selectedTopics}}" wx:key="index">
+            <view class="topic-tag">
+              <text class="topic-text">#{{item}}</text>
+              <t-icon name="close" size="14" bind:tap="onRemoveTopic" data-index="{{index}}" class="topic-close" />
+            </view>
+          </block>
+          <view class="topic-tag add-topic" bind:tap="onAddTopic">
+            <t-icon name="add" size="16" />
+            <text class="topic-text">添加标签</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="channel-section">
+        <view class="channel-heading">关联视频号<text class="media-optional">选填 · 最多 1 条</text></view>
+        <text class="channel-note">{{channelVideo ? '已关联作品，读者可在详情页点击观看。' : '额外关联视频号作品，不影响已上传内容，也不替代活动要求的投稿内容。'}}</text>
+        <view class="channel-actions">
+          <t-button wx:if="{{channelVideo}}" size="small" variant="outline" bind:tap="onOpenChannel" loading="{{channelOpening}}">打开检查</t-button>
+          <t-button size="small" variant="outline" bind:tap="onEditChannel">{{channelVideo ? '修改信息' : '填写作品信息'}}</t-button>
+          <t-button wx:if="{{channelVideo}}" size="small" variant="text" bind:tap="onRemoveChannel">移除关联</t-button>
+        </view>
+      </view>
+
+      <view class="channel-section">
+        <view class="channel-heading">作品封面<text class="media-optional">选填</text></view>
+        <view class="submission-cover-row">
+          <image wx:if="{{resolvedCoverUrl}}" class="submission-cover-thumb" src="{{resolvedCoverUrl}}" mode="aspectFill" />
+          <view wx:else class="submission-cover-thumb submission-cover-empty"><t-icon name="image" size="32" color="var(--text-muted)" /></view>
+          <view class="submission-cover-info">
+            <text class="channel-note">{{coverLabel}}</text>
+            <text class="channel-note">用于列表展示，不计入正文图片；仅设置封面不能单独投稿。</text>
+          </view>
+        </view>
+        <view class="channel-actions submission-cover-actions">
+          <t-button size="small" variant="outline" bind:tap="onChooseCover" disabled="{{mediaUploading}}">{{resolvedCoverUrl ? '更换封面' : '选择封面'}}</t-button>
+          <t-button wx:if="{{inheritedCoverUrl}}" size="small" variant="text" bind:tap="onRemoveInheritedCover">恢复默认</t-button>
         </view>
       </view>
 
@@ -150,30 +204,6 @@
       </t-popup>
       </root-portal>
 
-      <!-- 话题标签 -->
-      <view class="topic-section">
-        <view class="topic-header">
-          <text class="topic-title">添加标签</text>
-        </view>
-        <view class="topic-list">
-          <block wx:for="{{selectedActivity.tags}}" wx:key="index">
-            <view class="topic-tag">
-              <text class="topic-text">#{{item}}</text>
-            </view>
-          </block>
-          <block wx:for="{{selectedTopics}}" wx:key="index">
-            <view class="topic-tag">
-              <text class="topic-text">#{{item}}</text>
-              <t-icon name="close" size="14" bind:tap="onRemoveTopic" data-index="{{index}}" class="topic-close" />
-            </view>
-          </block>
-          <view class="topic-tag add-topic" bind:tap="onAddTopic">
-            <t-icon name="add" size="16" />
-            <text class="topic-text">添加标签</text>
-          </view>
-        </view>
-      </view>
-
       <!-- Picker 弹出层 -->
       <root-portal enable="{{pickerVisible}}">
       <t-picker class="post-picker-root theme-{{currentTheme}}" t-class="post-picker-panel theme-{{currentTheme}}" visible="{{pickerVisible}}" popup-props="{{selectionPopupProps}}" bind:change="onTypeChange" bind:cancel="onPickerCancel" header="{{true}}"
@@ -221,7 +251,8 @@
 
     <!-- 底部按钮 -->
     <view class="footer">
-      <t-button theme="primary" shape="round" bind:tap="onPublish"
+      <t-button variant="outline" shape="round" bind:tap="onPreviewSubmission" disabled="{{mediaUploading || submitting}}">预览</t-button>
+      <t-button theme="primary" shape="round" bind:tap="onPublish" loading="{{submitting || mediaUploading}}" disabled="{{submitting || mediaUploading}}"
         class="btn-submit btn-submit-inner {{!canPublish ? 'btn-submit-inner--disabled' : ''}}"
         aria-disabled="{{!canPublish}}" hover-class="none">
         投稿
@@ -347,7 +378,7 @@
         indicator-active-color="var(--text-white)">
         <swiper-item wx:for="{{imageList}}" wx:key="index">
           <block wx:if="{{item.type === 'video'}}">
-            <video class="view-media" src="{{item.url}}" controls show-fullscreen-btn object-fit="contain" />
+            <video class="view-media" src="{{item.url}}" poster="{{resolvedCoverUrl}}" controls show-fullscreen-btn object-fit="contain" />
           </block>
           <block wx:if="{{item.type === 'image'}}">
             <image class="view-media" src="{{item.url}}" mode="aspectFill" bind:tap="onPreviewImage"
@@ -393,6 +424,12 @@
         </view>
       </view>
 
+      <!-- 附加的视频号作品，保持原有详情内容顺序 -->
+      <view class="channel-section view-channel-section" wx:if="{{channelVideo}}">
+        <view class="channel-heading"><t-icon name="video" size="24" color="var(--primary, #4a7cf3)" /><text>关联视频号</text></view>
+        <text class="channel-note">可前往视频号观看关联作品</text>
+        <t-button theme="primary" block bind:tap="onOpenChannel" loading="{{channelOpening}}">去视频号观看</t-button>
+      </view>
     </view>
 
 
@@ -419,4 +456,87 @@
   bind:close="onJoinConsentClose"
   bind:complete="onJoinConsentComplete"
 />
-<common-dialog id="common-dialog" />
+
+
+<root-portal enable="{{channelEditorVisible}}">
+  <t-popup visible="{{channelEditorVisible}}" placement="bottom" z-index="{{11500}}"
+    overlay-props="{{selectionPopupOverlayProps}}" t-class="channel-popup-host theme-{{currentTheme}}" t-class-content="channel-popup-content"
+    bind:visible-change="onChannelPopupChange">
+    <view class="channel-editor theme-{{currentTheme}}">
+      <view class="channel-editor-header">
+        <text class="channel-editor-title">添加视频号作品</text>
+        <view class="channel-header-action"><t-button size="small" variant="text" bind:tap="onCloseChannelEditor">取消</t-button></view>
+      </view>
+      <scroll-view scroll-y enhanced="{{true}}" show-scrollbar="{{false}}" class="channel-editor-scroll">
+        <view class="channel-editor-body">
+          <text class="channel-note">从视频号助手复制以下两个 ID。暂不支持粘贴普通分享链接。</text>
+          <view class="channel-help-trigger"><t-button size="small" icon="help-circle" custom-style="justify-content: flex-start; margin: 0; padding-left: 0; padding-right: 0;" variant="text" theme="primary" bind:tap="onToggleChannelHelp">{{channelHelpExpanded ? '收起获取指引' : '如何获取这两个 ID？'}}</t-button></view>
+          <view wx:if="{{channelHelpExpanded}}" class="channel-help">
+            <text class="channel-help-title">1. 登录视频号助手</text>
+            <text class="channel-help-text">建议在电脑浏览器打开视频号助手，登录发布该作品的视频号。</text>
+            <text class="channel-help-title">2. 首页复制视频号 ID</text>
+            <text class="channel-help-text">在首页账号信息中找到“视频号 ID”，复制后填入下方视频号 ID（finderUserName），不是视频号昵称。</text>
+            <text class="channel-help-title">3. 动态管理复制作品 ID</text>
+            <text class="channel-help-text">进入“动态管理”，找到要关联的视频，在该作品的更多操作中选择“复制视频 ID”，填入作品 ID（feedId）。每条作品的 ID 不同；复制值开头如有 export/ 请完整保留。</text>
+            <text class="channel-help-text">两个 ID 应来自同一视频号及其作品。这里不需要 feed-token，也不能用普通分享链接代替。填写后可打开作品检查。</text>
+            <view class="channel-help-links">
+              <t-button size="small" variant="outline" data-link="assistant" bind:tap="onCopyChannelHelpLink">复制视频号助手地址</t-button>
+              <t-button size="small" variant="text" theme="primary" data-link="guide" bind:tap="onCopyChannelHelpLink">复制官方说明链接</t-button>
+            </view>
+            <text class="channel-help-caption">复制后在浏览器打开。展开或收起指引不会清空已填内容。</text>
+            <view wx:if="{{channelCopyError}}">
+              <text class="channel-error">{{channelCopyError}}</text>
+              <text class="channel-copy-url" user-select="{{true}}" selectable="{{true}}">{{channelCopyFallbackUrl}}</text>
+            </view>
+          </view>
+          <text class="channel-label">视频号 ID</text>
+          <view class="channel-input"><t-input value="{{channelFinderDraft}}" placeholder="粘贴视频号ID" maxlength="1024" borderless bind:change="onChannelFinderInput" /></view>
+          <view class="channel-feed-heading">
+            <text class="channel-label">作品 ID</text>
+            <view wx:if="{{channelFeedDraft}}" class="channel-header-action"><t-button size="small" variant="text" theme="primary" aria-label="清除作品 ID" bind:tap="onClearChannelFeed">清除</t-button></view>
+          </view>
+          <view class="channel-input channel-feed-input"><t-textarea value="{{channelFeedDraft}}" placeholder="粘贴完整作品 ID" maxlength="1024" autosize="{{channelFeedAutosize}}" fixed="{{true}}" cursor-spacing="24" confirm-type="done" bind:change="onChannelFeedInput" /></view>
+          <text class="channel-error" wx:if="{{channelError}}">{{channelError}}</text>
+          <text class="channel-note">先打开检查，确认作品正确后返回保存。视频内容将由运营人工审核，打开成功不代表归属认证。</text>
+        </view>
+      </scroll-view>
+      <view class="channel-editor-footer">
+        <view class="channel-footer-action"><t-button block shape="round" variant="outline" data-draft="{{true}}" bind:tap="onOpenChannel" loading="{{channelOpening}}">打开作品检查</t-button></view>
+        <view class="channel-footer-action"><t-button block shape="round" theme="primary" bind:tap="onSaveChannel">保存关联</t-button></view>
+      </view>
+    </view>
+  </t-popup>
+</root-portal>
+
+<root-portal enable="{{previewVisible}}">
+  <t-popup visible="{{previewVisible}}" placement="bottom" z-index="{{11500}}"
+    overlay-props="{{selectionPopupOverlayProps}}" t-class="channel-popup-host theme-{{currentTheme}}"
+    t-class-content="channel-popup-content" bind:visible-change="onPreviewVisibleChange">
+    <view class="submission-preview theme-{{currentTheme}}">
+      <view class="channel-editor-header"><text class="channel-editor-title">投稿预览</text><view class="channel-header-action"><t-button size="small" variant="text" bind:tap="onClosePreview">返回编辑</t-button></view></view>
+      <scroll-view scroll-y class="submission-preview-scroll">
+        <view class="channel-editor-body">
+          <text class="channel-note">仅预览，尚未提交。未填写的内容以占位文字显示。</text>
+          <image wx:if="{{resolvedCoverUrl}}" class="channel-existing-cover" src="{{resolvedCoverUrl}}" mode="aspectFill" />
+          <view wx:else class="preview-placeholder">作品封面</view>
+          <view class="view-title">{{title || '待填写标题'}}</view>
+          <view class="view-body"><text>{{content || '待填写内容简介'}}</text></view>
+          <block wx:for="{{imageList}}" wx:key="index">
+            <video wx:if="{{item.type === 'video'}}" class="submission-video-preview" src="{{item.url}}" poster="{{resolvedCoverUrl}}" controls />
+            <image wx:else class="preview-body-image" src="{{item.url}}" mode="widthFix" />
+          </block>
+          <t-button wx:if="{{audioUrl}}" variant="outline" bind:tap="onPlayAudio">{{audioPlaying ? '暂停录音' : '播放录音'}} · {{audioDuration}}秒</t-button>
+          <view wx:if="{{channelVideo}}" class="preview-channel">
+            <view class="channel-heading">视频号作品</view><text class="channel-note">点击进入视频号观看原作品</text>
+            <t-button block shape="round" theme="primary" bind:tap="onOpenChannel" loading="{{channelOpening}}">去视频号观看</t-button>
+          </view>
+          <text class="channel-note">{{selectedType || '未选择投稿类型'}} · {{selectedActivity.title || '不参与任何活动'}}</text>
+          <view class="channel-actions"><text wx:for="{{selectedActivity.tags}}" wx:key="*this">#{{item}}</text><text wx:for="{{selectedTopics}}" wx:key="*this">#{{item}}</text></view>
+        </view>
+      </scroll-view>
+    </view>
+  </t-popup>
+</root-portal>
+
+<!-- Keep confirmation/error dialogs in the same root layer, above editor and preview. -->
+<root-portal><common-dialog id="common-dialog" /></root-portal>

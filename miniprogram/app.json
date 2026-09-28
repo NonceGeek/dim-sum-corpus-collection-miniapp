@@ -9,7 +9,8 @@
     "pages/tracks/tracks",
     "pages/mine/mine",
     "pages/message/message",
-    "pages/webview/webview"
+    "pages/webview/webview",
+    "pages/channel-view/channel-view"
   ],
   "usingComponents": {
     "common-dialog": "/components/common-dialog/common-dialog"

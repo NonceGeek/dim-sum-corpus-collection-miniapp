@@ -35,7 +35,7 @@
       {
         "packageJsonPath": "./package.json",
         "miniprogramNpmDir": ".",
-        "miniprogramNpmDistDir": "./miniprogram/miniprogram_npm"
+        "miniprogramNpmDistDir": "./miniprogram/"
       }
     ]
   },

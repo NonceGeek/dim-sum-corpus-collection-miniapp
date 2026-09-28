@@ -1,0 +1,14 @@
+<view class="scan-page theme-{{currentTheme}}">
+  <view class="scan-card">
+    <view class="scan-icon"><t-icon name="video" size="36" /></view>
+    <view class="scan-title">视频号作品</view>
+    <view class="scan-description" wx:if="loading">正在获取作品信息…</view>
+    <view class="scan-description" wx:else>点击下方按钮，在微信视频号中观看原作品。无需登录小程序。</view>
+    <view class="scan-error" wx:if="error">{{error}}</view>
+    <view class="scan-action" wx:if="!loading">
+      <t-button wx:if="channelVideo" theme="primary" shape="round" block loading="{{opening}}" disabled="{{opening}}" bind:tap="openVideo">打开视频号作品</t-button>
+      <t-button wx:else theme="primary" shape="round" block bind:tap="loadVideo">重新加载</t-button>
+    </view>
+    <view class="scan-footnote">审核人员观看后，请返回电脑后台完成审核。作品已删除或不可见时可能无法打开。</view>
+  </view>
+</view>

@@ -1,3 +1,4 @@
+import { submissionKind } from "../../utils/submission-cover";
 const FALLBACK_IMAGE_RATIO = 1.25;
 const BASE_IMAGE_WIDTH = 330;
 const BASE_TITLE_LINE_HEIGHT = 40;
@@ -102,6 +103,7 @@ Component({
         const decoratedItem = {
           ...item,
           _wfIndex: index,
+          _mediaLabel: submissionKind(item),
           _isAudioOnly: this.isAudioOnlyMedia(item),
           _isRecentlyViewed:
             Boolean(this.data.recentlyViewedId) &&
@@ -144,6 +146,7 @@ Component({
     },
 
     isAudioOnlyMedia(item: any) {
+      if (item?.channelVideo || item?.coverUrl) return false;
       const media = Array.isArray(item?.media) ? item.media : [];
       const isMediaAudioOnly =
         media.length > 0 && media.every((file) => file?.type === "audio");

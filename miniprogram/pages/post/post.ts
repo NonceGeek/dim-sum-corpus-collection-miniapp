@@ -1,3 +1,5 @@
+import { resolveSubmissionCover } from "../../utils/submission-cover";
+import { ChannelVideo, parseChannelVideo, openChannelVideo, normalizeChannelFeedId } from "../../utils/channel-video";
 import request from "../../utils/http";
 import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
@@ -171,6 +173,25 @@ const hasCompletedQuestionnaireProfile = () => {
 
 Page({
   data: {
+    channelVideo: null as ChannelVideo | null,
+    inheritedCoverUrl: "",
+    resolvedCoverUrl: "",
+    coverLabel: "未设置封面，列表将显示默认作品卡片",
+    previewVisible: false,
+    localVideo: null as any,
+    imageCount: 0,
+    supportsBodyImages: true,
+    mediaUploading: false,
+    channelEditorVisible: false,
+    channelHelpExpanded: false,
+    channelCopyError: "",
+    channelCopyFallbackUrl: "",
+    channelFinderDraft: "",
+    channelFeedDraft: "",
+    channelFeedAutosize: { minHeight: 72, maxHeight: 96 },
+    channelError: "",
+    channelOpening: false,
+    submitting: false,
     mode: "",
     entryActivityId: "",
     questionnaireJourneyId: "",
@@ -191,7 +212,7 @@ Page({
     activityKeyword: "",
     title: "",
     content: "",
-    imageList: [],
+    imageList: [] as { type: string; url: string; durationSec?: number; sortOrder?: number; metadata?: any }[],
     allowImageUpload: true,
     allowVideoUpload: true,
     allowAudioUpload: true,
@@ -449,6 +470,9 @@ Page({
       const audioDuration = audioMedia?.durationSec || 0;
       this.setData({
         post: res,
+        channelVideo: res.channelVideo || null,
+        inheritedCoverUrl: res.coverUrl || "",
+
 
         title: res.title,
         content: res.intro,
@@ -670,8 +694,112 @@ Page({
     };
   },
 
+  onRemoveInheritedCover() {
+    this.setData({ inheritedCoverUrl: "" }, () => this.checkCanPublish());
+  },
+  onPreviewSubmission() {
+    if (this.data.mediaUploading || this.data.submitting) return;
+    if (this.data.recording || this.data.recordStarting || this.data.recordStopping || this.data.recordProcessing) {
+      wx.showToast({ title: "请先完成录音处理", icon: "none" }); return;
+    }
+    this.stopAudioPlayback();
+    this.checkCanPublish();
+    this.setData({ previewVisible: true });
+  },
+  onClosePreview() { this.stopAudioPlayback(); this.setData({ previewVisible: false }); },
+  onPreviewVisibleChange(e: any) { if (!e.detail.visible) this.onClosePreview(); },
+  onChooseLocalVideo() { this.onChooseImage(true); },
+  onRemoveLocalVideo() {
+    this.showPostDialog({ title: "移除本地视频？", content: "其他已填写内容会保留。", showCancel: true,
+      onConfirm: () => this.setData({ imageList: this.data.imageList.filter(item => item.type !== "video") }, () => this.checkCanPublish()) });
+  },
+  onChooseCover() {
+    if (this.data.mediaUploading) return;
+    wx.chooseMedia({ count: 1, mediaType: ["image"], sourceType: ["album", "camera"],
+      success: async (result) => {
+        this.setData({ mediaUploading: true });
+        wx.showLoading({ title: "上传封面中" });
+        try {
+          const file = await this.compressMediaFile({ type: "image", url: result.tempFiles[0].tempFilePath });
+          const uploaded = await this.uploadMediaFile(file, formatDate(new Date(), "YYYYMMDD"), `${Date.now()}_cover`);
+          this.setData({ inheritedCoverUrl: uploaded.url }, () => this.checkCanPublish());
+        } catch (error: any) {
+          this.showPostDialog({ title: "封面上传失败", content: error?.message || "请稍后重试，原封面已保留" });
+        } finally { this.setData({ mediaUploading: false }); wx.hideLoading(); }
+      }
+    });
+  },
+  onEditChannel() {
+    this.setData({ channelEditorVisible: true, channelHelpExpanded: false,
+      channelFinderDraft: this.data.channelVideo?.finderUserName || "",
+      channelFeedDraft: this.data.channelVideo?.feedId || "", channelError: "" });
+  },
+  onToggleChannelHelp() {
+    this.setData({ channelHelpExpanded: !this.data.channelHelpExpanded });
+  },
+  onCopyChannelHelpLink(e: any) {
+    const link = e.currentTarget?.dataset?.link || e.detail?.currentTarget?.dataset?.link;
+    const urls: Record<string, string> = {
+      assistant: "https://channels.weixin.qq.com/",
+      guide: "https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/channels-activity.html",
+    };
+    const url = urls[link];
+    if (!url) return;
+    this.setData({ channelCopyError: "", channelCopyFallbackUrl: "" });
+    wx.setClipboardData({
+      data: url,
+      success: () => wx.showToast({ title: "链接已复制", icon: "success" }),
+      fail: (error) => {
+        const detail = error?.errMsg || "微信未返回具体错误";
+        console.warn("[channel-help clipboard]", detail);
+        const message = detail.includes("api scope is not declared in the privacy agreement")
+          ? "小程序暂未完成复制功能的隐私声明，自动复制暂不可用。请长按下方链接手动复制。"
+          : "暂时无法自动复制，请长按下方链接手动复制，或稍后重试。";
+        this.setData({ channelCopyError: message, channelCopyFallbackUrl: url });
+      },
+    });
+  },
+  onChannelFinderInput(e: any) { this.setData({ channelFinderDraft: e.detail.value, channelError: "" }); },
+  onChannelFeedInput(e: any) { this.setData({ channelFeedDraft: normalizeChannelFeedId(e.detail.value), channelError: "" }); },
+  onClearChannelFeed() { this.setData({ channelFeedDraft: "", channelError: "" }); },
+  onCloseChannelEditor() { this.setData({ channelEditorVisible: false }); },
+  onChannelPopupChange(e: any) { if (!e.detail.visible) this.onCloseChannelEditor(); },
+  getChannelDraft() {
+    const value = parseChannelVideo(this.data.channelFinderDraft, this.data.channelFeedDraft);
+    if (!value) this.setData({ channelError: "请完整复制两个 ID（各最多 1024 字符）。作品 ID 可保留开头的 export/，不要填写普通分享链接或其他路径。" });
+    if (value) this.setData({ channelFinderDraft: value.finderUserName, channelFeedDraft: value.feedId });
+    return value;
+  },
+  onSaveChannel() {
+    const value = this.getChannelDraft();
+    if (!value) return;
+    this.setData({ channelVideo: value, channelEditorVisible: false }, () => this.checkCanPublish());
+  },
+  onRemoveChannel() {
+    this.showPostDialog({ title: "移除视频号作品？", content: "已填写的文字、图片、录音和本地视频会保留。",
+      showCancel: true, confirmText: "移除", onConfirm: () => this.setData({ channelVideo: null }, () => this.checkCanPublish()) });
+  },
+  async onOpenChannel(e: any) {
+    if (this.data.channelOpening) return;
+    if (this.data.recording || this.data.recordStarting || this.data.recordStopping || this.data.recordProcessing) {
+      wx.showToast({ title: "请先完成录音处理", icon: "none" }); return;
+    }
+    const value = e.currentTarget.dataset.draft ? this.getChannelDraft() : this.data.channelVideo;
+    if (!value) return;
+    this.stopAudioPlayback();
+    this.setData({ channelOpening: true });
+    try { await openChannelVideo(value); }
+    catch (error: any) {
+      const message = error?.message || "暂时无法打开作品，请稍后重试";
+      if (e.currentTarget.dataset.draft) this.setData({ channelError: message });
+      this.showPostDialog({ title: "无法打开视频号", content: message });
+    }
+    finally { this.setData({ channelOpening: false }); }
+  },
+
   // 选择图片
-  async onChooseImage() {
+  async onChooseImage(chooseVideo: unknown = false) {
+    if (this.data.mediaUploading) return;
     const mediaPolicy = getMediaPolicy(this.data.selectedActivity);
     const { maxImageCount, maxVideoCount } = mediaPolicy;
     const currentImageCount = this.data.imageList.filter(
@@ -697,7 +825,7 @@ Page({
       ? Math.max(maxImageCount - currentImageCount, 0)
       : 0;
     const remainingVideoCount = Math.max(maxVideoCount - currentVideoCount, 0);
-    const maxCount = remainingImageCount + remainingVideoCount;
+    const maxCount = chooseVideo === true ? remainingVideoCount : remainingImageCount;
 
     if (maxCount === 0) {
       if (mediaPolicy.hasActivity) {
@@ -712,8 +840,8 @@ Page({
     }
 
     const mediaType = [
-      ...(remainingImageCount > 0 ? ["image" as const] : []),
-      ...(remainingVideoCount > 0 ? ["video" as const] : []),
+      ...(remainingImageCount > 0 && chooseVideo !== true ? ["image" as const] : []),
+      ...(remainingVideoCount > 0 && chooseVideo === true ? ["video" as const] : []),
     ];
     wx.chooseMedia({
       count: maxCount,
@@ -723,6 +851,7 @@ Page({
       // wx.chooseMedia 只允许相机拍摄时长为 3～30 秒；相册视频同样校验30秒业务上限。
       maxDuration: MAX_VIDEO_DURATION,
       success: async (res) => {
+        this.setData({ mediaUploading: true });
         try {
           wx.showLoading({ title: "压缩中..." });
 
@@ -745,19 +874,8 @@ Page({
           const selectedVideo = selectedFiles.find(
             (file) => file.type === "video",
           );
-          const autoCover =
-            currentImageCount === 0 &&
-            selectedImageCount === 0 &&
-            selectedVideo?.thumbTempFilePath
-              ? {
-                  url: selectedVideo.thumbTempFilePath,
-                  type: "image",
-                }
-              : null;
-          const tempFiles = autoCover
-            ? [...selectedFiles, autoCover]
-            : selectedFiles;
-          const uploadImageCount = selectedImageCount + (autoCover ? 1 : 0);
+          const tempFiles = selectedFiles;
+          const uploadImageCount = selectedImageCount;
 
           if (
             currentImageCount + uploadImageCount > maxImageCount ||
@@ -802,6 +920,17 @@ Page({
             ),
           );
 
+          // 缩略图只保存为视频元数据，不作为正文图片上传。
+          if (selectedVideo?.thumbTempFilePath) {
+            try {
+              const thumbnail = await this.uploadMediaFile(
+                { type: "image", url: selectedVideo.thumbTempFilePath }, dateStr, `${timestamp}_thumbnail`);
+              const video = files.find(file => file.type === "video");
+              if (video) video.metadata = { ...video.metadata, thumbnailUrl: thumbnail.url };
+            } catch {
+              wx.showToast({ title: "缩略图获取失败，可另选封面", icon: "none" });
+            }
+          }
           this.setData({
             imageList: [...this.data.imageList, ...files],
           });
@@ -818,6 +947,7 @@ Page({
               "，请稍后重试",
           });
         } finally {
+          this.setData({ mediaUploading: false });
           wx.hideLoading();
         }
       },
@@ -1068,7 +1198,10 @@ Page({
 
     const imageCount = imageList.filter((i) => i.type === "image").length;
     const videoCount = imageList.filter((i) => i.type === "video").length;
-    const hasAnyMedia = imageCount > 0 || videoCount > 0 || Boolean(audioUrl);
+    const channel = this.data.channelVideo;
+    const effectiveVideoCount = videoCount;
+    const hasAnyMedia = imageCount > 0 || effectiveVideoCount > 0 || Boolean(audioUrl);
+    if (channel && !parseChannelVideo(channel.finderUserName, channel.feedId)) violations.push("请修改视频号作品 ID");
 
     if (title.length > MAX_TITLE_LENGTH) {
       violations.push(`标题不能超过${MAX_TITLE_LENGTH}字符`);
@@ -1086,12 +1219,10 @@ Page({
       violations.push("该活动不支持上传图片");
     } else if (
       !mediaPolicy.supportsImageUpload &&
-      videoCount === 0 &&
+      effectiveVideoCount === 0 &&
       imageCount > 0
     ) {
       violations.push("视频封面需与视频一起上传");
-    } else if (videoCount > 0 && imageCount === 0) {
-      violations.push("请上传1张视频封面");
     } else if (imageCount > mediaPolicy.maxImageCount) {
       violations.push(
         `图片最多上传${mediaPolicy.maxImageCount}张，当前有${imageCount}张`,
@@ -1103,9 +1234,9 @@ Page({
     } else if (
       mediaPolicy.requiredTypes.length === 1 &&
       mediaPolicy.requiredTypes[0] === "video" &&
-      videoCount === 0
+      effectiveVideoCount === 0
     ) {
-      violations.push("请上传1个视频");
+      violations.push("请上传本地视频，视频号关联不替代活动要求");
     } else if (videoCount > 1) {
       violations.push(`视频只能上传1个，当前有${videoCount}个`);
     }
@@ -1115,7 +1246,7 @@ Page({
     }
 
     if (!hasAnyMedia) {
-      violations.push("图片、录音、视频至少需要上传一种");
+      violations.push("请添加活动支持的图片、录音或本地视频");
     }
 
     const overDurationVideo = imageList.find(
@@ -1178,9 +1309,14 @@ Page({
     const canChooseVisualMedia =
       ((mediaPolicy.supportsImageUpload || videoCount > 0) &&
         imageCount < mediaPolicy.maxImageCount) ||
-      videoCount < mediaPolicy.maxVideoCount;
+      (videoCount < mediaPolicy.maxVideoCount);
     const showVideoCoverUpload = videoCount === 1 && imageCount === 0;
-    this.setData({ canPublish, canChooseVisualMedia, showVideoCoverUpload });
+    const cover = resolveSubmissionCover(this.data.inheritedCoverUrl, this.data.imageList);
+    this.setData({ canPublish, canChooseVisualMedia, showVideoCoverUpload,
+      resolvedCoverUrl: cover.url, coverLabel: cover.label, imageCount,
+      localVideo: this.data.imageList.find(item => item.type === "video") || null,
+      supportsBodyImages: mediaPolicy.supportsImageUpload,
+    });
     this.syncUnsavedExitGuard();
 
     if (!showMediaRuleError) {
@@ -1213,6 +1349,8 @@ Page({
     } = this.data;
 
     return Boolean(
+      this.data.channelVideo ||
+      this.data.inheritedCoverUrl ||
       title.trim() ||
       content.trim() ||
       imageList.length > 0 ||
@@ -1334,6 +1472,7 @@ Page({
 
   // 发布内容
   async onPublish() {
+    if (this.data.submitting || this.data.mediaUploading) return;
     const validation = this.getPublishValidation();
     console.log("validation:", validation);
     if (!validation.canPublish) {
@@ -1346,6 +1485,7 @@ Page({
       return;
     }
 
+    this.setData({ submitting: true });
     wx.showLoading({ title: "正在提交中..." });
     const {
       selectedActivity,
@@ -1397,6 +1537,8 @@ Page({
         ...selectedTopics,
       ],
       media: mediaList,
+      channelVideo: this.data.channelVideo,
+      coverUrl: resolveSubmissionCover(this.data.inheritedCoverUrl, imageList).url || null,
       precheckResult: {
         verdict: "pass",
       },
@@ -1410,22 +1552,33 @@ Page({
       })
       .filter((m) => m);
 
+    let submitted = false;
     try {
       const precheck = await request("/submissions/precheck", {
         method: "POST",
         data: {
           title: publishData.title,
           intro: publishData.intro,
-          images: imagePrecheck,
+          images: [...new Set([...imagePrecheck, ...(publishData.coverUrl ? [publishData.coverUrl] : [])])],
+          channelVideo: this.data.channelVideo,
         },
       });
       console.log("precheck:", precheck);
 
-      if (precheck.verdict !== "pass") {
+      if (!precheck || precheck.error || !["pass", "reject"].includes(precheck.verdict)) {
+        wx.hideLoading();
+        this.showPostDialog({
+          title: "预检暂未完成",
+          content: "内容检查服务暂时不可用，请稍后重试。这不代表投稿内容违规，填写的内容已保留。",
+        });
+        return;
+      }
+
+      if (precheck.verdict === "reject") {
         wx.hideLoading();
         const imageIssues = Array.isArray(precheck.details?.images)
           ? precheck.details.images
-              .filter((item: any) => item?.verdict !== "pass")
+              .filter((item: any) => item?.verdict === "reject")
               .map((item: any) => {
                 const imageNumber = Number.isInteger(item?.index)
                   ? item.index + 1
@@ -1453,7 +1606,7 @@ Page({
               .join("、")
           : "";
         const textIssue =
-          precheck.details?.text?.verdict !== "pass"
+          precheck.details?.text?.verdict === "reject"
             ? `文字内容疑似含有${textLabels || "违规"}内容`
             : "";
         const detailIssues = [textIssue, ...imageIssues].filter(Boolean);
@@ -1467,6 +1620,11 @@ Page({
         return;
       }
 
+      if (publishData.channelVideo && (precheck.requiresManualReview !== true || precheck.channelVideoChecked !== false)) {
+        wx.hideLoading();
+        this.showPostDialog({ title: "暂时无法提交视频号作品", content: "服务端尚未支持视频号人工审核，请稍后重试。已填写内容会保留。" });
+        return;
+      }
       console.log("发布内容：", publishData);
       const existedPostEdit = !!this.data.post?.id;
       const url = existedPostEdit
@@ -1484,8 +1642,9 @@ Page({
           content: submission.error,
         });
       } else {
+        submitted = true;
         wx.showToast({
-          title: existedPostEdit ? "修改成功" : "发布成功",
+          title: this.data.channelVideo ? "已提交，等待人工审核" : existedPostEdit ? "修改成功" : "发布成功",
           icon: "success",
           duration: 1500,
         });
@@ -1500,6 +1659,8 @@ Page({
         title: "发布失败",
         content: err?.error || err?.message || "请稍后重试",
       });
+    } finally {
+      if (!submitted) this.setData({ submitting: false });
     }
   },
 

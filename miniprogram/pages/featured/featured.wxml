@@ -57,9 +57,11 @@
               <scroll-view class="video-scroll {{track.hasTwoLineWorkTitle ? 'video-scroll--two-line' : ''}}" scroll-x="true" show-scrollbar="false">
                 <view class="video-list">
                   <view class="video-item" wx:for="{{track.works}}" wx:key="idx" wx:for-item="item">
-                    <block wx:if="{{item.hasImage}}">
+                    <block wx:if="{{item.coverUrl || item.hasImage || item.hasVideo || item.channelVideo}}">
                       <view class="video-cover-wrapper" bind:tap="onWorkCoverTap" data-id="{{item.id}}">
-                        <image class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+                        <image wx:if="{{item.coverUrl}}" class="video-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+                        <view wx:else class="video-cover channel-featured-placeholder"><t-icon name="video" size="48rpx" /><text>{{item.mediaLabel}}</text></view>
+                        <text wx:if="{{item.channelVideo && item.coverUrl}}" class="channel-featured-badge">视频号作品</text>
                       </view>
                       <view class="work-title">{{item.title}}</view>
                       <view class="author-row">
@@ -190,7 +192,9 @@
               <view class="tracks-popup-video-list">
                 <view class="tracks-popup-video-item" wx:for="{{track.works}}" wx:key="index" wx:for-item="video">
                   <view class="tracks-popup-cover-wrap">
-                    <image class="tracks-popup-cover" src="{{video.coverUrl}}" mode="aspectFill" />
+                    <image wx:if="{{video.coverUrl}}" class="tracks-popup-cover" src="{{video.coverUrl}}" mode="aspectFill" />
+                    <view wx:else class="tracks-popup-cover channel-featured-placeholder">{{video.mediaLabel}}</view>
+                    <text wx:if="{{video.channelVideo && video.coverUrl}}" class="channel-featured-badge">视频号作品</text>
                   </view>
                   <view class="tracks-popup-author">
                     <image class="avatar" src="{{video.author.avatar}}" mode="aspectFill" />

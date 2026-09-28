@@ -1,3 +1,4 @@
+import { submissionKind } from "../../utils/submission-cover";
 import { formatDate } from "../../utils/date";
 import {
   isLoggedIn,
@@ -38,6 +39,8 @@ const formatTrack = (item: any) => {
   const works = Array.isArray(item.works)
     ? item.works.map((work: any) => ({
         ...work,
+        mediaLabel: submissionKind(work),
+        hasVideo: work.media?.some((media: any) => media.type === "video") || false,
         hasImage: Array.isArray(work.media)
           ? work.media.some((media: any) => media?.type === "image")
           : false,

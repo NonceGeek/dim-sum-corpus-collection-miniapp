@@ -534,7 +534,9 @@
 }
 
 .btn-submit {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  margin-left: 24rpx;
 }
 
 .btn-submit-inner {
@@ -1402,3 +1404,118 @@
 .t-search__input-box .t-input__keyword {
   color: var(--text-primary) !important;
 }
+
+/* root-portal 不继承 page 上的尺寸变量，使用设计系统同值 fallback。 */
+.channel-section {
+  margin: 0 0 24rpx;
+  padding: 24rpx;
+  background: var(--bg-card, #fff);
+  border: 1rpx solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 24rpx);
+}
+.channel-heading {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  color: var(--text-primary, #1e293b);
+  font-size: var(--fs-28, 28rpx);
+  font-weight: 600;
+}
+
+.channel-note {
+  display: block;
+  margin: 16rpx 0 24rpx;
+  color: var(--text-secondary, #64748b);
+  font-size: var(--fs-24, 24rpx);
+  line-height: 1.6;
+}
+.channel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16rpx; }
+.channel-error { display: block; color: var(--danger, #ef4444); font-size: 24rpx; margin: 16rpx 0; line-height: 1.5; }
+.channel-editor {
+  background: var(--bg-card, #fff);
+  border-radius: 40rpx 40rpx 0 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  --td-input-bg-color: #fff;
+  --td-input-default-text-color: #1e293b;
+  --td-input-placeholder-text-color: #94a3b8;
+  --td-input-vertical-padding: 24rpx;
+  --td-input-horizontal-padding: 24rpx;
+  --td-input-border-radius: 16rpx;
+  --td-input-border-color: transparent;
+}
+.channel-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid var(--border-color, #e2e8f0);
+}
+.channel-editor-title { font-size: 32rpx; font-weight: 600; color: var(--text-primary, #1e293b); }
+.channel-editor-scroll { height: auto; max-height: 58vh; }
+.channel-editor-body { padding: 8rpx 32rpx 24rpx; }
+.channel-label { display: block; color: var(--text-primary, #1e293b); font-size: 28rpx; font-weight: 500; margin: 24rpx 0 12rpx; }
+.channel-input { background: #fff; border: 1rpx solid var(--border-color, #e2e8f0); border-radius: 16rpx; overflow: hidden; }
+.channel-editor-footer {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 16rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: transparent;
+}
+.channel-footer-action { flex: 1; min-width: 0; }
+.view-channel-section { margin: 32rpx 0 0; }
+
+.channel-popup-host { border-radius: 40rpx 40rpx 0 0; overflow: hidden; --td-popup-border-radius: 40rpx; }
+.channel-popup-content { border-radius: 40rpx 40rpx 0 0; overflow: hidden; background: var(--bg-card, #fff); }
+
+.submission-video-preview { width: 100%; height: 320rpx; border-radius: 16rpx; }
+.media-add-label { font-size: 24rpx; color: var(--text-muted); }
+.media-optional { font-size: 24rpx; color: var(--text-muted); font-weight: 400; }
+.submission-cover-row { display: flex; align-items: center; gap: 24rpx; margin-top: 24rpx; }
+.submission-cover-thumb { width: 144rpx; height: 180rpx; flex-shrink: 0; border-radius: 16rpx; }
+.submission-cover-empty { display: flex; align-items: center; justify-content: center; background: var(--bg-input); }
+.submission-cover-info { flex: 1; min-width: 0; }
+.submission-cover-badge { position: absolute; bottom: 8rpx; left: 8rpx; background: var(--bg-card); color: var(--primary); font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 8rpx; }
+
+.submission-preview { background: var(--bg-card, #fff); padding-bottom: env(safe-area-inset-bottom); }
+.submission-preview-scroll { height: 72vh; }
+.preview-body-image { display: block; width: 100%; margin: 24rpx 0; border-radius: 16rpx; }
+.preview-placeholder { padding: 64rpx; text-align: center; color: var(--text-muted); background: var(--bg-input); border-radius: 24rpx; }
+.preview-channel { padding: 24rpx 0; }
+
+.channel-help { margin: 8rpx 0 24rpx; padding: 24rpx; border-radius: 16rpx; background: var(--bg-input, #f8fafc); border: 1rpx solid var(--border-color, #e2e8f0); }
+.channel-help-title { display: block; margin-bottom: 8rpx; font-size: 28rpx; font-weight: 600; color: var(--text-primary, #1e293b); }
+.channel-help-text { display: block; margin-bottom: 24rpx; font-size: 26rpx; line-height: 1.7; color: var(--text-secondary, #64748b); }
+.channel-help-links { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.channel-help-caption { display: block; margin-top: 16rpx; font-size: 24rpx; line-height: 1.6; color: var(--text-muted, #94a3b8); }
+
+/* Use a native flex item so the custom button host cannot expand the header action. */
+.channel-header-action {
+  margin-left: auto;
+  flex-shrink: 0;
+  --td-button-small-padding-horizontal: 0;
+}
+
+.channel-feed-heading { display: flex; align-items: center; margin: 24rpx 0 12rpx; min-height: 64rpx; }
+.channel-feed-heading .channel-label { margin: 0; }
+.channel-feed-input {
+  --td-textarea-padding: 24rpx;
+  --td-textarea-background-color: #fff;
+  --td-textarea-text-color: #1e293b;
+  --td-textarea-placeholder-color: #94a3b8;
+}
+
+.channel-editor .channel-note { margin: 12rpx 0 16rpx; }
+
+.channel-help-trigger {
+  display: flex;
+  justify-content: flex-start;
+  --td-button-small-padding-horizontal: 0;
+}
+
+.channel-copy-url { display: block; word-break: break-all; font-size: 24rpx; line-height: 1.6; color: var(--text-primary, #1e293b); }
+
+.local-video-actions { justify-content: center; margin-top: 16rpx; }
+
+.submission-cover-actions { justify-content: center; margin-top: 16rpx; }
