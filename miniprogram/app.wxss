@@ -340,13 +340,13 @@ page {
     color: var(--text-muted) !important;
   }
 
-  /* TDesign Button 深色适配 */
-  .t-button--primary {
+  /* 仅覆盖实心按钮，保留 TDesign text / outline 的透明背景与文字色。 */
+  .t-button--primary.t-button--base {
     background: var(--gradient-primary) !important;
     border: none !important;
   }
 
-  .t-button--default {
+  .t-button--default.t-button--base {
     background-color: var(--bg-input) !important;
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
@@ -703,7 +703,7 @@ page {
   color: var(--primary) !important;
 }
 
-.theme-dark .t-button--default {
+.theme-dark .t-button--default.t-button--base {
   background-color: var(--bg-input) !important;
   border-color: var(--border-color) !important;
   color: var(--text-primary) !important;

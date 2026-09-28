@@ -266,3 +266,25 @@ for (const [link, url] of [
   page.onCopyChannelHelpLink({currentTarget:{dataset:{link}}});
   assert.equal(page.data.channelCopyError,''); assert.equal(page.data.channelCopyFallbackUrl,'');
 });
+
+for (const message of ['openChannelsActivity:fail cancel', 'openChannelsActivity:fail user canceled', 'openChannelsActivity:fail user cancelled']) {
+  test(`cancelled Channels confirmation is silent: ${message}`, async () => {
+    const { page, wx, util } = setup();
+    wx.openChannelsActivity = options => options.fail({ errMsg: message });
+    assert.equal(await util.openChannelVideo(ref), 'cancelled');
+    Object.assign(page.data, { channelVideo: ref, channelFinderDraft: ref.finderUserName, channelFeedDraft: ref.feedId });
+    for (const draft of [false, true]) {
+      await page.onOpenChannel({ currentTarget: { dataset: { draft } } });
+      assert.equal(page.dialog, undefined);
+      assert.equal(page.data.channelError, '');
+      assert.equal(page.data.channelOpening, false);
+      assert.equal(page.data.channelVideo, ref);
+      assert.equal(page.data.channelFeedDraft, ref.feedId);
+    }
+  });
+}
+test('unknown Channels failure is not swallowed as cancellation', async () => {
+  const { wx, util } = setup();
+  wx.openChannelsActivity = options => options.fail({ errMsg: 'openChannelsActivity:fail get channels info fail' });
+  await assert.rejects(util.openChannelVideo(ref), /get channels info fail/);
+});

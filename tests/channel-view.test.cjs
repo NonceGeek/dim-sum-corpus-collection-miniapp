@@ -42,3 +42,11 @@ test('failed opening remains visible and retry uses the same work', async () => 
   assert.equal(page.data.error, '作品不可见'); assert.equal(page.data.opening, false);
   await page.openVideo(); assert.equal(opens, 2); assert.equal(page.data.error, '');
 });
+
+test('cancelled opening leaves scan page ready without an error', async () => {
+  const page = setup(async () => ({ channelVideo: video }), async () => 'cancelled');
+  await page.loadVideo(); await page.openVideo();
+  assert.equal(page.data.error, '');
+  assert.equal(page.data.opening, false);
+  assert.equal(page.data.channelVideo.feedId, video.feedId);
+});

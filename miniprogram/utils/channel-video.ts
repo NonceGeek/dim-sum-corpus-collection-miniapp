@@ -8,7 +8,7 @@ export function parseChannelVideo(finderUserName: string, feedId: string): Chann
   if (values[1].length > 1024 || !/^(?:export\/)?[A-Za-z0-9_-]+$/.test(values[1])) return null;
   return { finderUserName: values[0], feedId: values[1] };
 }
-export function openChannelVideo(value: ChannelVideo): Promise<void> {
+export function openChannelVideo(value: ChannelVideo): Promise<"opened" | "cancelled"> {
   return new Promise((resolve, reject) => {
     const isDevtools = wx.getSystemInfoSync?.()?.platform === "devtools";
     if (!wx.canIUse("openChannelsActivity")) {
@@ -21,7 +21,13 @@ export function openChannelVideo(value: ChannelVideo): Promise<void> {
     const channelsWx = wx as typeof wx & { openChannelsActivity(options: ChannelVideo & {
       success: () => void; fail: (error?: { errMsg?: string; errCode?: number }) => void;
     }): void };
-    channelsWx.openChannelsActivity({ ...value, success: () => resolve(), fail: (error) => {
+    channelsWx.openChannelsActivity({ ...value, success: () => resolve("opened"), fail: (error) => {
+      // WeChat reports dismissing its confirmation through fail as well.
+      // Only explicit cancellation is silent; other failures keep diagnostics.
+      if (/\bcancel(?:led|ed)?\b/i.test(error?.errMsg || "")) {
+        resolve("cancelled");
+        return;
+      }
       const detail = error?.errMsg || "微信未返回具体错误";
       const code = error?.errCode === undefined ? "" : `（错误码 ${error.errCode}）`;
       const hint = isDevtools

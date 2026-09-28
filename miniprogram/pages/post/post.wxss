@@ -1436,9 +1436,9 @@
   border-radius: 40rpx 40rpx 0 0;
   overflow: hidden;
   box-sizing: border-box;
-  --td-input-bg-color: #fff;
-  --td-input-default-text-color: #1e293b;
-  --td-input-placeholder-text-color: #94a3b8;
+  --td-input-bg-color: var(--bg-card, #fff);
+  --td-input-default-text-color: var(--text-primary, #1e293b);
+  --td-input-placeholder-text-color: var(--text-muted, #94a3b8);
   --td-input-vertical-padding: 24rpx;
   --td-input-horizontal-padding: 24rpx;
   --td-input-border-radius: 16rpx;
@@ -1455,7 +1455,7 @@
 .channel-editor-scroll { height: auto; max-height: 58vh; }
 .channel-editor-body { padding: 8rpx 32rpx 24rpx; }
 .channel-label { display: block; color: var(--text-primary, #1e293b); font-size: 28rpx; font-weight: 500; margin: 24rpx 0 12rpx; }
-.channel-input { background: #fff; border: 1rpx solid var(--border-color, #e2e8f0); border-radius: 16rpx; overflow: hidden; }
+.channel-input { background: var(--bg-card, #fff); border: 1rpx solid var(--border-color, #e2e8f0); border-radius: 16rpx; overflow: hidden; }
 .channel-editor-footer {
   display: flex;
   align-items: center;
@@ -1501,9 +1501,9 @@
 .channel-feed-heading .channel-label { margin: 0; }
 .channel-feed-input {
   --td-textarea-padding: 24rpx;
-  --td-textarea-background-color: #fff;
-  --td-textarea-text-color: #1e293b;
-  --td-textarea-placeholder-color: #94a3b8;
+  --td-textarea-background-color: var(--bg-card, #fff);
+  --td-textarea-text-color: var(--text-primary, #1e293b);
+  --td-textarea-placeholder-color: var(--text-muted, #94a3b8);
 }
 
 .channel-editor .channel-note { margin: 12rpx 0 16rpx; }
