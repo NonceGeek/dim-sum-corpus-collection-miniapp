@@ -43,6 +43,9 @@ Page({
       shouldResumeJoin: options.join === "1",
     });
     this.syncTheme();
+    wx.showShareMenu({
+      menus: ["shareAppMessage"],
+    });
     this.loadActivity();
   },
 
@@ -91,6 +94,14 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  onShareAppMessage() {
+    return {
+      title: this.data.activity.title || "活动详情",
+      path: `/pages/activity-detail/activity-detail?id=${encodeURIComponent(this.data.activityId)}`,
+      imageUrl: this.data.activity.bannerUrl || "/public/image/yue.jpg",
+    };
   },
 
   onBackToBrowse() {

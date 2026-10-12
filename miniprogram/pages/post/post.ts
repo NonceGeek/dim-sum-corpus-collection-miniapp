@@ -675,7 +675,18 @@ Page({
       formData: {
         fileName: `${dateStr}_corpus_collection_${file.type}_${timestamp}.${ext}`,
       },
+    }).catch((error) => {
+      console.error("媒体上传请求失败：", error);
+      throw error;
     });
+    console.log("媒体上传返回：", res);
+
+    const statusCode = String(res.statusCode).trim();
+    if (statusCode === "413") {
+      throw Object.assign(new Error("文件过大，无法上传"), {
+        statusCode: res.statusCode,
+      });
+    }
 
     let data: any = {};
     try {
@@ -730,6 +741,7 @@ Page({
     });
   },
   onEditChannel() {
+    if (this.data.mediaUploading) return;
     this.setData({ channelEditorVisible: true, channelHelpExpanded: false,
       channelFinderDraft: this.data.channelVideo?.finderUserName || "",
       channelFeedDraft: this.data.channelVideo?.feedId || "", channelError: "" });

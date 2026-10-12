@@ -76,7 +76,7 @@
         <text class="channel-error" wx:if="{{!allowVideoUpload}}">当前活动不支持本地视频，请移除或切换活动。</text>
         <view class="channel-actions local-video-actions">
           <t-button wx:if="{{localVideo}}" size="small" variant="text" bind:tap="onRemoveLocalVideo">移除视频</t-button>
-          <t-button wx:elif="{{allowVideoUpload}}" size="small" variant="outline" bind:tap="onChooseLocalVideo" disabled="{{mediaUploading}}">选择视频</t-button>
+          <t-button wx:elif="{{allowVideoUpload}}" size="small" variant="outline" custom-style="{{(mediaUploading) && currentTheme === 'light' ? 'opacity: 1 !important; color: #64748b !important; background: #f1f5f9 !important; border-color: #cbd5e1 !important; --td-button-default-outline-disabled-color: #cbd5e1;' : ''}}" bind:tap="onChooseLocalVideo" disabled="{{mediaUploading}}"><text style="{{(mediaUploading) && currentTheme === 'light' ? 'color: #64748b !important;' : ''}}">选择视频</text></t-button>
         </view>
       </view>
 
@@ -137,7 +137,7 @@
         <text class="channel-note">{{channelVideo ? '已关联作品，读者可在详情页点击观看。' : '额外关联视频号作品，不影响已上传内容，也不替代活动要求的投稿内容。'}}</text>
         <view class="channel-actions">
           <t-button wx:if="{{channelVideo}}" size="small" variant="outline" bind:tap="onOpenChannel" loading="{{channelOpening}}">打开检查</t-button>
-          <t-button size="small" variant="outline" bind:tap="onEditChannel">{{channelVideo ? '修改信息' : '填写作品信息'}}</t-button>
+          <t-button size="small" variant="outline" custom-style="{{mediaUploading && currentTheme === 'light' ? 'opacity: 1 !important; color: #64748b !important; background: #f1f5f9 !important; border-color: #cbd5e1 !important; --td-button-default-outline-disabled-color: #cbd5e1;' : ''}}" bind:tap="onEditChannel" disabled="{{mediaUploading}}"><text style="{{mediaUploading && currentTheme === 'light' ? 'color: #64748b !important; opacity: 1;' : ''}}">{{channelVideo ? '修改信息' : '填写作品信息'}}</text></t-button>
           <t-button wx:if="{{channelVideo}}" size="small" variant="text" bind:tap="onRemoveChannel">移除关联</t-button>
         </view>
       </view>
@@ -153,7 +153,7 @@
           </view>
         </view>
         <view class="channel-actions submission-cover-actions">
-          <t-button size="small" variant="outline" bind:tap="onChooseCover" disabled="{{mediaUploading}}">{{resolvedCoverUrl ? '更换封面' : '选择封面'}}</t-button>
+          <t-button size="small" variant="outline" custom-style="{{mediaUploading && currentTheme === 'light' ? 'opacity: 1 !important; color: #64748b !important; background: #f1f5f9 !important; border-color: #cbd5e1 !important; --td-button-default-outline-disabled-color: #cbd5e1;' : ''}}" bind:tap="onChooseCover" disabled="{{mediaUploading}}"><text style="{{mediaUploading && currentTheme === 'light' ? 'color: #64748b !important; opacity: 1;' : ''}}">{{resolvedCoverUrl ? '更换封面' : '选择封面'}}</text></t-button>
           <t-button wx:if="{{inheritedCoverUrl}}" size="small" variant="text" bind:tap="onRemoveInheritedCover">恢复默认</t-button>
         </view>
       </view>
@@ -251,7 +251,7 @@
 
     <!-- 底部按钮 -->
     <view class="footer">
-      <t-button variant="outline" shape="round" bind:tap="onPreviewSubmission" disabled="{{mediaUploading || submitting}}">预览</t-button>
+      <t-button variant="outline" shape="round" custom-style="{{(mediaUploading || submitting) && currentTheme === 'light' ? 'opacity: 1 !important; color: #64748b !important; background: #f1f5f9 !important; border-color: #cbd5e1 !important; --td-button-default-outline-disabled-color: #cbd5e1;' : ''}}" bind:tap="onPreviewSubmission" disabled="{{mediaUploading || submitting}}"><text style="{{(mediaUploading || submitting) && currentTheme === 'light' ? 'color: #64748b !important;' : ''}}">预览</text></t-button>
       <t-button theme="primary" shape="round" bind:tap="onPublish" loading="{{submitting || mediaUploading}}" disabled="{{submitting || mediaUploading}}"
         class="btn-submit btn-submit-inner {{!canPublish ? 'btn-submit-inner--disabled' : ''}}"
         aria-disabled="{{!canPublish}}" hover-class="none">
@@ -458,14 +458,13 @@
 />
 
 
-<root-portal enable="{{channelEditorVisible}}">
   <t-popup visible="{{channelEditorVisible}}" placement="bottom" z-index="{{11500}}"
     overlay-props="{{selectionPopupOverlayProps}}" t-class="channel-popup-host theme-{{currentTheme}}" t-class-content="channel-popup-content"
     bind:visible-change="onChannelPopupChange">
     <view class="channel-editor theme-{{currentTheme}}">
       <view class="channel-editor-header">
         <text class="channel-editor-title">添加视频号作品</text>
-        <view class="channel-header-action"><t-button size="small" variant="text" bind:tap="onCloseChannelEditor">取消</t-button></view>
+        <view class="channel-header-action"><t-button size="small" variant="text" hover-class="none" bind:tap="onCloseChannelEditor">取消</t-button></view>
       </view>
       <scroll-view scroll-y enhanced="{{true}}" show-scrollbar="{{false}}" class="channel-editor-scroll">
         <view class="channel-editor-body">
@@ -506,9 +505,7 @@
       </view>
     </view>
   </t-popup>
-</root-portal>
 
-<root-portal enable="{{previewVisible}}">
   <t-popup visible="{{previewVisible}}" placement="bottom" z-index="{{11500}}"
     overlay-props="{{selectionPopupOverlayProps}}" t-class="channel-popup-host theme-{{currentTheme}}"
     t-class-content="channel-popup-content" bind:visible-change="onPreviewVisibleChange">
@@ -536,7 +533,5 @@
       </scroll-view>
     </view>
   </t-popup>
-</root-portal>
 
-<!-- Keep confirmation/error dialogs in the same root layer, above editor and preview. -->
-<root-portal><common-dialog id="common-dialog" /></root-portal>
+    <common-dialog id="common-dialog" />
