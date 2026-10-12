@@ -404,7 +404,7 @@ Page({
     }
   },
   async loadTrack(id: string) {
-    wx.showLoading({ title: "加载活动中..." });
+    wx.showLoading({ title: "加载活动中...", mask: true });
     try {
       const track = await request(`/activities/${id}`);
       await new Promise<void>((resolve) => {
@@ -451,7 +451,7 @@ Page({
   ): Promise<boolean> {
     const { retryOnFailure = false, showLoading = true } = options;
     if (showLoading) {
-      wx.showLoading({ title: "加载中..." });
+      wx.showLoading({ title: "加载中...", mask: true });
     }
     try {
       const res = await request(`/submissions/${id}`);
@@ -729,7 +729,7 @@ Page({
     wx.chooseMedia({ count: 1, mediaType: ["image"], sourceType: ["album", "camera"],
       success: async (result) => {
         this.setData({ mediaUploading: true });
-        wx.showLoading({ title: "上传封面中" });
+        wx.showLoading({ title: "上传封面中", mask: true });
         try {
           const file = await this.compressMediaFile({ type: "image", url: result.tempFiles[0].tempFilePath });
           const uploaded = await this.uploadMediaFile(file, formatDate(new Date(), "YYYYMMDD"), `${Date.now()}_cover`);
@@ -865,7 +865,7 @@ Page({
       success: async (res) => {
         this.setData({ mediaUploading: true });
         try {
-          wx.showLoading({ title: "压缩中..." });
+          wx.showLoading({ title: "压缩中...", mask: true });
 
           const selectedFiles = res.tempFiles.map((file: any) => ({
             url: file.tempFilePath,
@@ -922,7 +922,7 @@ Page({
             uploadCandidates.map((file) => this.compressMediaFile(file)),
           );
 
-          wx.showLoading({ title: "上传中..." });
+          wx.showLoading({ title: "上传中...", mask: true });
 
           const timestamp = Date.now();
           const dateStr = formatDate(new Date(), "YYYYMMDD");
@@ -1498,7 +1498,7 @@ Page({
     }
 
     this.setData({ submitting: true });
-    wx.showLoading({ title: "正在提交中..." });
+    wx.showLoading({ title: "正在提交中...", mask: true });
     const {
       selectedActivity,
       selectedType,
@@ -1909,7 +1909,7 @@ Page({
 
     this.clearPendingRecordPlayback();
     this.setData({ recordProcessing: true });
-    wx.showLoading({ title: "上传中..." });
+    wx.showLoading({ title: "上传中...", mask: true });
     try {
       const audioUrl = await this.uploadAudioFile(pendingRecordPath);
       this.stopAudioPlayback();
@@ -1945,7 +1945,7 @@ Page({
 
     this.clearPendingRecordPlayback();
     this.setData({ recordProcessing: true });
-    wx.showLoading({ title: "上传中..." });
+    wx.showLoading({ title: "上传中...", mask: true });
     try {
       const audioUrl = await this.uploadAudioFile(pendingRecordPath);
       this.setData({
@@ -2042,7 +2042,7 @@ Page({
     }
 
     this.setData({ recordProcessing: true });
-    wx.showLoading({ title: "准备试听..." });
+    wx.showLoading({ title: "准备试听...", mask: true });
     try {
       const playbackPath = `${wx.env.USER_DATA_PATH}/pending-record-${Date.now()}.mp3`;
       await new Promise<void>((resolve, reject) => {
