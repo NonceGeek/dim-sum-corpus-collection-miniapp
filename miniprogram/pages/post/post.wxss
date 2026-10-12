@@ -1464,6 +1464,27 @@
   background: transparent;
 }
 .channel-footer-action { flex: 1; min-width: 0; }
+
+.post-button-disabled-light {
+  opacity: 1 !important;
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  --td-button-default-outline-disabled-color: #cbd5e1;
+}
+
+.post-button-disabled-label {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+.channel-help-button {
+  justify-content: flex-start;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .view-channel-section { margin: 32rpx 0 0; }
 
 .channel-popup-host { border-radius: 40rpx 40rpx 0 0; overflow: hidden; --td-popup-border-radius: 40rpx; }
