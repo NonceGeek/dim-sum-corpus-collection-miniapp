@@ -97,6 +97,7 @@ Page({
   timer: null as any,
 
   async onLoad(options: any = {}) {
+    wx.showShareMenu({ menus: ["shareAppMessage"] });
     this.setData({
       joinConsentActivityId: options.joinActivityId || "",
       shouldResumeJoin: Boolean(options.joinActivityId),
@@ -106,6 +107,12 @@ Page({
     await this.loadTopTracks();
   },
 
+  onShareAppMessage() {
+    return {
+      title: "精选活动",
+      path: "/pages/featured/featured",
+    };
+  },
 
   async loadTopTracks(options: { force?: boolean } = {}) {
     try {

@@ -295,6 +295,7 @@ Page({
     console.log('onLoad options:', options);
     const pageMode = mode || "edit";
     this.syncTheme();
+    wx.showShareMenu({ menus: ["shareAppMessage"] });
 
     const query = [
       tag ? `tag=${encodeURIComponent(tag)}` : "",
@@ -403,6 +404,17 @@ Page({
       sharedRecorderManager.stop();
     }
   },
+  onShareAppMessage() {
+    const { post, resolvedCoverUrl } = this.data;
+    return {
+      title: post.title || "投稿页面",
+      path: post?.id
+        ? `/pages/post/post?id=${encodeURIComponent(post.id)}&mode=view`
+        : "/pages/post/post",
+      ...(resolvedCoverUrl ? { imageUrl: resolvedCoverUrl } : {}),
+    };
+  },
+
   async loadTrack(id: string) {
     wx.showLoading({ title: "加载活动中...", mask: true });
     try {
