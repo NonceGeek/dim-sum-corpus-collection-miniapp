@@ -448,6 +448,7 @@
 
 </view>
 <join-consent-popup
+  id="joinConsentPopup"
   visible="{{joinConsentPopupVisible}}"
   activity-id="{{joinConsentActivityId}}"
   current-theme="{{currentTheme}}"

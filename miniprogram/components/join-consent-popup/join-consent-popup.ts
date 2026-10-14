@@ -110,6 +110,19 @@ Component({
   },
 
   methods: {
+    // 服务端拒绝了当前 journey 时由页面调用：丢弃缓存的 journey，下次打开重新走 entry。
+    resetEntry() {
+      (this as any)._activeActivityId = undefined;
+      (this as any)._enteredJourneyId = "";
+      (this as any)._openedJourneyId = "";
+      (this as any)._entryClientEventId = "";
+      (this as any)._entryActivityId = undefined;
+      // close() 只停计时器不归零，残留的 countdown 会让重新验手机号时无法再发验证码。
+      this.stopCountdown();
+      this.stopAutoEnterCountdown();
+      this.setData({ journeyId: "", countdown: 0, autoEnterCountdown: 0 });
+    },
+
     async requestQuestionnaireEntry(activityId: string) {
       const isSameActivity = (this as any)._entryActivityId === activityId;
       const clientEventId =

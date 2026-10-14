@@ -278,6 +278,10 @@ Page({
     exitGuardVisible: false,
     joinConsentPopupVisible: false,
     joinConsentActivityId: "",
+    // journey 绑定的活动（自由投稿为空串），服务端要求与投稿 activityId 一致。
+    questionnaireJourneyActivityId: "",
+    // 投稿被问卷门禁拒绝后重新走问卷：关闭弹窗时保留草稿，不退出页面。
+    questionnaireRetrying: false,
   },
   audioStateHandler: null as any,
   audioErrorHandler: null as any,
@@ -291,7 +295,8 @@ Page({
   pendingPageExit: false,
 
   async onLoad(options) {
-    const { tag, id, mode, questionnaireJourneyId } = options;
+    const { tag, id, mode, questionnaireJourneyId, questionnaireActivityId } =
+      options;
     console.log('onLoad options:', options);
     const pageMode = mode || "edit";
     this.syncTheme();
@@ -302,6 +307,9 @@ Page({
       id ? `id=${encodeURIComponent(id)}` : "",
       questionnaireJourneyId
         ? `questionnaireJourneyId=${encodeURIComponent(questionnaireJourneyId)}`
+        : "",
+      questionnaireActivityId
+        ? `questionnaireActivityId=${encodeURIComponent(questionnaireActivityId)}`
         : "",
       `mode=${encodeURIComponent(pageMode)}`,
     ]
@@ -320,6 +328,8 @@ Page({
         mode: pageMode,
         entryActivityId: tag || "",
         questionnaireJourneyId: questionnaireJourneyId || "",
+        // 活动页带 tag 进入时 journey 就是为该活动创建的；查看页转编辑时单独传。
+        questionnaireJourneyActivityId: questionnaireActivityId || tag || "",
         userId: userInfo?.id || "",
         exitGuardVisible: pageMode === "edit",
       },
@@ -1067,6 +1077,7 @@ Page({
       activityPopupVisible: false,
       typeOptions: TYPES,
     });
+    this.syncQuestionnaireJourneyWithActivity();
     this.checkCanPublish();
   },
 
@@ -1079,8 +1090,22 @@ Page({
 
     if (loaded) {
       this.setData({ activityPopupVisible: false });
+      this.syncQuestionnaireJourneyWithActivity();
       this.checkCanPublish(hasUploadedMedia);
     }
+  },
+
+  // journey 只对创建时的活动有效（服务端校验同一活动/同为自由投稿）。
+  // 换活动后作废旧 journey：拿到过 journey 说明登记已完成，
+  // 提交时省略 questionnaireJourneyId，由服务端为新活动补建 reused journey。
+  syncQuestionnaireJourneyWithActivity() {
+    if (!this.data.questionnaireJourneyId) return;
+    const currentActivityId = String(this.data.selectedActivity?.id || "");
+    if (currentActivityId === this.data.questionnaireJourneyActivityId) return;
+    this.setData({
+      questionnaireJourneyId: "",
+      questionnaireJourneyActivityId: "",
+    });
   },
 
   // 添加话题
@@ -1509,6 +1534,7 @@ Page({
       return;
     }
 
+    this.syncQuestionnaireJourneyWithActivity();
     this.setData({ submitting: true });
     wx.showLoading({ title: "正在提交中...", mask: true });
     const {
@@ -1660,10 +1686,15 @@ Page({
       });
       wx.hideLoading();
 
-      if (submission.error) {
+      if (
+        submission.error === "QUESTIONNAIRE_REQUIRED" ||
+        submission.error === "JOURNEY_EXPIRED"
+      ) {
+        this.restartQuestionnaireGate();
+      } else if (submission.error) {
         this.showPostDialog({
           title: "错误提示",
-          content: submission.error,
+          content: submission.message || submission.error,
         });
       } else {
         submitted = true;
@@ -2332,37 +2363,71 @@ Page({
     });
   },
 
+  // 投稿返回 QUESTIONNAIRE_REQUIRED / JOURNEY_EXPIRED 时按文档重新从 entry 开始：
+  // 保留草稿，清掉失效 journey，以服务端判断为准重新走问卷门禁。
+  restartQuestionnaireGate() {
+    // 本地 questionnaireStatus 可能与服务端不一致，清掉后弹窗必走 /questionnaire/entry；
+    // 服务端判定为 reused 时弹窗会写回完成状态。
+    getApp<any>().globalData.questionnaireStatus = {};
+    (this.selectComponent("#joinConsentPopup") as any)?.resetEntry?.();
+    this.setData({
+      questionnaireJourneyId: "",
+      questionnaireJourneyActivityId: "",
+      questionnaireRetrying: true,
+      joinConsentActivityId: String(this.data.selectedActivity?.id || ""),
+      joinConsentPopupVisible: true,
+    });
+  },
+
   onJoinConsentClose() {
     if (
       this.data.mode === "edit" &&
-      !this.data.questionnaireJourneyId
+      !this.data.questionnaireJourneyId &&
+      !this.data.questionnaireRetrying
     ) {
       this.leavePostPageAfterPublish();
       return;
     }
-    this.setData({ joinConsentPopupVisible: false });
+    this.setData({
+      joinConsentPopupVisible: false,
+      questionnaireRetrying: false,
+    });
   },
 
   onJoinConsentComplete(e: WechatMiniprogram.CustomEvent) {
     if (this.data.mode === "edit") {
+      const questionnaireJourneyId = e.detail.questionnaireJourneyId || "";
+      if (this.data.questionnaireRetrying) {
+        wx.showToast({ title: "参赛资格已确认，请重新提交", icon: "none" });
+      }
       this.setData({
         joinConsentPopupVisible: false,
-        questionnaireJourneyId: e.detail.questionnaireJourneyId || "",
+        questionnaireRetrying: false,
+        questionnaireJourneyId,
+        questionnaireJourneyActivityId: questionnaireJourneyId
+          ? String(e.detail.activityId || this.data.joinConsentActivityId || "")
+          : "",
       });
       return;
     }
 
     this.setData({ joinConsentPopupVisible: false });
-    this.navigateToEditPost(e.detail.questionnaireJourneyId);
+    this.navigateToEditPost(
+      e.detail.questionnaireJourneyId,
+      e.detail.activityId || this.data.joinConsentActivityId,
+    );
   },
 
-  navigateToEditPost(questionnaireJourneyId = "") {
+  navigateToEditPost(questionnaireJourneyId = "", questionnaireActivityId = "") {
     const id = (this.data.post as any).id;
     wx.navigateTo({
       url:
         `/pages/post/post?id=${id}&mode=edit` +
         (questionnaireJourneyId
           ? `&questionnaireJourneyId=${encodeURIComponent(questionnaireJourneyId)}`
+          : "") +
+        (questionnaireJourneyId && questionnaireActivityId
+          ? `&questionnaireActivityId=${encodeURIComponent(questionnaireActivityId)}`
           : ""),
     });
   },
