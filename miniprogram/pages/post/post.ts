@@ -3,7 +3,7 @@ import { ChannelVideo, parseChannelVideo, openChannelVideo, normalizeChannelFeed
 import request from "../../utils/http";
 import ENV from "../../config/setting";
 import { formatDate } from "../../utils/date";
-import { guardProtectedPage, isLoggedIn } from "../../utils/auth";
+import { guardProtectedPage, isLoggedIn, navigateToProtectedPage } from "../../utils/auth";
 import uploadFileWithAuth from "../../utils/upload";
 
 const MAX_AUDIO_DURATION = 60;
@@ -2415,6 +2415,25 @@ Page({
     this.navigateToEditPost(
       e.detail.questionnaireJourneyId,
       e.detail.activityId || this.data.joinConsentActivityId,
+    );
+  },
+
+  onViewActivityTap() {
+    const activityId = (this.data.post as any)?.activity?.id;
+    if (!activityId) return;
+    wx.navigateTo({
+      url: `/pages/tracks/tracks?id=${encodeURIComponent(String(activityId))}`,
+    });
+  },
+
+  onViewHomeTap() {
+    wx.reLaunch({ url: "/pages/index/index" });
+  },
+
+  onViewJoinTap() {
+    const activityId = (this.data.post as any)?.activity?.id;
+    navigateToProtectedPage(
+      `/pages/post/post?mode=edit${activityId ? `&tag=${encodeURIComponent(String(activityId))}` : ""}`,
     );
   },
 

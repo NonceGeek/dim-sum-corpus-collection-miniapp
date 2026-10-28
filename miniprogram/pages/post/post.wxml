@@ -411,7 +411,7 @@
           <t-icon name="catalog" size="16" color="#94A3B8" />
           <text class="view-meta-text">{{post.submissionType}}</text>
         </view>
-        <view class="view-meta-item" wx:if="{{post.activity && post.activity.title}}">
+        <view class="view-meta-item" wx:if="{{post.activity && post.activity.title}}" bind:tap="onViewActivityTap">
           <t-icon name="flag" size="16" color="#94A3B8" />
           <text class="view-meta-text">{{post.activity.title}}</text>
         </view>
@@ -434,8 +434,16 @@
 
 
     <view class="view-footer">
+      <view wx:if="{{mode === 'view' && post.reviewStatus === 'approved'}}" class="view-footer-action" role="button" aria-label="首页" bind:tap="onViewHomeTap">
+        <view class="view-footer-action-icon"><t-icon name="home" size="20" color="var(--text-secondary)" /></view>
+        <text class="view-footer-text">首页</text>
+      </view>
+      <view wx:if="{{mode === 'view' && post.reviewStatus === 'approved'}}" class="view-footer-action" role="button" aria-label="参赛" bind:tap="onViewJoinTap">
+        <view class="view-footer-action-icon"><t-icon name="flag" size="20" color="var(--primary)" /></view>
+        <text class="view-footer-text">参赛</text>
+      </view>
       <view class="view-footer-action" bind:tap="onEditPost" wx:if="{{post.canEdit && userId === post.author.id}}">
-        <t-icon name="edit" size="20" color="var(--text-secondary)" />
+        <view class="view-footer-action-icon"><t-icon name="edit" size="20" color="var(--text-secondary)" /></view>
         <text class="view-footer-text">编辑</text>
       </view>
       <view class="hot-wrap">

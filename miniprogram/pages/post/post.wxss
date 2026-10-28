@@ -1367,15 +1367,28 @@
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 32rpx;
 }
 
 .view-footer-action {
+  flex-shrink: 0;
   height: var(--btn-height);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12rpx;
+}
+
+.view-footer-action-icon {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .view-footer-text {
